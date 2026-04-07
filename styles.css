@@ -1,0 +1,124 @@
+:root {
+  color-scheme: dark;
+  --bg-1: #100024;
+  --bg-2: #1a1148;
+  --card: rgba(255, 255, 255, 0.08);
+  --card-hover: rgba(255, 255, 255, 0.14);
+  --text: #f8f8ff;
+  --muted: #c7c7dd;
+  --accent: #7cf6ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at 10% 20%, #2c1f77 0%, var(--bg-1) 45%),
+    linear-gradient(135deg, var(--bg-1), var(--bg-2));
+}
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(124, 246, 255, 0.08) 0%,
+    rgba(180, 100, 255, 0.08) 45%,
+    rgba(255, 121, 198, 0.08) 100%
+  );
+  pointer-events: none;
+}
+
+.menu {
+  position: relative;
+  z-index: 1;
+  width: min(1000px, 92%);
+  margin: 0 auto;
+  padding: 56px 0 70px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 34px;
+}
+
+.tag {
+  margin: 0;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  line-height: 1.05;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
+
+.game-card {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.game-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px;
+}
+
+.game-card:hover,
+.game-card:focus-visible {
+  transform: translateY(-4px);
+  background: var(--card-hover);
+  border-color: rgba(124, 246, 255, 0.55);
+  outline: none;
+}
+
+.game-card h2 {
+  margin: 0 0 6px;
+  font-size: 1.3rem;
+}
+
+.game-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.game-card span {
+  margin-top: 18px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
