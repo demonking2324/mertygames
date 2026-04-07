@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beat the Dummy - MertyGames</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="dummy-page">
+    <div class="page-bg"></div>
+    <a class="chat-launch" href="./index.html">Back</a>
+
+    <main class="dummy-wrap">
+      <section class="dummy-card">
+        <h1>Beat the Dummy</h1>
+        <p class="dummy-sub">Hit the dummy as many times as possible in 30 seconds.</p>
+
+        <div class="dummy-stats">
+          <p>Score: <strong id="scoreValue">0</strong></p>
+          <p>Combo: <strong id="comboValue">x1</strong></p>
+          <p>Time: <strong id="timeValue">30</strong>s</p>
+        </div>
+
+        <button id="dummyTarget" class="dummy-target" type="button" aria-label="Hit the dummy">
+          <span>Dummy</span>
+        </button>
+
+        <p id="dummyMessage" class="dummy-message">Click the dummy to start.</p>
+        <button id="restartDummy" class="dummy-restart hidden" type="button">Play Again</button>
+      </section>
+    </main>
+
+    <script src="./beat-the-dummy.js"></script>
+  </body>
+</html>
