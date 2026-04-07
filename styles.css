@@ -108,6 +108,22 @@ h1 {
 .game-card h2 {
   margin: 0 0 6px;
   font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.live-badge {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #071116;
+  background: #63f0ff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .game-card p {
