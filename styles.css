@@ -46,6 +46,7 @@ body {
   padding: 8px 14px;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .chat-panel {
@@ -62,6 +63,20 @@ body {
   border: 1px solid rgba(124, 246, 255, 0.35);
   border-radius: 14px;
   overflow: hidden;
+}
+
+.chat-page-main {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 74px 16px 24px;
+}
+
+.chat-page .chat-panel {
+  position: static;
+  width: min(680px, 100%);
+  min-height: 500px;
+  max-height: 76vh;
 }
 
 .hidden {

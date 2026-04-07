@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MertyGames Chat</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="chat-page">
+    <div class="page-bg"></div>
+    <a class="chat-launch" href="./index.html">Back</a>
+
+    <main class="chat-page-main">
+      <section class="chat-panel" aria-label="Chat panel">
+        <div class="chat-head">
+          <h2>MertyGames Chat</h2>
+        </div>
+
+        <div class="chat-setup" id="chatSetup">
+          <p class="chat-help">Create a room or join with an 8-character code. Keep at least one member in the room to keep it active.</p>
+
+          <label for="chatName">Your name</label>
+          <input id="chatName" maxlength="18" placeholder="Enter your name" />
+
+          <div class="chat-row">
+            <button id="createChat" type="button">Create New Chat</button>
+          </div>
+
+          <div class="chat-row join-row">
+            <input id="chatCode" maxlength="8" placeholder="Room code (8 chars)" />
+            <button id="joinChat" type="button">Join Chat</button>
+          </div>
+
+          <p class="chat-status" id="chatStatus"></p>
+        </div>
+
+        <div class="chat-room hidden" id="chatRoom">
+          <div class="chat-room-top">
+            <p>Room: <strong id="roomCodeLabel"></strong></p>
+            <button id="leaveChat" type="button">Leave</button>
+          </div>
+
+          <div class="chat-messages" id="chatMessages"></div>
+
+          <form class="chat-send" id="chatSendForm">
+            <input id="chatInput" maxlength="200" placeholder="Type a message..." />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="./chat.js"></script>
+  </body>
+</html>

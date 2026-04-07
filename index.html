@@ -8,7 +8,7 @@
   </head>
   <body>
     <div class="page-bg"></div>
-    <button class="chat-launch" id="chatLaunch" type="button">Chat</button>
+    <a class="chat-launch" href="./chat.html">Chat</a>
 
     <main class="menu">
       <header class="hero">
@@ -41,46 +41,5 @@
       </section>
     </main>
 
-    <section class="chat-panel hidden" id="chatPanel" aria-label="Chat panel">
-      <div class="chat-head">
-        <h2>MertyGames Chat</h2>
-        <button class="chat-close" id="chatClose" type="button" aria-label="Close chat">x</button>
-      </div>
-
-      <div class="chat-setup" id="chatSetup">
-        <p class="chat-help">Create a room or join with an 8-character code.</p>
-
-        <label for="chatName">Your name</label>
-        <input id="chatName" maxlength="18" placeholder="Enter your name" />
-
-        <div class="chat-row">
-          <button id="createChat" type="button">Create New Chat</button>
-        </div>
-
-        <div class="chat-row join-row">
-          <input id="chatCode" maxlength="8" placeholder="Room code (8 chars)" />
-          <button id="joinChat" type="button">Join Chat</button>
-        </div>
-
-        <p class="chat-status" id="chatStatus"></p>
-      </div>
-
-      <div class="chat-room hidden" id="chatRoom">
-        <div class="chat-room-top">
-          <p>Room: <strong id="roomCodeLabel"></strong></p>
-          <button id="leaveChat" type="button">Leave</button>
-        </div>
-
-        <div class="chat-messages" id="chatMessages"></div>
-
-        <form class="chat-send" id="chatSendForm">
-          <input id="chatInput" maxlength="200" placeholder="Type a message..." />
-          <button type="submit">Send</button>
-        </form>
-      </div>
-    </section>
-
-    <script src="https://unpkg.com/gun/gun.js"></script>
-    <script src="./script.js"></script>
   </body>
 </html>
