@@ -32,12 +32,23 @@
             <button id="joinChat" type="button">Join Chat</button>
           </div>
 
+          <div class="chat-public-block">
+            <p class="chat-help chat-public-title">Public chat (always on)</p>
+            <p class="chat-help chat-public-codes">
+              Join with code <strong>12345678</strong> or <strong>ABCDEFGH</strong>, or tap the button.
+            </p>
+            <div class="chat-row">
+              <button id="joinPublicChat" type="button">Join Public Chat</button>
+            </div>
+          </div>
+
           <p class="chat-status" id="chatStatus"></p>
         </div>
 
         <div class="chat-room hidden" id="chatRoom">
           <div class="chat-room-top">
             <p>Room: <strong id="roomCodeLabel"></strong></p>
+            <p id="onlineCountLine" class="chat-online hidden">Online: <strong id="onlineCountValue">0</strong></p>
             <button id="leaveChat" type="button">Leave</button>
           </div>
 
