@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account - MertyGames</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="account-page">
+    <div class="page-bg"></div>
+    <a class="chat-launch" href="./index.html">Back</a>
+    <a class="account-launch" href="./chat.html">Chat</a>
+
+    <main class="account-wrap">
+      <section class="account-card">
+        <h1>Account</h1>
+        <p class="account-note">
+          Accounts are saved in this browser only (no server). Use the same device to sign in, or create a new account elsewhere.
+        </p>
+
+        <div id="accountSignedIn" class="account-signed-in hidden">
+          <p>Signed in as <strong id="signedInName"></strong></p>
+          <button type="button" id="signOutBtn" class="account-btn account-btn-secondary">Sign out</button>
+        </div>
+
+        <div id="accountForms">
+          <div class="account-tabs" role="tablist">
+            <button type="button" class="account-tab is-active" id="tabCreate" role="tab" aria-selected="true">Create Account</button>
+            <button type="button" class="account-tab" id="tabSignIn" role="tab" aria-selected="false">Sign In</button>
+          </div>
+
+          <div id="panelCreate" class="account-panel" role="tabpanel">
+            <label for="regUser">Username</label>
+            <input id="regUser" autocomplete="username" maxlength="24" placeholder="Choose a username" />
+
+            <label for="regPass">Password</label>
+            <input id="regPass" type="password" autocomplete="new-password" maxlength="128" placeholder="Choose a password" />
+
+            <label for="regPass2">Confirm password</label>
+            <input id="regPass2" type="password" autocomplete="new-password" maxlength="128" placeholder="Repeat password" />
+
+            <button type="button" id="createAccountBtn" class="account-btn">Create Account</button>
+          </div>
+
+          <div id="panelSignIn" class="account-panel hidden" role="tabpanel" hidden>
+            <label for="loginUser">Username</label>
+            <input id="loginUser" autocomplete="username" maxlength="24" placeholder="Your username" />
+
+            <label for="loginPass">Password</label>
+            <input id="loginPass" type="password" autocomplete="current-password" maxlength="128" placeholder="Your password" />
+
+            <button type="button" id="signInBtn" class="account-btn">Sign In</button>
+          </div>
+
+          <p id="accountMessage" class="account-message" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+
+    <script src="./auth.js"></script>
+  </body>
+</html>
