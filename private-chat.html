@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Private chat - MertyGames</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="chat-page">
+    <div class="page-bg"></div>
+    <a class="chat-launch" href="./index.html">Back</a>
+    <a class="account-launch" href="./account.html">Account</a>
+
+    <main class="chat-page-main">
+      <section class="chat-panel" aria-label="Private chat">
+        <div class="chat-head">
+          <h2>Private chat</h2>
+        </div>
+
+        <div class="chat-setup" id="privateSetup">
+          <p id="privateMineHint" class="chat-help hidden">Opening your private room…</p>
+
+          <div id="privateJoinBlock">
+            <p class="chat-help">Enter an 8-character code someone shared with you, and your display name.</p>
+
+            <label for="privateGuestName">Your name</label>
+            <input id="privateGuestName" maxlength="18" placeholder="How you appear in chat" />
+
+            <label for="privateCodeInput">Private chat code</label>
+            <input id="privateCodeInput" maxlength="8" placeholder="8 characters" autocomplete="off" />
+
+            <div class="chat-row">
+              <button id="privateJoinBtn" type="button">Join private chat</button>
+            </div>
+          </div>
+
+          <p class="chat-status" id="privateStatus"></p>
+        </div>
+
+        <div class="chat-room hidden" id="privateRoom">
+          <div class="chat-room-top">
+            <p>Code: <strong id="privateRoomLabel"></strong></p>
+            <button id="privateLeaveBtn" type="button">Leave</button>
+          </div>
+
+          <div class="chat-messages" id="privateMessages"></div>
+
+          <form class="chat-send" id="privateSendForm">
+            <input id="privateInput" maxlength="200" placeholder="Type a message…" />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="./merty-session.js"></script>
+    <script src="./private-chat.js"></script>
+  </body>
+</html>

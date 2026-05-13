@@ -1,8 +1,4 @@
-const STORAGE_KEY = "mertygames-accounts-v1";
-const SESSION_KEY = "mertygames-session-user";
-
 const tabCreate = document.getElementById("tabCreate");
-const tabSignIn = document.getElementById("tabSignIn");
 const panelCreate = document.getElementById("panelCreate");
 const panelSignIn = document.getElementById("panelSignIn");
 const regUser = document.getElementById("regUser");
@@ -17,22 +13,8 @@ const accountSignedIn = document.getElementById("accountSignedIn");
 const accountForms = document.getElementById("accountForms");
 const signedInName = document.getElementById("signedInName");
 const signOutBtn = document.getElementById("signOutBtn");
-
-function getStore() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { users: {} };
-    const data = JSON.parse(raw);
-    if (!data.users || typeof data.users !== "object") return { users: {} };
-    return data;
-  } catch {
-    return { users: {} };
-  }
-}
-
-function saveStore(store) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-}
+const tabSignIn = document.getElementById("tabSignIn");
+const copyPrivateCodeBtn = document.getElementById("copyPrivateCodeBtn");
 
 function normalizeUsername(name) {
   return name.trim().toLowerCase();
@@ -89,24 +71,23 @@ function setMessage(text, isError) {
   accountMessage.classList.toggle("account-message-error", Boolean(isError));
 }
 
-function getSessionUser() {
-  return sessionStorage.getItem(SESSION_KEY) || "";
-}
-
-function setSessionUser(username) {
-  if (username) sessionStorage.setItem(SESSION_KEY, username);
-  else sessionStorage.removeItem(SESSION_KEY);
-}
-
 function refreshSignedInUI() {
-  const u = getSessionUser();
+  const u = mertyGetSessionDisplay();
+  const privateBlock = document.getElementById("privateChatBlock");
+  const privateCodeDisplay = document.getElementById("privateChatCodeDisplay");
   if (u) {
     signedInName.textContent = u;
     accountSignedIn.classList.remove("hidden");
     accountForms.classList.add("hidden");
+    if (privateBlock && privateCodeDisplay) {
+      const code = mertyGetPrivateChatCodeForSession();
+      privateCodeDisplay.textContent = code || "--------";
+      privateBlock.classList.remove("hidden");
+    }
   } else {
     accountSignedIn.classList.add("hidden");
     accountForms.classList.remove("hidden");
+    if (privateBlock) privateBlock.classList.add("hidden");
   }
 }
 
@@ -157,7 +138,7 @@ createAccountBtn.addEventListener("click", async () => {
     return;
   }
   const key = normalizeUsername(name);
-  const store = getStore();
+  const store = mertyGetStore();
   if (store.users[key]) {
     setMessage("That username is already taken on this browser.", true);
     return;
@@ -169,9 +150,10 @@ createAccountBtn.addEventListener("click", async () => {
     salt,
     hash,
     createdAt: Date.now(),
+    privateChatCode: mertyRandomPrivateChatCode(),
   };
-  saveStore(store);
-  setSessionUser(store.users[key].display);
+  mertySaveStore(store);
+  mertySetSession(store.users[key].display, key);
   setMessage("Account created. You are signed in.");
   regUser.value = "";
   regPass.value = "";
@@ -193,7 +175,7 @@ signInBtn.addEventListener("click", async () => {
     return;
   }
   const key = normalizeUsername(name);
-  const store = getStore();
+  const store = mertyGetStore();
   const user = store.users[key];
   if (!user) {
     setMessage("No account with that username on this browser.", true);
@@ -204,16 +186,30 @@ signInBtn.addEventListener("click", async () => {
     setMessage("Wrong password.", true);
     return;
   }
-  setSessionUser(user.display);
+  mertyEnsurePrivateChatCodeForUser(key);
+  mertySetSession(user.display, key);
   setMessage("Signed in successfully.");
   loginPass.value = "";
   refreshSignedInUI();
 });
 
 signOutBtn.addEventListener("click", () => {
-  setSessionUser("");
+  mertySetSession("");
   setMessage("");
   refreshSignedInUI();
 });
+
+if (copyPrivateCodeBtn) {
+  copyPrivateCodeBtn.addEventListener("click", async () => {
+    const code = mertyGetPrivateChatCodeForSession();
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setMessage("Code copied.");
+    } catch {
+      setMessage("Could not copy. Select the code and copy manually.", true);
+    }
+  });
+}
 
 refreshSignedInUI();

@@ -20,6 +20,15 @@
 
         <div id="accountSignedIn" class="account-signed-in hidden">
           <p>Signed in as <strong id="signedInName"></strong></p>
+
+          <div id="privateChatBlock" class="account-private hidden">
+            <p class="account-private-label">Your private chat code (8 characters — share only with people you trust):</p>
+            <p class="account-private-code" id="privateChatCodeDisplay">--------</p>
+            <button type="button" id="copyPrivateCodeBtn" class="account-btn account-btn-secondary">Copy code</button>
+            <a class="account-btn" href="./private-chat.html?mine=1">Open my private chat</a>
+            <a class="account-link-join" href="./private-chat.html">Join someone’s private chat</a>
+          </div>
+
           <button type="button" id="signOutBtn" class="account-btn account-btn-secondary">Sign out</button>
         </div>
 
@@ -57,6 +66,7 @@
       </section>
     </main>
 
+    <script src="./merty-session.js"></script>
     <script src="./auth.js"></script>
   </body>
 </html>
