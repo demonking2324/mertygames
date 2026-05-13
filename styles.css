@@ -154,6 +154,16 @@ body {
   color: var(--muted);
 }
 
+.chat-name-account-hint {
+  margin: -4px 0 8px;
+  font-size: 0.82rem;
+}
+
+input#chatName:read-only {
+  opacity: 0.92;
+  border-color: rgba(124, 246, 255, 0.35);
+}
+
 .chat-setup label {
   display: block;
   margin-bottom: 6px;

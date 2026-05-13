@@ -325,13 +325,30 @@ function sendMessage(text) {
 }
 
 function validateName() {
+  if (typeof mertyGetSessionDisplay === "function") {
+    const accountName = mertyGetSessionDisplay().trim();
+    if (accountName) return accountName.slice(0, 18);
+  }
   const raw = chatNameInput.value.trim();
   if (!raw) {
-    setStatus("Enter your name first.");
+    setStatus("Enter your name first (or sign in on Account).");
     return null;
   }
   return raw.slice(0, 18);
 }
+
+function applyAccountNameToChat() {
+  if (typeof mertyGetSessionDisplay !== "function") return;
+  const accountName = mertyGetSessionDisplay().trim();
+  if (!accountName) return;
+  chatNameInput.value = accountName.slice(0, 18);
+  chatNameInput.readOnly = true;
+  chatNameInput.setAttribute("aria-readonly", "true");
+  const hint = document.getElementById("chatNameFromAccount");
+  if (hint) hint.classList.remove("hidden");
+}
+
+applyAccountNameToChat();
 
 createChatBtn.addEventListener("click", () => {
   const name = validateName();

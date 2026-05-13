@@ -21,7 +21,8 @@
           <p class="chat-help">Create a room or join with an 8-character code. Keep at least one member in the room to keep it active.</p>
 
           <label for="chatName">Your name</label>
-          <input id="chatName" maxlength="18" placeholder="Enter your name" />
+          <p id="chatNameFromAccount" class="chat-help chat-name-account-hint hidden">Using your account name (sign out on Account to pick a different name).</p>
+          <input id="chatName" maxlength="18" placeholder="Enter your name" autocomplete="nickname" />
 
           <div class="chat-row">
             <button id="createChat" type="button">Create New Chat</button>
@@ -63,6 +64,7 @@
     </main>
 
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="./merty-session.js"></script>
     <script src="./chat.js"></script>
   </body>
 </html>
