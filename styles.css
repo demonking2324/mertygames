@@ -338,7 +338,7 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 16px;
   padding: 20px;
-  min-height: 180px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -384,14 +384,29 @@ h1 {
   line-height: 1.2;
 }
 
-.game-card p {
+.game-studio {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  color: #ff9ec7;
+  letter-spacing: 0.02em;
+}
+
+.game-plays {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.game-desc {
   margin: 0;
   color: var(--muted);
   line-height: 1.4;
+  flex: 1;
 }
 
-.game-card span {
-  margin-top: 18px;
+.game-play-cta {
+  margin-top: 14px;
   color: var(--accent);
   font-weight: 700;
   font-size: 0.92rem;
