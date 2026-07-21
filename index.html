@@ -18,8 +18,15 @@
         <p class="subtitle">Pick a game and start playing.</p>
       </header>
 
+      <div class="game-filters" role="group" aria-label="Filter games by controls">
+        <button type="button" class="filter-btn is-active" data-filter="all">All Games</button>
+        <button type="button" class="filter-btn" data-filter="mouse-keyboard">Mouse and Keyboard Only</button>
+      </div>
+
+      <p id="filterEmpty" class="filter-empty hidden">No games match this filter.</p>
+
       <section class="game-grid" aria-label="Game menu">
-        <a class="game-card" href="https://demonking2324.github.io/RaceBattle1/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/RaceBattle1/" target="_blank" rel="noopener noreferrer" data-controls="mouse-keyboard">
           <img class="game-icon" src="./assets/race-battle-1.svg" alt="Race Battle 1 game icon" />
           <h2>Race Battle 1 <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -27,7 +34,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/AgentShadow/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/AgentShadow/" target="_blank" rel="noopener noreferrer" data-controls="mouse-keyboard">
           <img class="game-icon" src="./assets/agent-shadow.svg" alt="Agent Shadow game icon" />
           <h2>Agent Shadow <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -35,7 +42,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/AirportTycoon/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/AirportTycoon/" target="_blank" rel="noopener noreferrer" data-controls="any">
           <img class="game-icon" src="./assets/airport-tycoon.svg" alt="Airport Tycoon game icon" />
           <h2>Airport Tycoon <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -43,7 +50,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/PlaneCrashSim/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/PlaneCrashSim/" target="_blank" rel="noopener noreferrer" data-controls="mouse-keyboard">
           <img class="game-icon" src="./assets/plane-crash-sim.svg" alt="Plane Crash Simulator game icon" />
           <h2>Plane Crash Simulator <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -51,7 +58,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/ArcherWars_2/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/ArcherWars_2/" target="_blank" rel="noopener noreferrer" data-controls="mouse-keyboard">
           <img class="game-icon" src="./assets/archer-wars-2.svg" alt="Archer Wars 2 game icon" />
           <h2>Archer Wars 2 <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studios</p>
@@ -59,7 +66,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/2d-Hunger-Games/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/2d-Hunger-Games/" target="_blank" rel="noopener noreferrer" data-controls="mouse-keyboard">
           <img class="game-icon" src="./assets/2d-hunger-games.svg" alt="2D Hunger Games game icon" />
           <h2>2D Hunger Games <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -67,7 +74,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/CountryHungerGames/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/CountryHungerGames/" target="_blank" rel="noopener noreferrer" data-controls="any">
           <img class="game-icon" src="./assets/country-hunger-games.svg" alt="Country Hunger Games game icon" />
           <h2>Country Hunger Games <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -75,7 +82,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/GardenDefence/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/GardenDefence/" target="_blank" rel="noopener noreferrer" data-controls="any">
           <img class="game-icon" src="./assets/garden-defence.svg" alt="Garden Defence game icon" />
           <h2>Garden Defence <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -83,7 +90,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/EurovisionSimulator/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/EurovisionSimulator/" target="_blank" rel="noopener noreferrer" data-controls="any">
           <img class="game-icon" src="./assets/eurovision-simulator.svg" alt="Eurovision Simulator game icon" />
           <h2>Eurovision Simulator <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -91,7 +98,7 @@
           <span>Play</span>
         </a>
 
-        <a class="game-card" href="https://demonking2324.github.io/archerwars/" target="_blank" rel="noopener noreferrer">
+        <a class="game-card" href="https://demonking2324.github.io/archerwars/" target="_blank" rel="noopener noreferrer" data-controls="mouse-keyboard">
           <img class="game-icon" src="./assets/archer-wars.svg" alt="Archer Wars game icon" />
           <h2>Archer Wars <span class="live-badge">Live</span></h2>
           <p class="game-studio">By MertyGames Studio</p>
@@ -101,5 +108,6 @@
       </section>
     </main>
 
+    <script src="./filter.js"></script>
   </body>
 </html>
