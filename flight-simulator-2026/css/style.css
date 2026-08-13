@@ -313,5 +313,126 @@ html, body {
 .message button:hover { border-color: var(--accent); }
 
 @media (max-width: 860px) {
-  .menu-grid { grid-template-columns: 1fr; }
+  .menu-grid,
+  .menu-grid.two { grid-template-columns: 1fr; }
+  .menu-panel { padding: 20px 18px 24px; }
+  .menu-panel h1 { font-size: 30px; letter-spacing: 2px; }
+}
+
+/* ===== Touch-controls toggle (menu) ===== */
+.opt-toggle {
+  display: flex; align-items: center; gap: 10px;
+  margin: 14px auto 0;
+  cursor: pointer; user-select: none;
+  font-size: 14px; color: var(--muted, #9fb4d6);
+}
+.opt-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.opt-track {
+  position: relative; width: 44px; height: 24px; flex: 0 0 auto;
+  background: #2a3852; border: 1px solid var(--border);
+  border-radius: 999px; transition: background .15s ease;
+}
+.opt-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #e5eefb; transition: transform .15s ease;
+}
+.opt-toggle input:checked + .opt-track { background: #2b6ea3; }
+.opt-toggle input:checked + .opt-track .opt-thumb { transform: translateX(20px); }
+.opt-toggle input:focus-visible + .opt-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ===== Mobile / touch controls ===== */
+.mobile-controls { display: none; }
+body.touch .mobile-controls {
+  display: block;
+  position: absolute; inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+body.touch .controls-help { display: none; }   /* keyboard hints not needed */
+body.touch .hud-bl { display: none; }           /* replaced by touch controls */
+#game { touch-action: none; }
+.mobile-controls, .mc-btn, .mc-throttle, .mc-stick, .mc-chip {
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mc-throttle {
+  position: absolute; left: 14px; bottom: 14px;
+  width: 58px; height: 190px;
+  background: rgba(9, 15, 28, 0.72);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.mc-th-fill {
+  position: absolute; left: 8px; right: 8px; bottom: 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #22c55e, #f59e0b);
+  opacity: 0.55;
+}
+.mc-th-knob {
+  position: absolute; left: 6px; right: 6px; height: 26px;
+  border-radius: 9px;
+  background: #e5eefb;
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+.mc-cap {
+  position: absolute; left: 0; right: 0; top: 6px;
+  text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  color: #cdd8e6; pointer-events: none;
+}
+
+.mc-stick {
+  position: absolute; right: 14px; bottom: 14px;
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(30,45,70,.55), rgba(9,15,28,.72));
+  border: 1px solid var(--border);
+  pointer-events: auto;
+}
+.mc-stick-knob {
+  position: absolute; left: 50%; top: 50%;
+  width: 62px; height: 62px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 40% 35%, #7dd3fc, #2b6ea3);
+  box-shadow: 0 4px 12px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,255,255,.15);
+}
+.mc-cap-stick {
+  top: auto; bottom: 8px; font-size: 10px; color: #9fb4d6;
+}
+
+.mc-buttons {
+  position: absolute; left: 50%; bottom: 20px;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.mc-btn {
+  pointer-events: auto;
+  min-width: 60px; height: 54px; padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(9, 15, 28, 0.78);
+  color: var(--text);
+  font-size: 13px; font-weight: 800; letter-spacing: .5px;
+  cursor: pointer;
+}
+.mc-btn.mc-sm { min-width: 48px; font-size: 16px; }
+.mc-btn:active { background: #17314a; border-color: var(--accent); }
+.mc-btn.on { color: #22c55e; border-color: #1f5133; }
+.mc-btn.mc-brake.active { color: #fff; background: #b91c1c; border-color: #b91c1c; }
+.mc-chip {
+  pointer-events: none;
+  font-size: 12px; font-weight: 700; color: #9fb4d6;
+  padding: 6px 8px; border-radius: 8px;
+  background: rgba(9,15,28,.6); border: 1px solid var(--border);
+}
+
+@media (max-width: 560px) {
+  .mc-stick { width: 120px; height: 120px; }
+  .mc-throttle { height: 160px; width: 52px; }
+  .mc-btn { min-width: 52px; height: 48px; font-size: 12px; }
 }

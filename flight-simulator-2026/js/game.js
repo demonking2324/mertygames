@@ -121,7 +121,7 @@ class Game {
   _togglePause() {
     if (this.state === "flying") {
       this.state = "paused";
-      this._showMessage("Paused", "<p>Press <b>P</b> to resume, <b>Esc</b> for menu.</p>", false);
+      this._showMessage("Paused", "<p>Press <b>P</b> (or tap <b>❚❚</b>) to resume, <b>Esc</b> / <b>☰</b> for menu.</p>", false);
     } else if (this.state === "paused") {
       this.state = "flying";
       this._hideMessage();
@@ -151,10 +151,14 @@ class Game {
     if (this.input.pressed("KeyR")) ac.flaps = Math.max(0, ac.flaps - 1);
     if (this.input.pressed("KeyG")) ac.gearDown = !ac.gearDown;
 
-    // Continuous throttle.
-    const rate = 0.5; // per second full-travel
-    if (ctrl.throttleUp) ac.setThrottle(ac.throttle + rate * dt);
-    if (ctrl.throttleDown) ac.setThrottle(ac.throttle - rate * dt);
+    // Throttle: the touch slider sets it absolutely; keyboard nudges it.
+    if (ctrl.throttleAbsolute != null) {
+      ac.setThrottle(ctrl.throttleAbsolute);
+    } else {
+      const rate = 0.5; // per second full-travel
+      if (ctrl.throttleUp) ac.setThrottle(ac.throttle + rate * dt);
+      if (ctrl.throttleDown) ac.setThrottle(ac.throttle - rate * dt);
+    }
     ac.brakes = ctrl.brakes && ac.onGround;
 
     ac.update(dt, { pitch: ctrl.pitch });
@@ -165,6 +169,7 @@ class Game {
 
     this.cam.follow(ac.x, ac.y, dt);
     this.hud.update(ac, this.world);
+    if (this.mobile) this.mobile.sync(ac);
   }
 
   _checkTransitions() {

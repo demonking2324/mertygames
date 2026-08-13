@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Flight Simulator 2026</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -37,6 +37,13 @@
 
       <button id="start-btn" class="start-btn">START FLIGHT</button>
       <button id="training-btn" class="training-btn">TRAINING MODE</button>
+
+      <label class="opt-toggle" for="touch-toggle">
+        <input type="checkbox" id="touch-toggle" />
+        <span class="opt-track"><span class="opt-thumb"></span></span>
+        <span class="opt-text">On-screen touch controls</span>
+      </label>
+
       <p class="hint">Tip: aim for a smooth touchdown — under ~3 m/s vertical speed on the runway.</p>
     </div>
 
@@ -93,6 +100,7 @@
   <script src="js/input.js"></script>
   <script src="js/hud.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/mobile.js"></script>
   <script src="js/menu.js"></script>
   <script src="js/main.js"></script>
 </body>
