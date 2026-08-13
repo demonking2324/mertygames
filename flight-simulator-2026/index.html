@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flight Simulator 2026</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- ===== Start Menu ===== -->
+  <div id="menu" class="screen">
+    <div class="menu-panel">
+      <h1>FLIGHT SIMULATOR <span>2026</span></h1>
+      <p class="tagline">A realistic 2D side-view flight simulator</p>
+
+      <div class="menu-grid two">
+        <section>
+          <h2>1. Airline</h2>
+          <div id="airline-list" class="card-list"></div>
+        </section>
+
+        <section>
+          <h2>2. Aircraft</h2>
+          <div id="aircraft-list" class="card-list"></div>
+        </section>
+      </div>
+
+      <section class="route-section">
+        <h2>3. Route — tap an airport on the map</h2>
+        <div id="map-wrap" class="map-wrap">
+          <svg id="world-map" class="world-map" viewBox="0 0 360 180" preserveAspectRatio="none" aria-label="World map"></svg>
+          <div id="map-dots" class="map-dots"></div>
+          <div id="map-popup" class="map-popup hidden"></div>
+        </div>
+        <div id="route-info" class="route-info"></div>
+      </section>
+
+      <button id="start-btn" class="start-btn">START FLIGHT</button>
+      <button id="training-btn" class="training-btn">TRAINING MODE</button>
+      <p class="hint">Tip: aim for a smooth touchdown — under ~3 m/s vertical speed on the runway.</p>
+    </div>
+
+    <!-- Training setup dialog -->
+    <div id="training-modal" class="modal hidden">
+      <div class="modal-card">
+        <h2>Training Mode</h2>
+        <p class="modal-sub">Practice at a neutral training field — no airline, no traffic.</p>
+
+        <div class="seg" id="train-mode">
+          <button type="button" class="seg-btn active" data-mode="takeoff">Takeoff</button>
+          <button type="button" class="seg-btn" data-mode="landing">Landing</button>
+        </div>
+
+        <label class="modal-label">Aircraft
+          <select id="train-aircraft"></select>
+        </label>
+
+        <div class="modal-actions">
+          <button id="train-start" class="start-btn">Start Training</button>
+          <button id="train-cancel" class="pop-btn cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Game ===== -->
+  <div id="game" class="screen hidden">
+    <canvas id="canvas"></canvas>
+
+    <div id="hud" class="hud"></div>
+
+    <button id="reset-btn" class="reset-btn hidden">⟲ Reset</button>
+
+    <div id="controls-help" class="controls-help">
+      <strong>Controls</strong>
+      <div>↓ / S — Pitch nose UP (pull)</div>
+      <div>↑ / W — Pitch nose DOWN (push)</div>
+      <div>D / A — Throttle up / down</div>
+      <div>F / R — Flaps extend / retract</div>
+      <div>G — Landing gear toggle</div>
+      <div>Space — Wheel brakes (hold)</div>
+      <div>P — Pause &nbsp; Esc — Menu</div>
+    </div>
+
+    <div id="message" class="message hidden"></div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/aircraft.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/hud.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
