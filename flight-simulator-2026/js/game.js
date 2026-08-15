@@ -373,11 +373,12 @@ class Game {
   /* Detailed side-view airliner/GA drawing in local (nose-right) coordinates. */
   _drawPlaneBody(ctx, ac, L) {
     const spec = ac.spec;
-    const H = L * (spec.wide ? 0.14 : 0.115);   // fuselage half-height reference
-    const body = ac.airline.fuselage;
-    const tail = ac.airline.tail;
-    const accent = ac.airline.accent;
-    const accent2 = ac.airline.accent2; // optional second cheatline (e.g. retro AA)
+    const H = L * (spec.wide ? 0.14 : 0.115);
+    const al = ac.airline;
+    const body = al.fuselage;
+    const belly = al.belly || shade(body, -14);
+    const tail = al.tail;
+    const accent = al.accent;
     const isJet = spec.engineType === "jet";
     const highWing = spec.highWing;
 
@@ -402,7 +403,7 @@ class Game {
       ctx.restore();
     }
 
-    // ---- Horizontal stabilizer (tailplane) ----
+    // ---- Horizontal stabilizer ----
     ctx.fillStyle = shade(body, -10);
     ctx.beginPath();
     ctx.moveTo(-L * 0.34, -H * 0.2);
@@ -412,23 +413,15 @@ class Game {
     ctx.closePath();
     ctx.fill();
 
-    // ---- Vertical tail fin (airline tail color) ----
+    // ---- Vertical tail fin + airline artwork ----
+    this._tailFinPath(ctx, L, H);
     ctx.fillStyle = tail;
-    ctx.beginPath();
-    ctx.moveTo(-L * 0.42, -H * 0.7);
-    ctx.quadraticCurveTo(-L * 0.50, -H * 2.9, -L * 0.40, -H * 2.9);
-    ctx.lineTo(-L * 0.26, -H * 0.7);
-    ctx.closePath();
     ctx.fill();
-    // small logo dot on the tail
-    ctx.fillStyle = accent;
-    ctx.beginPath();
-    ctx.arc(-L * 0.40, -H * 1.7, H * 0.35, 0, Math.PI * 2);
-    ctx.fill();
+    this._drawTailMark(ctx, al, L, H);
 
     // ---- Wing (behind fuselage), swept for jets ----
     const wingY = highWing ? -H * 0.7 : H * 0.55;
-    const wingDrop = highWing ? -1 : 1; // direction the wing extends vertically
+    const wingDrop = highWing ? -1 : 1;
     ctx.fillStyle = shade(body, -16);
     ctx.beginPath();
     ctx.moveTo(L * 0.14, wingY);
@@ -438,7 +431,6 @@ class Game {
     ctx.closePath();
     ctx.fill();
 
-    // Winglet at the wing tip.
     if (spec.winglets) {
       ctx.beginPath();
       ctx.moveTo(-L * 0.30, wingY + wingDrop * H * 1.5);
@@ -448,53 +440,32 @@ class Game {
       ctx.fill();
     }
 
-    // ---- Engines ----
     this._drawEngines(ctx, ac, L, H, wingY, wingDrop);
 
-    // ---- Fuselage (rounded capsule with pointed nose, tapered tail) ----
+    // ---- Fuselage ----
+    this._fuselagePath(ctx, L, H);
     ctx.fillStyle = body;
-    ctx.beginPath();
-    ctx.moveTo(L * 0.5, 0);                                 // nose tip
-    ctx.quadraticCurveTo(L * 0.44, -H, L * 0.18, -H);
-    ctx.lineTo(-L * 0.30, -H * 0.92);
-    ctx.quadraticCurveTo(-L * 0.5, -H * 0.55, -L * 0.5, 0); // tail cone top
-    ctx.quadraticCurveTo(-L * 0.5, H * 0.55, -L * 0.30, H * 0.92);
-    ctx.lineTo(L * 0.18, H);
-    ctx.quadraticCurveTo(L * 0.44, H, L * 0.5, 0);
-    ctx.closePath();
     ctx.fill();
+
+    // Belly, cheatline and titles clipped to the body.
+    ctx.save();
+    this._fuselagePath(ctx, L, H);
+    ctx.clip();
+    ctx.fillStyle = belly;
+    const bellyTop = al.cheat === "split" ? H * 0.15 : H * 0.22;
+    ctx.fillRect(-L * 0.52, bellyTop, L * 1.06, H * 1.2);
+    this._drawCheat(ctx, al, L, H);
+    this._drawTitles(ctx, al, L, H);
+    ctx.restore();
 
     // Subtle belly shading for volume.
     ctx.save();
-    ctx.globalAlpha = 0.12;
+    ctx.globalAlpha = 0.10;
     ctx.fillStyle = "#000";
-    ctx.beginPath();
-    ctx.moveTo(-L * 0.30, H * 0.92);
-    ctx.lineTo(L * 0.18, H);
-    ctx.quadraticCurveTo(L * 0.44, H, L * 0.5, 0);
-    ctx.lineTo(L * 0.42, H * 0.4);
-    ctx.lineTo(-L * 0.30, H * 0.5);
-    ctx.closePath();
-    ctx.fill();
+    this._fuselagePath(ctx, L, H);
+    ctx.clip();
+    ctx.fillRect(-L * 0.52, H * 0.35, L * 1.06, H);
     ctx.restore();
-
-    // ---- Cheatline (accent stripe along the windows) ----
-    // A second accent draws a parallel stripe just below for classic
-    // twin-line liveries like American's retro "silverbird".
-    const clw = Math.max(1.5, H * 0.22);
-    ctx.lineWidth = clw;
-    ctx.strokeStyle = accent;
-    ctx.beginPath();
-    ctx.moveTo(-L * 0.36, -H * 0.02);
-    ctx.lineTo(L * 0.40, -H * 0.06);
-    ctx.stroke();
-    if (accent2) {
-      ctx.strokeStyle = accent2;
-      ctx.beginPath();
-      ctx.moveTo(-L * 0.36, -H * 0.02 + clw);
-      ctx.lineTo(L * 0.40, -H * 0.06 + clw);
-      ctx.stroke();
-    }
 
     // ---- Cockpit windows ----
     ctx.fillStyle = "#0f2233";
@@ -505,7 +476,7 @@ class Game {
     ctx.closePath();
     ctx.fill();
 
-    // ---- Cabin windows (scaled to length) ----
+    // ---- Cabin windows ----
     ctx.fillStyle = "rgba(150,200,235,0.95)";
     const count = spec.engineType === "prop" ? 4 : (spec.wide ? 14 : 9);
     const startX = L * 0.28, endX = -L * 0.28;
@@ -516,7 +487,7 @@ class Game {
       ctx.fillRect(wx - wsz / 2, winY, wsz, wsz * 1.3);
     }
 
-    // ---- Landing gear (or fixed gear for the Cessna) ----
+    // ---- Landing gear ----
     if (ac.gearDown || spec.fixedGear) {
       const strutColor = "#243040";
       const wheelColor = "#0b1118";
@@ -536,6 +507,267 @@ class Game {
         ctx.fill();
       }
     }
+  }
+
+  _fuselagePath(ctx, L, H) {
+    ctx.beginPath();
+    ctx.moveTo(L * 0.5, 0);
+    ctx.quadraticCurveTo(L * 0.44, -H, L * 0.18, -H);
+    ctx.lineTo(-L * 0.30, -H * 0.92);
+    ctx.quadraticCurveTo(-L * 0.5, -H * 0.55, -L * 0.5, 0);
+    ctx.quadraticCurveTo(-L * 0.5, H * 0.55, -L * 0.30, H * 0.92);
+    ctx.lineTo(L * 0.18, H);
+    ctx.quadraticCurveTo(L * 0.44, H, L * 0.5, 0);
+    ctx.closePath();
+  }
+
+  _tailFinPath(ctx, L, H) {
+    ctx.beginPath();
+    ctx.moveTo(-L * 0.42, -H * 0.7);
+    ctx.quadraticCurveTo(-L * 0.50, -H * 2.9, -L * 0.40, -H * 2.9);
+    ctx.lineTo(-L * 0.26, -H * 0.7);
+    ctx.closePath();
+  }
+
+  _drawCheat(ctx, al, L, H) {
+    const cheat = al.cheat || "thin";
+    const accent = al.accent;
+    const accent2 = al.accent2;
+    if (cheat === "none") return;
+
+    if (cheat === "split") {
+      ctx.fillStyle = accent;
+      ctx.fillRect(-L * 0.48, H * 0.02, L * 0.96, H * 0.22);
+      return;
+    }
+    if (cheat === "band") {
+      ctx.fillStyle = accent;
+      ctx.globalAlpha = 0.92;
+      ctx.fillRect(-L * 0.40, -H * 0.16, L * 0.78, H * 0.28);
+      ctx.globalAlpha = 1;
+      return;
+    }
+    if (cheat === "flag3") {
+      const h = H * 0.14;
+      ctx.fillStyle = "#078930";
+      ctx.fillRect(-L * 0.38, -H * 0.08, L * 0.74, h);
+      ctx.fillStyle = accent;
+      ctx.fillRect(-L * 0.38, -H * 0.08 + h, L * 0.74, h);
+      ctx.fillStyle = accent2 || "#da121a";
+      ctx.fillRect(-L * 0.38, -H * 0.08 + h * 2, L * 0.74, h);
+      return;
+    }
+    if (cheat === "ribbon") {
+      ctx.strokeStyle = al.tail;
+      ctx.lineWidth = Math.max(1.4, H * 0.16);
+      ctx.beginPath();
+      ctx.moveTo(L * 0.28, -H * 0.12);
+      ctx.quadraticCurveTo(L * 0.12, -H * 0.55, -L * 0.02, -H * 0.10);
+      ctx.stroke();
+      ctx.strokeStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(L * 0.26, -H * 0.02);
+      ctx.quadraticCurveTo(L * 0.10, -H * 0.38, -L * 0.04, 0);
+      ctx.stroke();
+      return;
+    }
+
+    const clw = Math.max(1.5, H * (cheat === "dual" ? 0.18 : 0.22));
+    ctx.lineWidth = clw;
+    ctx.strokeStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(-L * 0.36, -H * 0.02);
+    ctx.lineTo(L * 0.40, -H * 0.06);
+    ctx.stroke();
+    if (cheat === "dual" && accent2) {
+      ctx.strokeStyle = accent2;
+      ctx.beginPath();
+      ctx.moveTo(-L * 0.36, -H * 0.02 + clw);
+      ctx.lineTo(L * 0.40, -H * 0.06 + clw);
+      ctx.stroke();
+    }
+  }
+
+  _drawTitles(ctx, al, L, H) {
+    const text = al.titles;
+    if (!text || H < 7) return;
+    ctx.fillStyle = al.titleColor || "#1a1a1a";
+    ctx.font = `800 ${Math.max(7, H * 0.52)}px system-ui, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, -L * 0.08, -H * 0.52);
+  }
+
+  _drawTailMark(ctx, al, L, H) {
+    const mark = al.tailMark || "none";
+    if (mark === "none") return;
+    ctx.save();
+    this._tailFinPath(ctx, L, H);
+    ctx.clip();
+    const cx = -L * 0.38, cy = -H * 1.7;
+    const s = H;
+
+    if (mark === "aa-flag") {
+      const x0 = -L * 0.48, x1 = -L * 0.26, w = x1 - x0;
+      ctx.fillStyle = "#0a3161"; ctx.fillRect(x0 + w * 0.55, -H * 3.0, w * 0.5, H * 2.6);
+      ctx.fillStyle = "#f4f6f8"; ctx.fillRect(x0 + w * 0.28, -H * 3.0, w * 0.32, H * 2.6);
+      ctx.fillStyle = "#c8102e"; ctx.fillRect(x0, -H * 3.0, w * 0.32, H * 2.6);
+    } else if (mark === "widget") {
+      ctx.fillStyle = al.accent;
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.55, cy);
+      ctx.lineTo(cx - s * 0.55, cy - s * 0.85);
+      ctx.lineTo(cx - s * 0.55, cy + s * 0.85);
+      ctx.closePath();
+      ctx.fill();
+    } else if (mark === "globe") {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = Math.max(1.2, s * 0.12);
+      ctx.beginPath(); ctx.arc(cx, cy, s * 0.55, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx, cy, s * 0.22, s * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - s * 0.55, cy); ctx.lineTo(cx + s * 0.55, cy); ctx.stroke();
+    } else if (mark === "heart") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(cx - s * 0.22, cy - s * 0.05, s * 0.28, 0, Math.PI * 2);
+      ctx.arc(cx + s * 0.22, cy - s * 0.05, s * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.48, cy + s * 0.05);
+      ctx.lineTo(cx, cy + s * 0.7);
+      ctx.lineTo(cx + s * 0.48, cy + s * 0.05);
+      ctx.closePath();
+      ctx.fill();
+    } else if (mark === "mosaic") {
+      const cols = ["#68b8e8", "#2ba6df", "#7ec8f0", "#1a6f9e"];
+      for (let i = 0; i < 8; i++) {
+        ctx.fillStyle = cols[i % cols.length];
+        ctx.fillRect(cx - s * 0.5 + (i % 3) * s * 0.38, cy - s * 0.7 + Math.floor(i / 3) * s * 0.42, s * 0.32, s * 0.32);
+      }
+    } else if (mark === "union") {
+      ctx.strokeStyle = "#c8102e";
+      ctx.lineWidth = Math.max(2, s * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.6, cy - s * 0.9);
+      ctx.quadraticCurveTo(cx, cy, cx + s * 0.5, cy + s * 0.9);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = Math.max(1.4, s * 0.12);
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.45, cy - s * 0.7);
+      ctx.quadraticCurveTo(cx - s * 0.1, cy + s * 0.1, cx + s * 0.35, cy + s * 0.75);
+      ctx.stroke();
+    } else if (mark === "crane") {
+      ctx.fillStyle = al.accent;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, s * 0.22, s * 0.55, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.1, cy);
+      ctx.quadraticCurveTo(cx - s * 0.7, cy - s * 0.2, cx - s * 0.15, cy - s * 0.55);
+      ctx.quadraticCurveTo(cx + s * 0.05, cy - s * 0.15, cx - s * 0.1, cy);
+      ctx.fill();
+    } else if (mark === "tricolor") {
+      const x = -L * 0.48;
+      ctx.fillStyle = "#002157"; ctx.fillRect(x, -H * 3, L * 0.05, H * 2.5);
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(x + L * 0.05, -H * 3, L * 0.045, H * 2.5);
+      ctx.fillStyle = "#ef3340"; ctx.fillRect(x + L * 0.095, -H * 3, L * 0.05, H * 2.5);
+    } else if (mark === "crown") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.45, cy + s * 0.25);
+      ctx.lineTo(cx - s * 0.45, cy - s * 0.05);
+      ctx.lineTo(cx - s * 0.2, cy + s * 0.12);
+      ctx.lineTo(cx, cy - s * 0.45);
+      ctx.lineTo(cx + s * 0.2, cy + s * 0.12);
+      ctx.lineTo(cx + s * 0.45, cy - s * 0.05);
+      ctx.lineTo(cx + s * 0.45, cy + s * 0.25);
+      ctx.closePath();
+      ctx.fill();
+    } else if (mark === "arabic") {
+      ctx.strokeStyle = al.accent;
+      ctx.lineWidth = Math.max(1.6, s * 0.16);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.45, cy + s * 0.15);
+      ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.7, cx + s * 0.5, cy - s * 0.1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.35, cy + s * 0.4);
+      ctx.quadraticCurveTo(cx + s * 0.05, cy - s * 0.15, cx + s * 0.4, cy + s * 0.35);
+      ctx.stroke();
+    } else if (mark === "bird") {
+      ctx.fillStyle = al.accent;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - s * 0.15);
+      ctx.quadraticCurveTo(cx - s * 0.7, cy + s * 0.2, cx - s * 0.15, cy + s * 0.45);
+      ctx.quadraticCurveTo(cx, cy + s * 0.1, cx + s * 0.15, cy + s * 0.45);
+      ctx.quadraticCurveTo(cx + s * 0.7, cy + s * 0.2, cx, cy - s * 0.15);
+      ctx.fill();
+    } else if (mark === "roo") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(cx + s * 0.05, cy + s * 0.1, s * 0.28, s * 0.42, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.15, cy + s * 0.2);
+      ctx.quadraticCurveTo(cx - s * 0.55, cy + s * 0.55, cx - s * 0.2, cy + s * 0.7);
+      ctx.quadraticCurveTo(cx - s * 0.05, cy + s * 0.4, cx - s * 0.15, cy + s * 0.2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + s * 0.18, cy - s * 0.35, s * 0.16, s * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (mark === "tsuru") {
+      ctx.fillStyle = al.accent;
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.62, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.15, cy - s * 0.1);
+      ctx.quadraticCurveTo(cx - s * 0.4, cy - s * 0.2, cx - s * 0.1, cy + s * 0.35);
+      ctx.quadraticCurveTo(cx + s * 0.05, cy, cx + s * 0.35, cy + s * 0.25);
+      ctx.closePath();
+      ctx.fill();
+    } else if (mark === "maple") {
+      ctx.fillStyle = al.accent;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - s * 0.7);
+      ctx.lineTo(cx + s * 0.18, cy - s * 0.28);
+      ctx.lineTo(cx + s * 0.55, cy - s * 0.32);
+      ctx.lineTo(cx + s * 0.28, cy + s * 0.05);
+      ctx.lineTo(cx + s * 0.38, cy + s * 0.45);
+      ctx.lineTo(cx, cy + s * 0.18);
+      ctx.lineTo(cx - s * 0.38, cy + s * 0.45);
+      ctx.lineTo(cx - s * 0.28, cy + s * 0.05);
+      ctx.lineTo(cx - s * 0.55, cy - s * 0.32);
+      ctx.lineTo(cx - s * 0.18, cy - s * 0.28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillRect(cx - s * 0.07, cy + s * 0.15, s * 0.14, s * 0.45);
+    } else if (mark === "eth-flag") {
+      ctx.fillStyle = "#078930"; ctx.fillRect(-L * 0.5, -H * 3, L * 0.28, H * 0.85);
+      ctx.fillStyle = "#fcd116"; ctx.fillRect(-L * 0.5, -H * 2.15, L * 0.28, H * 0.85);
+      ctx.fillStyle = "#da121a"; ctx.fillRect(-L * 0.5, -H * 1.3, L * 0.28, H * 0.85);
+    } else if (mark === "kq") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.4, cy);
+      ctx.quadraticCurveTo(cx, cy - s * 0.7, cx - s * 0.45, cy - s * 0.1);
+      ctx.quadraticCurveTo(cx, cy + s * 0.15, cx + s * 0.4, cy);
+      ctx.fill();
+    } else if (mark === "pegasus") {
+      ctx.fillStyle = "#1a1a1a";
+      ctx.beginPath();
+      ctx.ellipse(cx + s * 0.1, cy, s * 0.28, s * 0.38, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.05, cy - s * 0.1);
+      ctx.quadraticCurveTo(cx - s * 0.7, cy - s * 0.5, cx - s * 0.2, cy + s * 0.35);
+      ctx.quadraticCurveTo(cx - s * 0.05, cy + s * 0.1, cx - s * 0.05, cy - s * 0.1);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   _drawEngines(ctx, ac, L, H, wingY, wingDrop) {
@@ -561,7 +793,7 @@ class Game {
     if (spec.engineType === "turboprop") {
       // Nacelle on the wing with a spinner + prop disc (Dash 8).
       const ny = wingY + wingDrop * H * 0.4;
-      ctx.fillStyle = "#374151";
+      ctx.fillStyle = ac.airline.engine || "#374151";
       roundRect(ctx, L * 0.02, ny - H * 0.35, L * 0.22, H * 0.7, H * 0.25);
       ctx.fill();
       ctx.save();
@@ -580,7 +812,7 @@ class Game {
     const ey = wingY + wingDrop * H * 1.05;
     const ew = spec.wide ? L * 0.26 : L * 0.20;
     const eh = spec.wide ? H * 1.15 : H * 0.95;
-    ctx.fillStyle = shade(ac.airline.fuselage, -28);
+    ctx.fillStyle = ac.airline.engine || shade(ac.airline.fuselage, -28);
     roundRect(ctx, -L * 0.02, ey - eh / 2, ew, eh, eh * 0.45);
     ctx.fill();
     // Intake lip.
@@ -588,13 +820,11 @@ class Game {
     ctx.beginPath();
     ctx.ellipse(-L * 0.02 + ew, ey, eh * 0.16, eh * 0.42, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Accent band on the nacelle.
-    ctx.strokeStyle = ac.airline.accent;
-    ctx.lineWidth = Math.max(1.2, eh * 0.12);
+    // Exhaust.
+    ctx.fillStyle = shade(ac.airline.engine || ac.airline.fuselage, -40);
     ctx.beginPath();
-    ctx.moveTo(-L * 0.02 + ew * 0.15, ey - eh * 0.45);
-    ctx.lineTo(-L * 0.02 + ew * 0.15, ey + eh * 0.45);
-    ctx.stroke();
+    ctx.ellipse(-L * 0.02, ey, eh * 0.12, eh * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   _showMessage(titleHtml, bodyHtml, withButtons) {

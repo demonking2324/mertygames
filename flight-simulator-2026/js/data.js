@@ -10,27 +10,64 @@ function deg(rad) { return (rad * 180) / Math.PI; }
 function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 function lerp(a, b, t) { return a + (b - a) * t; }
 
-/* Real airlines with approximate livery colors:
- * fuselage = main body, tail = vertical-stabilizer color, accent = cheatline. */
+/* Real airlines with current-style liveries.
+ * fuselage / belly / tail / engine = paint. cheat = window-line style.
+ * tailMark = distinctive fin artwork drawn in game.js. */
 const AIRLINES = [
-  { id: "aal", name: "American Airlines",   code: "AA", fuselage: "#d6dade", tail: "#c0c5ca", accent: "#c8102e", accent2: "#0a3161" },
-  { id: "dal", name: "Delta Air Lines",     code: "DL", fuselage: "#eef2f6", tail: "#0b2f57", accent: "#c8102e" },
-  { id: "ual", name: "United Airlines",     code: "UA", fuselage: "#eef2f6", tail: "#0a3161", accent: "#1d7fd4" },
-  { id: "swa", name: "Southwest Airlines",  code: "WN", fuselage: "#2e4b9b", tail: "#e51937", accent: "#f9b612" },
-  { id: "jbu", name: "JetBlue",             code: "B6", fuselage: "#eef2f6", tail: "#00205b", accent: "#2ba6df" },
-  { id: "baw", name: "British Airways",     code: "BA", fuselage: "#eef2f6", tail: "#1d3f73", accent: "#c8102e" },
-  { id: "dlh", name: "Lufthansa",           code: "LH", fuselage: "#eef2f6", tail: "#05164d", accent: "#f6c800" },
-  { id: "afr", name: "Air France",          code: "AF", fuselage: "#eef2f6", tail: "#002157", accent: "#ef3340" },
-  { id: "klm", name: "KLM",                 code: "KL", fuselage: "#dff0fb", tail: "#00a1de", accent: "#ffffff" },
-  { id: "uae", name: "Emirates",            code: "EK", fuselage: "#eef2f6", tail: "#d71921", accent: "#c8a24a" },
-  { id: "sia", name: "Singapore Airlines",  code: "SQ", fuselage: "#eef2f6", tail: "#22366b", accent: "#f7a600" },
-  { id: "qfa", name: "Qantas",              code: "QF", fuselage: "#eef2f6", tail: "#e40000", accent: "#ffffff" },
-  { id: "jal", name: "Japan Airlines",      code: "JL", fuselage: "#eef2f6", tail: "#b0132b", accent: "#d21b34" },
-  { id: "aca", name: "Air Canada",          code: "AC", fuselage: "#e9edf1", tail: "#1b1c1e", accent: "#d0112b" },
-  { id: "eth", name: "Ethiopian Airlines",  code: "ET", fuselage: "#eef2f6", tail: "#1a7a3a", accent: "#f2b301", accent2: "#d21b34" },
-  { id: "kqa", name: "Kenya Airways",       code: "KQ", fuselage: "#eef2f6", tail: "#b81330", accent: "#0f7d3b", accent2: "#111418" },
-  { id: "pgt", name: "Pegasus Airlines",    code: "PC", fuselage: "#eef2f6", tail: "#f5c400", accent: "#1a1a1a" },
-  { id: "pvt", name: "Private",              code: "N",  fuselage: "#e8edf2", tail: "#9aa7b8", accent: "#3d5a80" },
+  { id: "aal", name: "American Airlines",  code: "AA", fuselage: "#c8ccd1", belly: "#b0b5bb", tail: "#0a3161",
+    accent: "#c8102e", accent2: "#f4f6f8", cheat: "none", titles: "American", titleColor: "#5c6570",
+    tailMark: "aa-flag", engine: "#c8ccd1" },
+  { id: "dal", name: "Delta Air Lines",    code: "DL", fuselage: "#f4f7fa", belly: "#e6ebf1", tail: "#0b1f47",
+    accent: "#e31837", cheat: "none", titles: "DELTA", titleColor: "#0b1f47",
+    tailMark: "widget", engine: "#0b1f47" },
+  { id: "ual", name: "United Airlines",    code: "UA", fuselage: "#f4f7fa", belly: "#0a3161", tail: "#0033a0",
+    accent: "#143c8a", cheat: "none", titles: "UNITED", titleColor: "#0033a0",
+    tailMark: "globe", engine: "#0033a0" },
+  { id: "swa", name: "Southwest Airlines", code: "WN", fuselage: "#304cb2", belly: "#e31837", tail: "#e31837",
+    accent: "#ffb81c", cheat: "split", titles: "Southwest", titleColor: "#ffffff",
+    tailMark: "heart", engine: "#304cb2" },
+  { id: "jbu", name: "JetBlue",            code: "B6", fuselage: "#f7f9fc", belly: "#00205b", tail: "#00205b",
+    accent: "#68b8e8", cheat: "none", titles: "jetBlue", titleColor: "#00205b",
+    tailMark: "mosaic", engine: "#00205b" },
+  { id: "baw", name: "British Airways",    code: "BA", fuselage: "#f4f7fa", belly: "#e6ebf0", tail: "#012169",
+    accent: "#c8102e", accent2: "#ffffff", cheat: "ribbon", titles: "BRITISH", titleColor: "#012169",
+    tailMark: "union", engine: "#c5ccd4" },
+  { id: "dlh", name: "Lufthansa",          code: "LH", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#05164d",
+    accent: "#f7c600", cheat: "none", titles: "Lufthansa", titleColor: "#05164d",
+    tailMark: "crane", engine: "#f4f7fa" },
+  { id: "afr", name: "Air France",         code: "AF", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#002157",
+    accent: "#ef3340", accent2: "#ffffff", cheat: "none", titles: "AIRFRANCE", titleColor: "#002157",
+    tailMark: "tricolor", engine: "#002157" },
+  { id: "klm", name: "KLM",                code: "KL", fuselage: "#00a1de", belly: "#0089c4", tail: "#0066a1",
+    accent: "#ffffff", cheat: "none", titles: "KLM", titleColor: "#ffffff",
+    tailMark: "crown", engine: "#00a1de" },
+  { id: "uae", name: "Emirates",           code: "EK", fuselage: "#f4f7fa", belly: "#eee6d4", tail: "#d71a21",
+    accent: "#c8a24a", cheat: "band", titles: "Emirates", titleColor: "#c8a24a",
+    tailMark: "arabic", engine: "#d71a21" },
+  { id: "sia", name: "Singapore Airlines", code: "SQ", fuselage: "#f4f7fa", belly: "#ece4cc", tail: "#1b2c5e",
+    accent: "#c5a35a", cheat: "band", titles: "SINGAPORE", titleColor: "#1b2c5e",
+    tailMark: "bird", engine: "#c5a35a" },
+  { id: "qfa", name: "Qantas",             code: "QF", fuselage: "#f4f7fa", belly: "#eceff2", tail: "#e4002b",
+    accent: "#e4002b", cheat: "none", titles: "QANTAS", titleColor: "#e4002b",
+    tailMark: "roo", engine: "#e4002b" },
+  { id: "jal", name: "Japan Airlines",     code: "JL", fuselage: "#f4f7fa", belly: "#eceff2", tail: "#ffffff",
+    accent: "#b0132b", cheat: "thin", titles: "JAL", titleColor: "#1a1a1a",
+    tailMark: "tsuru", engine: "#b0132b" },
+  { id: "aca", name: "Air Canada",         code: "AC", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#1d1d1f",
+    accent: "#e31837", cheat: "none", titles: "AIR CANADA", titleColor: "#1d1d1f",
+    tailMark: "maple", engine: "#1d1d1f" },
+  { id: "eth", name: "Ethiopian Airlines", code: "ET", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#078930",
+    accent: "#fcd116", accent2: "#da121a", cheat: "flag3", titles: "ETHIOPIAN", titleColor: "#078930",
+    tailMark: "eth-flag", engine: "#078930" },
+  { id: "kqa", name: "Kenya Airways",      code: "KQ", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#e31837",
+    accent: "#e31837", cheat: "thin", titles: "Kenya Airways", titleColor: "#1a1a1a",
+    tailMark: "kq", engine: "#e31837" },
+  { id: "pgt", name: "Pegasus Airlines",   code: "PC", fuselage: "#f4f7fa", belly: "#fff6d6", tail: "#ffcc00",
+    accent: "#1a1a1a", cheat: "none", titles: "pegasus", titleColor: "#1a1a1a",
+    tailMark: "pegasus", engine: "#ffcc00" },
+  { id: "pvt", name: "Private",             code: "N",  fuselage: "#f2f4f6", belly: "#d9dee4", tail: "#c5ccd4",
+    accent: "#2f5f8a", cheat: "thin", titles: "", titleColor: "#2f5f8a",
+    tailMark: "none", engine: "#c5ccd4" },
 ];
 
 /* Aircraft aerodynamic + performance model.
@@ -317,7 +354,12 @@ const AIRPORT_FLEETS = {
 };
 
 /* Plain, liveryless aircraft scheme + a neutral field for Training Mode. */
-const TRAINING_AIRLINE = { id: "train", name: "Training", code: "TRN", fuselage: "#d9dee4", tail: "#c2c8d0", accent: "#aeb6c1" };
+const TRAINING_AIRLINE = {
+  id: "train", name: "Training", code: "TRN",
+  fuselage: "#d9dee4", belly: "#c5ccd4", tail: "#c2c8d0",
+  accent: "#aeb6c1", cheat: "none", titles: "", titleColor: "#8a93a0",
+  tailMark: "none", engine: "#c5ccd4",
+};
 const TRAINING_AIRPORT = {
   icao: "TRNG", iata: "TRN", name: "Training Field", city: "Training",
   lat: 0, lon: 0, elevation: 0, runway: 4000,

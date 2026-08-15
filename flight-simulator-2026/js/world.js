@@ -740,10 +740,10 @@ class World {
   _drawParkedPlane(ctx, x, gy, L, al) {
     const H = L * 0.17;
     const legs = H * 0.9;
-    const cy = gy - legs - H;               // fuselage centerline
+    const cy = gy - legs - H;
     const body = al.fuselage, tail = al.tail, accent = al.accent;
+    const belly = al.belly || shade(body, -14);
 
-    // Wing (behind fuselage).
     ctx.fillStyle = shade(body, -18);
     ctx.beginPath();
     ctx.moveTo(x + L * 0.02, cy + H * 0.2);
@@ -753,7 +753,6 @@ class World {
     ctx.closePath();
     ctx.fill();
 
-    // Vertical tail fin (right end).
     ctx.fillStyle = tail;
     ctx.beginPath();
     ctx.moveTo(x + L * 0.24, cy - H * 0.3);
@@ -762,8 +761,11 @@ class World {
     ctx.lineTo(x + L * 0.14, cy - H * 0.3);
     ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(x + L * 0.34, cy - H * 1.5, Math.max(1.2, H * 0.28), 0, Math.PI * 2);
+    ctx.fill();
 
-    // Landing gear.
     ctx.strokeStyle = "#202c3a";
     ctx.lineWidth = Math.max(1, H * 0.2);
     for (const lx of [-L * 0.26, L * 0.2]) {
@@ -777,32 +779,53 @@ class World {
       ctx.fill();
     }
 
-    // Fuselage (nose left, tapered tail right).
+    const fuselage = () => {
+      ctx.beginPath();
+      ctx.moveTo(x - L * 0.5, cy);
+      ctx.quadraticCurveTo(x - L * 0.46, cy - H, x - L * 0.24, cy - H);
+      ctx.lineTo(x + L * 0.36, cy - H * 0.86);
+      ctx.quadraticCurveTo(x + L * 0.5, cy - H * 0.5, x + L * 0.48, cy);
+      ctx.quadraticCurveTo(x + L * 0.5, cy + H * 0.6, x + L * 0.34, cy + H * 0.9);
+      ctx.lineTo(x - L * 0.24, cy + H);
+      ctx.quadraticCurveTo(x - L * 0.46, cy + H, x - L * 0.5, cy);
+      ctx.closePath();
+    };
     ctx.fillStyle = body;
-    ctx.beginPath();
-    ctx.moveTo(x - L * 0.5, cy);
-    ctx.quadraticCurveTo(x - L * 0.46, cy - H, x - L * 0.24, cy - H);
-    ctx.lineTo(x + L * 0.36, cy - H * 0.86);
-    ctx.quadraticCurveTo(x + L * 0.5, cy - H * 0.5, x + L * 0.48, cy);
-    ctx.quadraticCurveTo(x + L * 0.5, cy + H * 0.6, x + L * 0.34, cy + H * 0.9);
-    ctx.lineTo(x - L * 0.24, cy + H);
-    ctx.quadraticCurveTo(x - L * 0.46, cy + H, x - L * 0.5, cy);
-    ctx.closePath();
+    fuselage();
     ctx.fill();
+    ctx.save();
+    fuselage();
+    ctx.clip();
+    ctx.fillStyle = belly;
+    ctx.fillRect(x - L * 0.52, cy + H * 0.15, L * 1.06, H);
+    if (al.cheat === "split") {
+      ctx.fillStyle = accent;
+      ctx.fillRect(x - L * 0.5, cy + H * 0.02, L, H * 0.22);
+    } else if (al.cheat === "band") {
+      ctx.fillStyle = accent;
+      ctx.fillRect(x - L * 0.42, cy - H * 0.16, L * 0.8, H * 0.28);
+    } else if (al.cheat === "flag3") {
+      ctx.fillStyle = "#078930";
+      ctx.fillRect(x - L * 0.4, cy - H * 0.08, L * 0.74, H * 0.14);
+      ctx.fillStyle = accent;
+      ctx.fillRect(x - L * 0.4, cy + H * 0.06, L * 0.74, H * 0.14);
+      ctx.fillStyle = al.accent2 || "#da121a";
+      ctx.fillRect(x - L * 0.4, cy + H * 0.2, L * 0.74, H * 0.14);
+    } else if (al.cheat === "thin") {
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = Math.max(1, H * 0.26);
+      ctx.beginPath();
+      ctx.moveTo(x - L * 0.42, cy - H * 0.05);
+      ctx.lineTo(x + L * 0.34, cy - H * 0.1);
+      ctx.stroke();
+    }
+    ctx.restore();
 
-    // Engine under the wing.
-    ctx.fillStyle = shade(body, -30);
+    ctx.fillStyle = al.engine || shade(body, -30);
     const ew = L * 0.16, eh = H * 0.8;
     roundRect(ctx, x - L * 0.16, cy + H * 0.55, ew, eh, eh * 0.4);
     ctx.fill();
 
-    // Cheatline + cockpit.
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = Math.max(1, H * 0.26);
-    ctx.beginPath();
-    ctx.moveTo(x - L * 0.42, cy - H * 0.05);
-    ctx.lineTo(x + L * 0.34, cy - H * 0.1);
-    ctx.stroke();
     ctx.fillStyle = "#0f2233";
     ctx.beginPath();
     ctx.arc(x - L * 0.4, cy - H * 0.25, Math.max(1, H * 0.2), 0, Math.PI * 2);

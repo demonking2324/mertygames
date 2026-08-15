@@ -105,7 +105,7 @@ class Menu {
       const el = document.createElement("div");
       el.className = "card" + (a === this.selectedAirline ? " selected" : "");
       el.innerHTML = `
-        <span class="swatch" style="background:${a.tail}; box-shadow: inset 0 0 0 3px ${a.accent}"></span>
+        <span class="swatch" style="background: linear-gradient(180deg, ${a.fuselage} 58%, ${a.tail} 58%); box-shadow: inset 0 0 0 2px ${a.accent}"></span>
         <span class="card-main">
           <span class="card-title">${a.name}</span>
           <span class="card-sub">${a.code} · ${this.selectedAircraft.name}</span>
