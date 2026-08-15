@@ -732,6 +732,43 @@ class World {
         onion(-40); onion(40);
         break;
       }
+      case "palace": {
+        // Warsaw: Palace of Culture — a tall stepped tower with a spire.
+        box(-80, 70, 140, haze); windows(-80, 70, 140);
+        box(90, 55, 110, hazeDark); windows(90, 55, 110);
+        box(0, 90, 280, hazeDark); windows(0, 90, 280);
+        box(0, 70, 340, haze);
+        ctx.fillStyle = hazeDark;
+        ctx.beginPath();
+        ctx.moveTo(at(0) - m(28), gy - m(340));
+        ctx.lineTo(at(0), gy - m(430));
+        ctx.lineTo(at(0) + m(28), gy - m(340));
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = hazeDark;
+        ctx.lineWidth = m(4);
+        ctx.beginPath();
+        ctx.moveTo(at(0), gy - m(430));
+        ctx.lineTo(at(0), gy - m(470));
+        ctx.stroke();
+        break;
+      }
+      case "mills": {
+        // Manchester: brick mill chimneys + a modern glass tower.
+        const brick = "#8a5a3c";
+        box(-180, 90, 120, brick); windows(-180, 90, 120);
+        box(-70, 70, 90, "#7a4e34");
+        const chimney = (off, h) => {
+          ctx.fillStyle = "#6a4030";
+          ctx.fillRect(at(off) - m(10), gy - m(h), m(20), m(h));
+          ctx.fillStyle = "#4a2c20";
+          ctx.fillRect(at(off) - m(14), gy - m(h) - m(12), m(28), m(12));
+        };
+        chimney(-210, 220); chimney(-40, 180);
+        box(120, 55, 260, hazeDark); windows(120, 55, 260);
+        box(200, 48, 180, haze); windows(200, 48, 180);
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);

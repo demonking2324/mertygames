@@ -756,6 +756,18 @@ class Game {
       ctx.quadraticCurveTo(cx, cy - s * 0.7, cx - s * 0.45, cy - s * 0.1);
       ctx.quadraticCurveTo(cx, cy + s * 0.15, cx + s * 0.4, cy);
       ctx.fill();
+    } else if (mark === "thy") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.58, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#c8102e";
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.38, cy);
+      ctx.quadraticCurveTo(cx, cy - s * 0.55, cx - s * 0.42, cy - s * 0.05);
+      ctx.quadraticCurveTo(cx - s * 0.05, cy + s * 0.08, cx + s * 0.1, cy + s * 0.22);
+      ctx.quadraticCurveTo(cx + s * 0.28, cy + s * 0.12, cx + s * 0.38, cy);
+      ctx.fill();
     } else if (mark === "pegasus") {
       ctx.fillStyle = "#1a1a1a";
       ctx.beginPath();
