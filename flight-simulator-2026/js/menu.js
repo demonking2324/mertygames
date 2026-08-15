@@ -32,8 +32,8 @@ const SVG_NS = "http://www.w3.org/1998/svg";
 class Menu {
   constructor(onStart) {
     this.onStart = onStart;
-    this.selectedAirline = AIRLINES[0];
     this.selectedAircraft = AIRCRAFT_TYPES[2]; // A320 default
+    this.selectedAirline = liveriesForAircraft(this.selectedAircraft)[0] || AIRLINES[0];
 
     this.from = AIRPORTS.find((a) => a.iata === "JFK") || AIRPORTS[0];
     this.to = AIRPORTS.find((a) => a.iata === "LHR") || AIRPORTS[1];
@@ -43,8 +43,8 @@ class Menu {
     this.openCluster = null;
     this.clusterEls = {};
 
-    this._buildAirlines();
     this._buildAircraft();
+    this._buildAirlines();
     this._buildMap();
     this._buildTraining();
 
@@ -93,14 +93,22 @@ class Menu {
   _buildAirlines() {
     const box = document.getElementById("airline-list");
     box.innerHTML = "";
-    AIRLINES.forEach((a) => {
+    const liveries = liveriesForAircraft(this.selectedAircraft);
+    if (!liveries.includes(this.selectedAirline)) {
+      this.selectedAirline = liveries[0] || null;
+    }
+    if (!liveries.length) {
+      box.innerHTML = `<div class="card"><span class="card-main"><span class="card-sub">No liveries for this type.</span></span></div>`;
+      return;
+    }
+    liveries.forEach((a) => {
       const el = document.createElement("div");
       el.className = "card" + (a === this.selectedAirline ? " selected" : "");
       el.innerHTML = `
         <span class="swatch" style="background:${a.tail}; box-shadow: inset 0 0 0 3px ${a.accent}"></span>
         <span class="card-main">
           <span class="card-title">${a.name}</span>
-          <span class="card-sub">${a.code}</span>
+          <span class="card-sub">${a.code} · ${this.selectedAircraft.name}</span>
         </span>`;
       el.addEventListener("click", () => {
         this.selectedAirline = a;
@@ -114,16 +122,18 @@ class Menu {
     const box = document.getElementById("aircraft-list");
     box.innerHTML = "";
     AIRCRAFT_TYPES.forEach((t) => {
+      const n = liveriesForAircraft(t).length;
       const el = document.createElement("div");
       el.className = "card" + (t === this.selectedAircraft ? " selected" : "");
       el.innerHTML = `
         <span class="card-main">
           <span class="card-title">${t.name}</span>
-          <span class="card-sub">${t.class} · V<sub>R</sub> ${t.vRotate} kt · ${(t.mass/1000).toFixed(1)} t</span>
+          <span class="card-sub">${t.class} · V<sub>R</sub> ${t.vRotate} kt · ${n} ${n === 1 ? "livery" : "liveries"}</span>
         </span>`;
       el.addEventListener("click", () => {
         this.selectedAircraft = t;
         this._buildAircraft();
+        this._buildAirlines();
       });
       box.appendChild(el);
     });
@@ -143,7 +153,8 @@ class Menu {
   }
   _clusteredIatas() {
     const set = new Set();
-    MAP_CLUSTERS.forEach((c) => c.iatas.forEach((i) => set.add(i)));
+    (typeof MAP_CLUSTERS !== "undefined" ? MAP_CLUSTERS : []).forEach((c) =>
+      c.iatas.forEach((i) => set.add(i)));
     return set;
   }
 
@@ -210,6 +221,7 @@ class Menu {
 
   _buildClusters(host) {
     this.clusterEls = {};
+    if (typeof MAP_CLUSTERS === "undefined" || !MAP_CLUSTERS.length) return;
     MAP_CLUSTERS.forEach((cluster) => {
       const { left, top } = this._pct(cluster);
       const btn = document.createElement("button");
@@ -395,7 +407,7 @@ class Menu {
   }
 
   _start() {
-    if (!this.from || !this.to || this.from === this.to) return;
+    if (!this.from || !this.to || this.from === this.to || !this.selectedAirline) return;
     this.onStart({
       airline: this.selectedAirline,
       aircraft: this.selectedAircraft,

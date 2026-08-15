@@ -30,6 +30,7 @@ const AIRLINES = [
   { id: "eth", name: "Ethiopian Airlines",  code: "ET", fuselage: "#eef2f6", tail: "#1a7a3a", accent: "#f2b301", accent2: "#d21b34" },
   { id: "kqa", name: "Kenya Airways",       code: "KQ", fuselage: "#eef2f6", tail: "#b81330", accent: "#0f7d3b", accent2: "#111418" },
   { id: "pgt", name: "Pegasus Airlines",    code: "PC", fuselage: "#eef2f6", tail: "#f5c400", accent: "#1a1a1a" },
+  { id: "pvt", name: "Private",              code: "N",  fuselage: "#e8edf2", tail: "#9aa7b8", accent: "#3d5a80" },
 ];
 
 /* Aircraft aerodynamic + performance model.
@@ -269,6 +270,29 @@ const AIRPORTS = [
 /* Airlines commonly seen parked at each airport (id → count), used to
  * populate the background gates. Rough real-world hub presence. */
 const AIRLINE_BY_ID = Object.fromEntries(AIRLINES.map((a) => [a.id, a]));
+
+/* Which of our airlines actually operate each type (mainline / regional
+ * affiliate). Used so the livery picker only offers realistic paint. */
+const AIRCRAFT_OPERATORS = {
+  c172:  ["pvt"],
+  dash8: ["aca", "qfa", "eth"],
+  a320:  ["aal", "dal", "ual", "jbu", "baw", "dlh", "afr", "aca", "pgt"],
+  b738:  ["aal", "dal", "ual", "swa", "klm", "qfa", "jal", "aca", "eth", "kqa"],
+  b77w:  ["aal", "ual", "baw", "afr", "klm", "uae", "sia", "qfa", "jal", "aca", "eth", "kqa"],
+  e175:  ["aal", "dal", "ual", "aca", "klm"],
+  b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa"],
+};
+
+function liveriesForAircraft(spec) {
+  const ids = (spec && AIRCRAFT_OPERATORS[spec.id]) || [];
+  const list = [];
+  for (const id of ids) {
+    const al = AIRLINE_BY_ID[id];
+    if (al) list.push(al);
+  }
+  return list;
+}
+
 const AIRPORT_FLEETS = {
   JFK: [["dal", 5], ["jbu", 4], ["aal", 3], ["ual", 1], ["baw", 1], ["afr", 1], ["dlh", 1], ["aca", 1]],
   LGA: [["dal", 5], ["aal", 3], ["jbu", 3], ["swa", 2], ["ual", 1]],
