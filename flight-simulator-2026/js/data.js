@@ -714,7 +714,7 @@ const LOADING_TIPS = [
   { tags: ["ga"], text: "The Cessna 172 has fixed gear — no need to toggle G." },
   { tags: ["general"], text: "Hold Space for wheel brakes. They only work on the ground." },
   { tags: ["general"], text: "Press P to pause, Esc to return to the menu." },
-  { tags: ["freecam"], text: "Free Cam has no aircraft. Pan with WASD or arrows, drag the view, and zoom with Q/E or the scroll wheel." },
+  { tags: ["freecam"], text: "Free Cam has no aircraft. Pan with WASD or arrows, drag the view, scroll to look up at the sky, and zoom with Q/E." },
   { tags: ["freecam"], text: "Watch airliners appear at the gates, taxi out and take off, or land and taxi back to a stand." },
   { tags: ["training", "landing"], text: "Landing practice starts you on a ~3.5° final. Manage the descent; don't chase the runway." },
   { tags: ["general"], text: "On-screen touch controls (throttle slider + pitch stick) can be toggled from the main menu." },

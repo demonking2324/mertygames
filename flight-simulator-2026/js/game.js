@@ -81,8 +81,13 @@ class Game {
     c.addEventListener("wheel", (e) => {
       if (!this.freeCam || (this.state !== "flying" && this.state !== "paused")) return;
       e.preventDefault();
-      const f = e.deltaY > 0 ? 0.9 : 1.11;
-      this.cam.scale = clamp(this.cam.scale * f, 0.18, 1.35);
+      if (e.ctrlKey || e.metaKey || e.shiftKey) {
+        const f = e.deltaY > 0 ? 0.9 : 1.11;
+        this.cam.scale = clamp(this.cam.scale * f, 0.18, 1.35);
+      } else {
+        this.cam.y -= e.deltaY / this.cam.scale;
+        this._clampFreeCam();
+      }
     }, { passive: false });
   }
 
@@ -178,7 +183,7 @@ class Game {
     this._hideMessage();
     this.resetBtn.classList.add("hidden");
     this.hud.setSpectator(true, ap);
-    this.hud.setStatus("Arrivals come from the left · WASD / drag to pan · Q/E or scroll to zoom · Esc menu");
+    this.hud.setStatus("Arrivals come from the left · WASD / drag to pan · scroll up for sky · Q/E to zoom · Esc menu");
 
     document.getElementById("menu").classList.add("hidden");
     document.getElementById("game").classList.remove("hidden");
@@ -188,8 +193,9 @@ class Game {
   _clampFreeCam() {
     if (!this.world) return;
     const w = this.world;
-    this.cam.x = clamp(this.cam.x, w.depRunwayStart - 2300, w.depRunwayEnd + 3600);
-    this.cam.y = clamp(this.cam.y, 45, 1100);
+    this.cam.x = clamp(this.cam.x, w.depRunwayStart - 2300, w.depRunwayEnd + 8000);
+    const gy = w.groundElevation;
+    this.cam.y = clamp(this.cam.y, gy + 40, gy + 14000);
   }
 
   /* Place the aircraft airborne on a ~3.5° final approach to the runway. */
