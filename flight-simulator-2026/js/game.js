@@ -313,13 +313,7 @@ class Game {
   }
 
   _pickTraffic() {
-    const mine = this.ac.airline && this.ac.airline.id;
-    const pool = airportFleet(this.world.dep).filter((a) => a.id !== mine && a.id !== "pvt");
-    const al = pool.length ? pool[Math.floor(Math.random() * pool.length)] : AIRLINES[0];
-    const types = AIRCRAFT_TYPES.filter((t) =>
-      t.engineType === "jet" && ((AIRCRAFT_OPERATORS[t.id] || []).includes(al.id)));
-    const spec = types.length ? types[Math.floor(Math.random() * types.length)] : AIRCRAFT_TYPES[2];
-    return { spec, airline: al };
+    return pickAirportTraffic(this.world.dep, this.ac.airline && this.ac.airline.id);
   }
 
   _holdingTraffic() {

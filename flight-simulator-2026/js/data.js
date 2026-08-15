@@ -503,6 +503,127 @@ const AIRPORT_FLEETS = {
   HKG: [["cpa", 6], ["sia", 1], ["uae", 1], ["qfa", 1], ["jal", 1], ["ana", 1]],
 };
 
+/* Types that actually operate at each field (subset of AIRCRAFT_TYPES). */
+const AIRPORT_TYPES = {
+  JFK: ["a320", "b738", "e175", "b789", "a359", "b77w"],
+  LGA: ["a320", "b738", "e175"],
+  MIA: ["a320", "b738", "b789", "b77w"],
+  SAW: ["a320", "b738"],
+  LAX: ["a320", "b738", "b789", "a359", "b77w"],
+  ORD: ["a320", "b738", "e175", "b77w", "b789"],
+  SFO: ["a320", "b738", "b789", "b77w", "a359"],
+  YVR: ["a320", "b738", "dash8", "b789", "b77w"],
+  FRA: ["a320", "b789", "a359", "b77w"],
+  MUC: ["a320", "b738", "b789", "a359"],
+  LHR: ["a320", "b789", "a359", "b77w"],
+  MAN: ["a320", "b738", "b77w", "b789"],
+  WAW: ["a320", "b738"],
+  CDG: ["a320", "b77w", "b789", "a359"],
+  AMS: ["b738", "a320", "e175", "b77w", "b789"],
+  DXB: ["b77w", "b789", "a359", "b738"],
+  DOH: ["a359", "b77w", "a320", "b789"],
+  FCO: ["a320", "b738", "a359", "b789"],
+  CPT: ["b789", "a359", "b77w", "a320"],
+  ADD: ["b789", "b77w", "a359", "b738", "dash8"],
+  NBO: ["b738", "b789", "b77w"],
+  HND: ["a320", "b77w", "b789", "a359"],
+  SIN: ["a359", "b77w", "b789"],
+  SYD: ["b738", "b789", "a359", "b77w"],
+  AKL: ["a320", "b789"],
+  ICN: ["b77w", "b789", "a359", "a320"],
+  MEX: ["b738", "b789", "a320"],
+  CPH: ["a320", "a359", "b738"],
+  BKK: ["a320", "b77w", "b789", "a359"],
+  SEA: ["b738", "a320", "b77w", "b789"],
+  JNB: ["b789", "a359", "b77w", "a320"],
+  DEL: ["a320", "b789", "b77w"],
+  BOM: ["a320", "b789", "b77w"],
+  DUB: ["b738", "a320"],
+  BOS: ["a320", "b738", "e175", "b789", "a359"],
+  CAI: ["a320", "b738", "b77w", "b789"],
+  MEL: ["b738", "b789", "a359"],
+  GRU: ["a320", "b789", "a359"],
+  EZE: ["a320", "b789"],
+  YYZ: ["a320", "e175", "b789", "b77w", "dash8"],
+  MAD: ["a320", "b738", "a359", "b789"],
+  HKG: ["a359", "b77w", "a320", "b789"],
+  PVG: ["a320", "b77w", "b789", "a359"],
+  SCL: ["a320", "b789", "a359"],
+};
+
+/* Home fields — there the airline flies its mixed fleet. Elsewhere a
+ * long-haul carrier only shows the widebodies it actually brings. */
+const AIRLINE_HUBS = {
+  aal: ["JFK", "LGA", "LAX", "ORD", "MIA", "BOS"],
+  dal: ["JFK", "LGA", "LAX", "BOS", "SEA", "MIA"],
+  ual: ["JFK", "LGA", "LAX", "ORD", "SFO", "SEA", "BOS"],
+  jbu: ["JFK", "LGA", "BOS", "MIA"],
+  swa: ["LAX", "ORD", "MIA", "LGA"],
+  baw: ["LHR", "MAN"],
+  vir: ["LHR"],
+  ezy: ["MAN", "DUB", "FCO", "MAD"],
+  ryr: ["DUB", "MAN", "WAW", "FCO", "MAD", "SAW", "MUC"],
+  dlh: ["FRA", "MUC"],
+  afr: ["CDG"],
+  klm: ["AMS"],
+  uae: ["DXB"],
+  sia: ["SIN"],
+  qfa: ["SYD", "MEL"],
+  jal: ["HND"],
+  ana: ["HND"],
+  aca: ["YVR", "YYZ"],
+  eth: ["ADD"],
+  kqa: ["NBO"],
+  pgt: ["SAW"],
+  thy: ["SAW"],
+  qtr: ["DOH"],
+  ibe: ["MAD", "FCO"],
+  lan: ["SCL", "GRU", "EZE", "MIA"],
+  kal: ["ICN"],
+  sas: ["CPH"],
+  aic: ["DEL", "BOM"],
+  amx: ["MEX"],
+  cpa: ["HKG"],
+  asa: ["SEA", "LAX"],
+  anz: ["AKL"],
+  tha: ["BKK"],
+  msr: ["CAI"],
+};
+
+const WIDEBODY_IDS = new Set(["b77w", "b789", "a359"]);
+
+function typesAtAirportForAirline(iata, airlineId) {
+  const field = AIRPORT_TYPES[iata] || ["a320", "b738"];
+  let types = field.filter((tid) => (AIRCRAFT_OPERATORS[tid] || []).includes(airlineId));
+  const atHome = (AIRLINE_HUBS[airlineId] || []).includes(iata);
+  const wides = types.filter((tid) => WIDEBODY_IDS.has(tid));
+  if (!atHome && wides.length) types = wides;
+  return types;
+}
+
+/* Weighted (airline, type) pairs that actually operate at this airport. */
+function pickAirportTraffic(airport, excludeId) {
+  const iata = airport.iata;
+  const specById = Object.fromEntries(AIRCRAFT_TYPES.map((t) => [t.id, t]));
+  const pairs = [];
+  for (const [id, count] of (AIRPORT_FLEETS[iata] || [])) {
+    if (id === excludeId || id === "pvt") continue;
+    const al = AIRLINE_BY_ID[id];
+    if (!al) continue;
+    const types = typesAtAirportForAirline(iata, id);
+    for (const tid of types) {
+      const spec = specById[tid];
+      if (!spec) continue;
+      for (let n = 0; n < count; n++) pairs.push({ spec, airline: al });
+    }
+  }
+  if (!pairs.length) {
+    const tid = (AIRPORT_TYPES[iata] || ["a320"])[0];
+    return { spec: specById[tid] || AIRCRAFT_TYPES[2], airline: AIRLINES[0] };
+  }
+  return pairs[Math.floor(Math.random() * pairs.length)];
+}
+
 /* Plain, liveryless aircraft scheme + a neutral field for Training Mode. */
 const TRAINING_AIRLINE = {
   id: "train", name: "Training", code: "TRN",
