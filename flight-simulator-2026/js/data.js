@@ -407,33 +407,14 @@ const AIRPORT_REGION = {
   HAAB: "af", HKJK: "af",
 };
 
-/* Nearby airports that overlap on the world map. A magnifying-glass
- * control zooms that city so each field can be picked separately. */
-const MAP_CLUSTERS = [
-  {
-    id: "nyc",
-    label: "New York",
-    short: "NYC",
-    iatas: ["JFK", "LGA"],
-    lat: 40.71,
-    lon: -73.90,
-    lon0: -74.22,
-    lon1: -73.58,
-    lat0: 40.50,
-    lat1: 40.92,
-  },
-  {
-    id: "uk",
-    label: "United Kingdom",
-    short: "UK",
-    iatas: ["LHR", "MAN"],
-    lat: 52.40,
-    lon: -1.50,
-    lon0: -3.35,
-    lon1: 1.20,
-    lat0: 50.50,
-    lat1: 54.05,
-  },
+/* Continent zoom windows for the route map. lon/lat bounds in degrees. */
+const MAP_ZOOMS = [
+  { id: "na",  label: "North America", short: "N. America", lon0: -130, lon1: -65,  lat0: 24,  lat1: 55 },
+  { id: "sa",  label: "South America", short: "S. America", lon0: -85,  lon1: -32,  lat0: -56, lat1: 14 },
+  { id: "eu",  label: "Europe",        short: "Europe",     lon0: -12,  lon1: 36,   lat0: 35,  lat1: 61 },
+  { id: "af",  label: "Africa",        short: "Africa",     lon0: -20,  lon1: 54,   lat0: -36, lat1: 38 },
+  { id: "as",  label: "Asia",          short: "Asia",       lon0: 48,   lon1: 150,  lat0: -10, lat1: 50 },
+  { id: "oc",  label: "Oceania",       short: "Oceania",    lon0: 110,  lon1: 180,  lat0: -48, lat1: -8 },
 ];
 
 /* Region pairs that are joined by land (no ocean band between them). */

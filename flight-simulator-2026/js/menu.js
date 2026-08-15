@@ -22,18 +22,6 @@ const CONTINENTS = [
   [[113,-22],[114,-30],[118,-34],[125,-33],[132,-32],[138,-35],[145,-38],[150,-37],[153,-30],[148,-24],[145,-16],[138,-12],[132,-11],[126,-14],[120,-19],[113,-22]],
 ];
 
-/* Close-up coastlines used inside magnifying-glass loupes. */
-const CLUSTER_LAND = {
-  nyc: [
-    [[-74.22,40.50],[-74.22,40.92],[-73.93,40.92],[-73.78,40.87],[-73.70,40.86],[-73.58,40.80],[-73.58,40.58],[-73.78,40.54],[-73.95,40.50],[-74.22,40.50]],
-  ],
-  uk: [
-    [[-3.2,50.7],[-1.8,50.55],[-0.2,50.65],[0.9,50.95],[1.15,51.45],[0.85,52.05],
-     [0.15,52.85],[-0.35,53.65],[-1.15,53.85],[-2.45,53.75],[-3.2,53.45],
-     [-3.1,52.35],[-3.2,51.45],[-3.2,50.7]],
-  ],
-};
-
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 class Menu {
@@ -47,8 +35,7 @@ class Menu {
     this.dotEls = {};
 
     this.trainMode = "takeoff";
-    this.openCluster = null;
-    this.clusterEls = {};
+    this.zoom = null;
 
     this._buildAircraft();
     this._buildAirlines();
@@ -148,29 +135,22 @@ class Menu {
 
   /* ---- World map ---- */
   _project(ap) { return { x: ap.lon + 180, y: 90 - ap.lat }; }      // to viewBox units
-  _pct(ap) {
-    const p = this._project(ap);
-    return { left: (p.x / 360) * 100, top: (p.y / 180) * 100 };
+  _view() {
+    return this.zoom || { lon0: -180, lon1: 180, lat0: -90, lat1: 90 };
   }
-  /* Project a lon/lat into loupe space, inset so dots stay inside the circle. */
-  _clusterXY(lon, lat, cluster) {
-    const pad = 0.22;
-    const nx = (lon - cluster.lon0) / (cluster.lon1 - cluster.lon0);
-    const ny = (cluster.lat1 - lat) / (cluster.lat1 - cluster.lat0);
+  _pct(ap) {
+    const z = this._view();
     return {
-      x: (pad + nx * (1 - 2 * pad)) * 100,
-      y: (pad + ny * (1 - 2 * pad)) * 100,
+      left: ((ap.lon - z.lon0) / (z.lon1 - z.lon0)) * 100,
+      top: ((z.lat1 - ap.lat) / (z.lat1 - z.lat0)) * 100,
     };
   }
-  _clusterPct(ap, cluster) {
-    const p = this._clusterXY(ap.lon, ap.lat, cluster);
-    return { left: p.x, top: p.y };
-  }
-  _clusteredIatas() {
-    const set = new Set();
-    (typeof MAP_CLUSTERS !== "undefined" ? MAP_CLUSTERS : []).forEach((c) =>
-      c.iatas.forEach((i) => set.add(i)));
-    return set;
+  _inView(ap) {
+    const z = this._view();
+    const padLon = (z.lon1 - z.lon0) * 0.02;
+    const padLat = (z.lat1 - z.lat0) * 0.02;
+    return ap.lon >= z.lon0 - padLon && ap.lon <= z.lon1 + padLon &&
+           ap.lat >= z.lat0 - padLat && ap.lat <= z.lat1 + padLat;
   }
 
   _buildMap() {
@@ -215,28 +195,23 @@ class Menu {
     });
     svg.appendChild(this.routeLine);
 
-    // Airport dots — clustered cities are hidden on the world map and
-    // shown inside a magnifying-glass loupe instead.
+    // Airport dots — all fields stay on the map. Continent zoom (and a
+    // small nudge) keeps nearby ones clickable.
     const dots = document.getElementById("map-dots");
     dots.innerHTML = "";
     this.dotEls = {};
-    const clustered = this._clusteredIatas();
     AIRPORTS.forEach((ap) => {
-      if (clustered.has(ap.iata)) return;
       const { left, top } = this._pct(ap);
       const dot = this._makeDot(ap, left, top);
       dots.appendChild(dot);
       this.dotEls[ap.iata] = dot;
     });
 
-    this._buildClusters(dots);
+    this._buildZoomBar();
+    this._layoutDots();
 
-    // Clicking empty map closes any open popup / loupe.
     const wrap = document.getElementById("map-wrap");
-    wrap.addEventListener("click", () => {
-      this._closePopup();
-      this._closeCluster();
-    });
+    wrap.addEventListener("click", () => this._closePopup());
     const popup = document.getElementById("map-popup");
     popup.addEventListener("click", (e) => e.stopPropagation());
   }
@@ -252,86 +227,68 @@ class Menu {
     return dot;
   }
 
-  _buildClusters(host) {
-    this.clusterEls = {};
-    if (typeof MAP_CLUSTERS === "undefined" || !MAP_CLUSTERS.length) return;
-    MAP_CLUSTERS.forEach((cluster) => {
-      const { left, top } = this._pct(cluster);
+  _buildZoomBar() {
+    const bar = document.getElementById("map-zooms");
+    if (!bar) return;
+    bar.innerHTML = "";
+    const add = (id, label, zoom) => {
       const btn = document.createElement("button");
-      btn.className = "mag-btn";
-      btn.style.left = left + "%";
-      btn.style.top = top + "%";
-      btn.title = `Zoom ${cluster.label}`;
-      btn.innerHTML = `
-        <span class="mag-lens"></span>
-        <span class="mag-handle"></span>
-        <span class="mag-label">${cluster.short || cluster.label}</span>`;
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this._toggleCluster(cluster);
+      btn.type = "button";
+      btn.className = "zoom-btn" + ((zoom ? this.zoom && this.zoom.id === id : !this.zoom) ? " active" : "");
+      btn.innerHTML = zoom ? `<span class="zoom-mag" aria-hidden="true"></span>${label}` : label;
+      btn.addEventListener("click", () => {
+        const same = zoom && this.zoom && this.zoom.id === zoom.id;
+        this._setZoom(same ? null : zoom);
       });
-      host.appendChild(btn);
-
-      const wrapH = host.parentElement ? host.parentElement.clientHeight : 400;
-      const pinY = (top / 100) * wrapH;
-      const loupeR = 110;
-      const loupeY = Math.max(pinY, loupeR + 8);
-
-      const loupe = document.createElement("div");
-      loupe.className = "loupe hidden";
-      loupe.style.left = left + "%";
-      loupe.style.top = loupeY + "px";
-      loupe.innerHTML = `
-        <span class="loupe-handle"></span>
-        <div class="loupe-glass">
-          <svg class="loupe-map" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
-          <div class="loupe-dots"></div>
-          <div class="loupe-caption">${cluster.label.toUpperCase()}</div>
-        </div>`;
-      loupe.addEventListener("click", (e) => e.stopPropagation());
-      host.appendChild(loupe);
-
-      const lsvg = loupe.querySelector(".loupe-map");
-      const land = CLUSTER_LAND[cluster.id] || [];
-      land.forEach((poly) => lsvg.appendChild(this._landPath(poly, (lon, lat) =>
-        this._clusterXY(lon, lat, cluster))));
-
-      const ldots = loupe.querySelector(".loupe-dots");
-      cluster.iatas.forEach((iata) => {
-        const ap = AIRPORTS.find((a) => a.iata === iata);
-        if (!ap) return;
-        const p = this._clusterPct(ap, cluster);
-        const dot = this._makeDot(ap, p.left, p.top);
-        ldots.appendChild(dot);
-        this.dotEls[ap.iata] = dot;
-      });
-
-      this.clusterEls[cluster.id] = { cluster, btn, loupe };
-    });
+      bar.appendChild(btn);
+    };
+    add("world", "World", null);
+    MAP_ZOOMS.forEach((z) => add(z.id, z.short, z));
   }
 
-  _toggleCluster(cluster) {
-    if (this.openCluster && this.openCluster.id === cluster.id) {
-      this._closeCluster();
-      return;
-    }
+  _setZoom(zoom) {
+    this.zoom = zoom;
     this._closePopup();
-    this.openCluster = cluster;
-    for (const id in this.clusterEls) {
-      const el = this.clusterEls[id];
-      const on = el.cluster.id === cluster.id;
-      el.btn.classList.toggle("hidden", on);
-      el.loupe.classList.toggle("hidden", !on);
+    const svg = document.getElementById("world-map");
+    if (!zoom) {
+      svg.setAttribute("viewBox", "0 0 360 180");
+    } else {
+      svg.setAttribute("viewBox",
+        `${zoom.lon0 + 180} ${90 - zoom.lat1} ${zoom.lon1 - zoom.lon0} ${zoom.lat1 - zoom.lat0}`);
     }
+    this._layoutDots();
+    this._buildZoomBar();
+    this._refreshMap();
   }
 
-  _closeCluster() {
-    this.openCluster = null;
-    for (const id in this.clusterEls) {
-      const el = this.clusterEls[id];
-      el.btn.classList.remove("hidden");
-      el.loupe.classList.add("hidden");
+  _layoutDots() {
+    const shown = [];
+    AIRPORTS.forEach((ap) => {
+      const el = this.dotEls[ap.iata];
+      if (!el) return;
+      if (!this._inView(ap)) {
+        el.classList.add("hidden");
+        return;
+      }
+      el.classList.remove("hidden");
+      const p = this._pct(ap);
+      shown.push({ el, left: p.left, top: p.top });
+    });
+    const min = this.zoom ? 6.2 : 3.4;
+    for (let i = 0; i < shown.length; i++) {
+      for (let j = 0; j < i; j++) {
+        const dx = shown[i].left - shown[j].left;
+        const dy = shown[i].top - shown[j].top;
+        if (Math.hypot(dx, dy) < min) {
+          shown[i].left += min * 0.72;
+          shown[i].top += min * 0.55;
+        }
+      }
     }
+    shown.forEach((s) => {
+      s.el.style.left = Math.min(96, Math.max(4, s.left)) + "%";
+      s.el.style.top = Math.min(94, Math.max(6, s.top)) + "%";
+    });
   }
 
   _svgEl(tag, attrs) {
@@ -409,14 +366,6 @@ class Menu {
       const el = this.dotEls[iata];
       el.classList.toggle("from", !!this.from && this.from.iata === iata);
       el.classList.toggle("to", !!this.to && this.to.iata === iata);
-    }
-
-    for (const id in this.clusterEls) {
-      const { cluster, btn } = this.clusterEls[id];
-      const hasFrom = !!this.from && cluster.iatas.includes(this.from.iata);
-      const hasTo = !!this.to && cluster.iatas.includes(this.to.iata);
-      btn.classList.toggle("has-from", hasFrom);
-      btn.classList.toggle("has-to", hasTo);
     }
 
     const line = this.routeLine;
