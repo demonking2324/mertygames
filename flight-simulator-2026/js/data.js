@@ -68,6 +68,12 @@ const AIRLINES = [
   { id: "thy", name: "Turkish Airlines",   code: "TK", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#c8102e",
     accent: "#c8102e", cheat: "none", titles: "TURKISH", titleColor: "#c8102e",
     tailMark: "thy", engine: "#c8102e" },
+  { id: "qtr", name: "Qatar Airways",      code: "QR", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#5c0a2c",
+    accent: "#5c0a2c", cheat: "thin", titles: "QATAR", titleColor: "#5c0a2c",
+    tailMark: "oryx", engine: "#5c0a2c" },
+  { id: "ibe", name: "Iberia",             code: "IB", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#d7042c",
+    accent: "#ffcc00", cheat: "none", titles: "IBERIA", titleColor: "#d7042c",
+    tailMark: "iberia", engine: "#d7042c" },
   { id: "pvt", name: "Private",             code: "N",  fuselage: "#f2f4f6", belly: "#d9dee4", tail: "#c5ccd4",
     accent: "#2f5f8a", cheat: "thin", titles: "", titleColor: "#2f5f8a",
     tailMark: "none", engine: "#c5ccd4" },
@@ -313,6 +319,12 @@ const AIRPORTS = [
     theme: { terrain: ["#a89a54", "#6f6228"], sky: ["#8fbad6", "#e3ddc4"], landmark: "africa" } },
   { icao: "LTFJ", iata: "SAW", name: "Istanbul Sabiha Gökçen", city: "Istanbul", lat: 40.8986,  lon: 29.3092,   elevation: 95,  runway: 3000,
     theme: { terrain: ["#6f8a44", "#4a6228"], sky: ["#7eb6d8", "#e4d6a8"], landmark: "mosque" } },
+  { icao: "OTHH", iata: "DOH", name: "Doha Hamad",          city: "Doha",         lat: 25.2731,  lon: 51.6080,   elevation: 4,   runway: 4850,
+    theme: { terrain: ["#d2b176", "#a3843c"], sky: ["#7ec2e8", "#f3e2b4"], landmark: "dhow" } },
+  { icao: "LIRF", iata: "FCO", name: "Rome Fiumicino",      city: "Rome",         lat: 41.8003,  lon: 12.2389,   elevation: 5,   runway: 3903,
+    theme: { terrain: ["#6a8a44", "#445a28"], sky: ["#8fb6d6", "#dce8f0"], landmark: "colosseum" } },
+  { icao: "FACT", iata: "CPT", name: "Cape Town Intl",      city: "Cape Town",    lat: -33.9648, lon: 18.6017,   elevation: 46,  runway: 3201,
+    theme: { terrain: ["#7a8a48", "#4e5e2c"], sky: ["#7eb8e0", "#e8f0f6"], landmark: "table" } },
 ];
 
 /* Airlines commonly seen parked at each airport (id → count), used to
@@ -324,11 +336,11 @@ const AIRLINE_BY_ID = Object.fromEntries(AIRLINES.map((a) => [a.id, a]));
 const AIRCRAFT_OPERATORS = {
   c172:  ["pvt"],
   dash8: ["aca", "qfa", "eth"],
-  a320:  ["aal", "dal", "ual", "jbu", "baw", "dlh", "afr", "aca", "pgt", "thy"],
+  a320:  ["aal", "dal", "ual", "jbu", "baw", "dlh", "afr", "aca", "pgt", "thy", "ibe", "qtr"],
   b738:  ["aal", "dal", "ual", "swa", "klm", "qfa", "jal", "aca", "eth", "kqa"],
-  b77w:  ["aal", "ual", "baw", "afr", "klm", "uae", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy"],
+  b77w:  ["aal", "ual", "baw", "afr", "klm", "uae", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr"],
   e175:  ["aal", "dal", "ual", "aca", "klm"],
-  b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy"],
+  b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "ibe"],
 };
 
 function liveriesForAircraft(spec) {
@@ -342,30 +354,33 @@ function liveriesForAircraft(spec) {
 }
 
 const AIRPORT_FLEETS = {
-  JFK: [["dal", 5], ["jbu", 4], ["aal", 3], ["ual", 1], ["baw", 1], ["afr", 1], ["dlh", 1], ["aca", 1], ["thy", 1]],
+  JFK: [["dal", 5], ["jbu", 4], ["aal", 3], ["ual", 1], ["baw", 1], ["afr", 1], ["dlh", 1], ["aca", 1], ["thy", 1], ["qtr", 1]],
   LGA: [["dal", 5], ["aal", 3], ["jbu", 3], ["swa", 2], ["ual", 1]],
   SAW: [["pgt", 6], ["thy", 3], ["dlh", 1], ["afr", 1], ["baw", 1]],
-  LAX: [["aal", 3], ["ual", 3], ["dal", 3], ["swa", 2], ["jbu", 1], ["qfa", 1], ["aca", 1]],
+  LAX: [["aal", 3], ["ual", 3], ["dal", 3], ["swa", 2], ["jbu", 1], ["qfa", 1], ["aca", 1], ["qtr", 1]],
   ORD: [["ual", 6], ["aal", 4], ["swa", 2], ["dlh", 1], ["aca", 1]],
   SFO: [["ual", 6], ["aal", 1], ["dal", 1], ["sia", 1], ["uae", 1], ["aca", 1]],
   YVR: [["aca", 7], ["ual", 2], ["aal", 1], ["dal", 1], ["jal", 1], ["qfa", 1]],
-  FRA: [["dlh", 6], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["thy", 1]],
+  FRA: [["dlh", 6], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["thy", 1], ["qtr", 1]],
   MUC: [["dlh", 7], ["ual", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["aca", 1], ["eth", 1], ["thy", 1]],
-  LHR: [["baw", 6], ["dlh", 2], ["klm", 1], ["afr", 2], ["aal", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["kqa", 1], ["thy", 1]],
+  LHR: [["baw", 6], ["dlh", 2], ["klm", 1], ["afr", 2], ["aal", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["kqa", 1], ["thy", 1], ["qtr", 1], ["ibe", 1]],
   MAN: [["baw", 4], ["uae", 2], ["thy", 2], ["dlh", 1], ["klm", 1], ["afr", 1]],
   WAW: [["dlh", 2], ["thy", 2], ["baw", 1], ["klm", 1], ["afr", 1], ["uae", 1]],
-  CDG: [["afr", 6], ["klm", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["aca", 1], ["thy", 1]],
+  CDG: [["afr", 6], ["klm", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["aca", 1], ["thy", 1], ["ibe", 1]],
   AMS: [["klm", 6], ["afr", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["kqa", 1], ["pgt", 1], ["thy", 1]],
-  DXB: [["uae", 7], ["baw", 1], ["sia", 1], ["qfa", 1], ["eth", 1], ["kqa", 1], ["thy", 1]],
-  ADD: [["eth", 7], ["dlh", 1], ["uae", 1], ["baw", 1], ["afr", 1], ["klm", 1]],
+  DXB: [["uae", 7], ["baw", 1], ["sia", 1], ["qfa", 1], ["eth", 1], ["kqa", 1], ["thy", 1], ["qtr", 1]],
+  DOH: [["qtr", 8], ["baw", 1], ["thy", 1], ["sia", 1], ["uae", 1]],
+  FCO: [["ibe", 5], ["afr", 1], ["dlh", 1], ["thy", 1], ["qtr", 1], ["baw", 1]],
+  CPT: [["baw", 2], ["qtr", 2], ["eth", 1], ["kqa", 1], ["dlh", 1], ["afr", 1]],
+  ADD: [["eth", 7], ["dlh", 1], ["uae", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["qtr", 1]],
   NBO: [["kqa", 7], ["klm", 1], ["eth", 1], ["baw", 1], ["dlh", 1], ["uae", 1]],
-  HND: [["jal", 5], ["sia", 1], ["baw", 1], ["dlh", 1], ["ual", 1], ["qfa", 1], ["aca", 1]],
-  SIN: [["sia", 6], ["uae", 1], ["baw", 1], ["qfa", 1], ["dlh", 1], ["jal", 1]],
-  SYD: [["qfa", 6], ["uae", 1], ["sia", 1], ["ual", 1]],
-  GRU: [["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["uae", 1]],
+  HND: [["jal", 5], ["sia", 1], ["baw", 1], ["dlh", 1], ["ual", 1], ["qfa", 1], ["aca", 1], ["qtr", 1]],
+  SIN: [["sia", 6], ["uae", 1], ["baw", 1], ["qfa", 1], ["dlh", 1], ["jal", 1], ["qtr", 1]],
+  SYD: [["qfa", 6], ["uae", 1], ["sia", 1], ["ual", 1], ["qtr", 1]],
+  GRU: [["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["uae", 1], ["ibe", 1]],
   YYZ: [["aca", 7], ["ual", 1], ["aal", 1], ["baw", 1], ["dlh", 1], ["afr", 1]],
-  MAD: [["afr", 2], ["baw", 2], ["dlh", 1], ["klm", 1], ["aal", 1], ["dal", 1]],
-  HKG: [["sia", 2], ["uae", 1], ["baw", 1], ["qfa", 1], ["jal", 1], ["dlh", 1], ["aca", 1]],
+  MAD: [["ibe", 6], ["afr", 2], ["baw", 2], ["dlh", 1], ["klm", 1], ["aal", 1], ["qtr", 1]],
+  HKG: [["sia", 2], ["uae", 1], ["baw", 1], ["qfa", 1], ["jal", 1], ["dlh", 1], ["aca", 1], ["qtr", 1]],
 };
 
 /* Plain, liveryless aircraft scheme + a neutral field for Training Mode. */
@@ -399,12 +414,12 @@ function airportFleet(airport) {
  * open ocean (e.g., JFK→LHR crosses the Atlantic). */
 const AIRPORT_REGION = {
   KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na",
-  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu",
-  OMDB: "me",
+  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu",
+  OMDB: "me", OTHH: "me",
   RJTT: "asia", WSSS: "asia", VHHH: "asia",
   YSSY: "oceania",
   SBGR: "sa",
-  HAAB: "af", HKJK: "af",
+  HAAB: "af", HKJK: "af", FACT: "af",
 };
 
 /* Continent zoom windows for the route map. lon/lat bounds in degrees. */
@@ -412,7 +427,7 @@ const MAP_ZOOMS = [
   { id: "na",  label: "North America", short: "N. America", lon0: -130, lon1: -65,  lat0: 24,  lat1: 55 },
   { id: "sa",  label: "South America", short: "S. America", lon0: -85,  lon1: -32,  lat0: -56, lat1: 14 },
   { id: "eu",  label: "Europe",        short: "Europe",     lon0: -12,  lon1: 36,   lat0: 35,  lat1: 61 },
-  { id: "af",  label: "Africa",        short: "Africa",     lon0: -20,  lon1: 54,   lat0: -36, lat1: 38 },
+  { id: "af",  label: "Africa",        short: "Africa",     lon0: -20,  lon1: 54,   lat0: -38, lat1: 38 },
   { id: "as",  label: "Asia",          short: "Asia",       lon0: 48,   lon1: 150,  lat0: -10, lat1: 50 },
   { id: "oc",  label: "Oceania",       short: "Oceania",    lon0: 110,  lon1: 180,  lat0: -48, lat1: -8 },
 ];

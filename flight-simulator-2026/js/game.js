@@ -778,6 +778,24 @@ class Game {
       ctx.quadraticCurveTo(cx - s * 0.7, cy - s * 0.5, cx - s * 0.2, cy + s * 0.35);
       ctx.quadraticCurveTo(cx - s * 0.05, cy + s * 0.1, cx - s * 0.05, cy - s * 0.1);
       ctx.fill();
+    } else if (mark === "oryx") {
+      ctx.fillStyle = "#f4f7fa";
+      ctx.beginPath();
+      ctx.ellipse(cx + s * 0.05, cy + s * 0.12, s * 0.22, s * 0.32, 0.25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + s * 0.12, cy - s * 0.15);
+      ctx.quadraticCurveTo(cx - s * 0.05, cy - s * 0.7, cx - s * 0.35, cy - s * 0.55);
+      ctx.quadraticCurveTo(cx, cy - s * 0.35, cx + s * 0.12, cy - s * 0.15);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + s * 0.22, cy - s * 0.18, s * 0.14, s * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (mark === "iberia") {
+      ctx.fillStyle = "#ffcc00";
+      ctx.fillRect(cx - s * 0.55, cy - s * 0.18, s * 1.1, s * 0.22);
+      ctx.fillStyle = "#d7042c";
+      ctx.fillRect(cx - s * 0.55, cy + s * 0.04, s * 1.1, s * 0.14);
     }
     ctx.restore();
   }

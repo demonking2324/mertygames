@@ -769,6 +769,75 @@ class World {
         box(200, 48, 180, haze); windows(200, 48, 180);
         break;
       }
+      case "colosseum": {
+        // Rome: oval amphitheatre with stacked arches.
+        const stone = "#c4a882";
+        const stoneDark = "#9a7d58";
+        ctx.fillStyle = stoneDark;
+        ctx.beginPath();
+        ctx.ellipse(at(0), gy - m(70), m(160), m(90), 0, Math.PI, 0, true);
+        ctx.fill();
+        ctx.fillStyle = stone;
+        ctx.beginPath();
+        ctx.ellipse(at(0), gy - m(70), m(150), m(82), 0, Math.PI, 0, true);
+        ctx.fill();
+        ctx.fillStyle = "#6a5340";
+        ctx.beginPath();
+        ctx.ellipse(at(0), gy - m(70), m(70), m(38), 0, Math.PI, 0, true);
+        ctx.fill();
+        ctx.strokeStyle = stoneDark;
+        ctx.lineWidth = m(3);
+        [-90, -45, 0, 45, 90].forEach((off) => {
+          ctx.beginPath();
+          ctx.ellipse(at(off), gy - m(55), m(16), m(22), 0, Math.PI, 0, true);
+          ctx.stroke();
+        });
+        box(-220, 70, 110, haze); windows(-220, 70, 110);
+        box(230, 55, 90, hazeDark);
+        break;
+      }
+      case "table": {
+        // Cape Town: Table Mountain's flat top plus a harbour skyline.
+        ctx.fillStyle = "#6a7a68";
+        ctx.beginPath();
+        ctx.moveTo(at(-420), gy);
+        ctx.lineTo(at(-260), gy - m(160));
+        ctx.lineTo(at(-180), gy - m(240));
+        ctx.lineTo(at(-40), gy - m(250));
+        ctx.lineTo(at(80), gy - m(245));
+        ctx.lineTo(at(160), gy - m(180));
+        ctx.lineTo(at(280), gy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#8a9a84";
+        ctx.fillRect(at(-180), gy - m(250), m(260), m(18));
+        box(200, 48, 90, haze); windows(200, 48, 90);
+        box(270, 40, 70, hazeDark);
+        break;
+      }
+      case "dhow": {
+        // Doha: glass towers and a lateen-sail dhow.
+        box(-80, 48, 220, hazeDark); windows(-80, 48, 220);
+        box(20, 40, 280, haze); windows(20, 40, 280);
+        box(90, 36, 160, hazeDark); windows(90, 36, 160);
+        const bx = at(220);
+        ctx.fillStyle = "#c9b48a";
+        ctx.beginPath();
+        ctx.moveTo(bx - m(90), gy - m(8));
+        ctx.quadraticCurveTo(bx, gy + m(18), bx + m(110), gy - m(12));
+        ctx.lineTo(bx + m(70), gy - m(28));
+        ctx.quadraticCurveTo(bx, gy - m(8), bx - m(70), gy - m(24));
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#e8dcc4";
+        ctx.beginPath();
+        ctx.moveTo(bx - m(10), gy - m(28));
+        ctx.lineTo(bx - m(10), gy - m(150));
+        ctx.lineTo(bx + m(95), gy - m(36));
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);
