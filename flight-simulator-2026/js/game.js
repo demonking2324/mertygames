@@ -422,8 +422,23 @@ class Game {
   }
 
   _pickTraffic() {
+    if (this.freeCam) return this._pickFreshTraffic();
     const exclude = this.ac && this.ac.airline && this.ac.airline.id;
     return pickAirportTraffic(this.world.dep, exclude);
+  }
+
+  /* Prefer an airline/type that is not already on the field. */
+  _pickFreshTraffic(extraKey) {
+    const all = uniqueAirportTraffic(this.world.dep);
+    const used = new Set();
+    if (extraKey) used.add(extraKey);
+    for (const t of this.traffic || []) {
+      if (t.phase === "gone" || t.phase === "cruise") continue;
+      used.add(t.airline.id + "|" + t.spec.id);
+    }
+    const fresh = all.filter((p) => !used.has(p.airline.id + "|" + p.spec.id));
+    const pool = fresh.length ? fresh : all;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   _holdingTraffic() {
@@ -549,7 +564,7 @@ class Game {
     const slots = this.apron.slots;
     this.traffic = [];
     this._gateOcc = new Array(slots.length).fill(null);
-    const nParked = 3;
+    const nParked = Math.min(4, slots.length - 2);
     const used = new Set();
     for (let i = 0; i < nParked; i++) {
       let pick = this._pickTraffic();
@@ -677,6 +692,10 @@ class Game {
     t.goalX = this.apron.slots[slot];
     t.wait = 0;
     t.handoff = null;
+    const pick = this._pickFreshTraffic(t.airline.id + "|" + t.spec.id);
+    t.spec = pick.spec;
+    t.airline = pick.airline;
+    t.flaps = Math.min(t.spec.flapNotches, 3);
     this._gateOcc[slot] = t;
     return true;
   }
