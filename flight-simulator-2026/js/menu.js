@@ -224,10 +224,14 @@ class Menu {
     if (typeof MAP_CLUSTERS === "undefined" || !MAP_CLUSTERS.length) return;
     MAP_CLUSTERS.forEach((cluster) => {
       const { left, top } = this._pct(cluster);
+      // Sit the glass in the Atlantic, just SE of NYC, so Toronto / other
+      // nearby dots stay clickable.
+      const btnLeft = left + 3.4;
+      const btnTop = top + 2.8;
       const btn = document.createElement("button");
       btn.className = "mag-btn";
-      btn.style.left = left + "%";
-      btn.style.top = top + "%";
+      btn.style.left = btnLeft + "%";
+      btn.style.top = btnTop + "%";
       btn.title = `Zoom ${cluster.label}`;
       btn.innerHTML = `
         <span class="mag-lens"></span>
@@ -241,8 +245,8 @@ class Menu {
 
       const loupe = document.createElement("div");
       loupe.className = "loupe hidden";
-      loupe.style.left = left + "%";
-      loupe.style.top = `calc(${top}% + 42px)`;
+      loupe.style.left = btnLeft + "%";
+      loupe.style.top = `calc(${btnTop}% + 42px)`;
       loupe.innerHTML = `
         <span class="loupe-handle"></span>
         <div class="loupe-glass">

@@ -663,7 +663,75 @@ class World {
         });
         break;
       }
-      case "hills":
+      case "mountains": {
+        // Vancouver: snow-capped coastal range + evergreens.
+        const mx = at(-80);
+        ctx.fillStyle = "#5c6f86";
+        ctx.beginPath();
+        ctx.moveTo(mx - m(420), gy);
+        ctx.lineTo(mx - m(180), gy - m(280));
+        ctx.lineTo(mx, gy - m(360));
+        ctx.lineTo(mx + m(160), gy - m(240));
+        ctx.lineTo(mx + m(380), gy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#eef3f7";
+        ctx.beginPath();
+        ctx.moveTo(mx - m(70), gy - m(300));
+        ctx.lineTo(mx, gy - m(360));
+        ctx.lineTo(mx + m(55), gy - m(305));
+        ctx.quadraticCurveTo(mx, gy - m(325), mx - m(70), gy - m(300));
+        ctx.fill();
+        const pine = (off, sc) => {
+          const x = at(off);
+          ctx.fillStyle = "#2f5a32";
+          ctx.beginPath();
+          ctx.moveTo(x, gy - m(110 * sc));
+          ctx.lineTo(x - m(28 * sc), gy);
+          ctx.lineTo(x + m(28 * sc), gy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = "#4a3320";
+          ctx.fillRect(x - m(3), gy - m(8), m(6), m(8));
+        };
+        pine(220, 1.1); pine(280, 0.8); pine(340, 1); pine(-320, 0.9);
+        break;
+      }
+      case "alpine": {
+        // Munich: Alps plus twin onion-dome towers (Frauenkirche).
+        ctx.fillStyle = "#6a7380";
+        ctx.beginPath();
+        ctx.moveTo(at(-480), gy);
+        ctx.lineTo(at(-280), gy - m(160));
+        ctx.lineTo(at(-80), gy - m(240));
+        ctx.lineTo(at(80), gy - m(150));
+        ctx.lineTo(at(260), gy - m(220));
+        ctx.lineTo(at(480), gy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#e8eef4";
+        ctx.beginPath();
+        ctx.moveTo(at(-120), gy - m(200));
+        ctx.lineTo(at(-80), gy - m(240));
+        ctx.lineTo(at(-45), gy - m(200));
+        ctx.closePath();
+        ctx.fill();
+        const onion = (off) => {
+          box(off, 36, 180, "#c9c3b4");
+          ctx.fillStyle = "#6e7a88";
+          ctx.beginPath();
+          ctx.ellipse(at(off), gy - m(180), m(22), m(28), 0, Math.PI, 0, true);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(at(off), gy - m(208));
+          ctx.lineTo(at(off), gy - m(230));
+          ctx.strokeStyle = "#6e7a88";
+          ctx.lineWidth = m(3);
+          ctx.stroke();
+        };
+        onion(-40); onion(40);
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);

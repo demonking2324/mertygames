@@ -272,6 +272,8 @@ const AIRPORTS = [
     theme: { terrain: ["#5c7f3c", "#3a5626"], sky: ["#8fb0cf", "#c6d7e6"], landmark: "skyline" } },
   { icao: "KSFO", iata: "SFO", name: "San Francisco Intl",  city: "San Francisco",lat: 37.6213,  lon: -122.3790, elevation: 4,   runway: 3618,
     theme: { terrain: ["#7d8a4a", "#586b30"], sky: ["#9ab8cf", "#dfe8ee"], landmark: "bridge" } },
+  { icao: "CYVR", iata: "YVR", name: "Vancouver Intl",      city: "Vancouver",    lat: 49.1947,  lon: -123.1792, elevation: 4,   runway: 3318,
+    theme: { terrain: ["#3f6e3a", "#244a22"], sky: ["#8aa8c0", "#d4e0e8"], landmark: "mountains" } },
   { icao: "EGLL", iata: "LHR", name: "London Heathrow",     city: "London",       lat: 51.4700,  lon: -0.4543,   elevation: 25,  runway: 3902,
     theme: { terrain: ["#3e6f39", "#274b22"], sky: ["#9fb0bd", "#cbd6dd"], landmark: "bigben" } },
   { icao: "EHAM", iata: "AMS", name: "Amsterdam Schiphol",  city: "Amsterdam",    lat: 52.3105,  lon: 4.7683,    elevation: -3,  runway: 3800,
@@ -280,6 +282,8 @@ const AIRPORTS = [
     theme: { terrain: ["#5d8140", "#3b5528"], sky: ["#8fb4d6", "#cfe0ee"], landmark: "eiffel" } },
   { icao: "EDDF", iata: "FRA", name: "Frankfurt",           city: "Frankfurt",    lat: 50.0379,  lon: 8.5622,    elevation: 111, runway: 4000,
     theme: { terrain: ["#4d7538", "#314e22"], sky: ["#93b2cd", "#c9d8e4"], landmark: "skyline" } },
+  { icao: "EDDM", iata: "MUC", name: "Munich",              city: "Munich",       lat: 48.3538,  lon: 11.7861,   elevation: 453, runway: 4000,
+    theme: { terrain: ["#4a7540", "#2f4e28"], sky: ["#8fb4d0", "#d5e4ee"], landmark: "alpine" } },
   { icao: "OMDB", iata: "DXB", name: "Dubai Intl",          city: "Dubai",        lat: 25.2532,  lon: 55.3657,   elevation: 19,  runway: 4447,
     theme: { terrain: ["#d8b676", "#a9863f"], sky: ["#7fc0e8", "#f4e2b0"], landmark: "burj" } },
   { icao: "RJTT", iata: "HND", name: "Tokyo Haneda",        city: "Tokyo",        lat: 35.5494,  lon: 139.7798,  elevation: 6,   runway: 3360,
@@ -337,9 +341,11 @@ const AIRPORT_FLEETS = {
   LAX: [["aal", 3], ["ual", 3], ["dal", 3], ["swa", 2], ["jbu", 1], ["qfa", 1], ["aca", 1]],
   ORD: [["ual", 6], ["aal", 4], ["swa", 2], ["dlh", 1], ["aca", 1]],
   SFO: [["ual", 6], ["aal", 1], ["dal", 1], ["sia", 1], ["uae", 1], ["aca", 1]],
+  YVR: [["aca", 7], ["ual", 2], ["aal", 1], ["dal", 1], ["jal", 1], ["qfa", 1]],
+  FRA: [["dlh", 6], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1]],
+  MUC: [["dlh", 7], ["ual", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["aca", 1], ["eth", 1]],
   LHR: [["baw", 6], ["dlh", 2], ["klm", 1], ["afr", 2], ["aal", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["kqa", 1]],
   CDG: [["afr", 6], ["klm", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["aca", 1]],
-  FRA: [["dlh", 6], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1]],
   AMS: [["klm", 6], ["afr", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["kqa", 1], ["pgt", 1]],
   DXB: [["uae", 7], ["baw", 1], ["sia", 1], ["qfa", 1], ["eth", 1], ["kqa", 1]],
   ADD: [["eth", 7], ["dlh", 1], ["uae", 1], ["baw", 1], ["afr", 1], ["klm", 1]],
@@ -383,13 +389,12 @@ function airportFleet(airport) {
 /* Coarse continent per airport — used to decide when a route flies over
  * open ocean (e.g., JFK→LHR crosses the Atlantic). */
 const AIRPORT_REGION = {
-  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na",
-  EGLL: "eu", LFPG: "eu", EDDF: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu",
+  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na",
+  EGLL: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu",
   OMDB: "me",
   RJTT: "asia", WSSS: "asia", VHHH: "asia",
   YSSY: "oceania",
   SBGR: "sa",
-  CYYZ: "na",
   HAAB: "af", HKJK: "af",
 };
 
