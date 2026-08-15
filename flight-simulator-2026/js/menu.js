@@ -162,24 +162,42 @@ class Menu {
     const svg = document.getElementById("world-map");
     svg.innerHTML = "";
 
+    // Paint lives on the elements themselves — stylesheet `fill` does not
+    // reach SVG geometry in every browser, and <polygon> can fail to render.
+    const css = this._svgEl("style");
+    css.textContent = [
+      ".map-continent { fill: #3c8f5c; stroke: #6ec48a; stroke-width: 0.5; }",
+      ".map-grid { stroke: rgba(255,255,255,0.16); stroke-width: 0.35; }",
+      ".route-line { stroke: #38bdf8; stroke-width: 1.6; stroke-dasharray: 4 3; fill: none; }",
+    ].join(" ");
+    svg.appendChild(css);
+
     // Graticule.
     for (let lon = -150; lon <= 150; lon += 30) {
       const x = lon + 180;
-      svg.appendChild(this._svgEl("line", { x1: x, y1: 0, x2: x, y2: 180, class: "map-grid" }));
+      svg.appendChild(this._svgEl("line", {
+        x1: x, y1: 0, x2: x, y2: 180, class: "map-grid",
+        stroke: "rgba(255,255,255,0.16)", "stroke-width": "0.35",
+      }));
     }
     for (let lat = -60; lat <= 60; lat += 30) {
       const y = 90 - lat;
-      svg.appendChild(this._svgEl("line", { x1: 0, y1: y, x2: 360, y2: y, class: "map-grid" }));
+      svg.appendChild(this._svgEl("line", {
+        x1: 0, y1: y, x2: 360, y2: y, class: "map-grid",
+        stroke: "rgba(255,255,255,0.16)", "stroke-width": "0.35",
+      }));
     }
 
-    // Continents.
-    CONTINENTS.forEach((poly) => {
-      const pts = poly.map(([lon, lat]) => `${lon + 180},${90 - lat}`).join(" ");
-      svg.appendChild(this._svgEl("polygon", { points: pts, class: "map-continent" }));
-    });
+    CONTINENTS.forEach((poly) => svg.appendChild(this._landPath(poly, (lon, lat) => ({
+      x: lon + 180,
+      y: 90 - lat,
+    }))));
 
     // Route line (updated on selection).
-    this.routeLine = this._svgEl("line", { class: "route-line hidden" });
+    this.routeLine = this._svgEl("line", {
+      class: "route-line hidden",
+      stroke: "#38bdf8", "stroke-width": "1.6", "stroke-dasharray": "4 3", fill: "none",
+    });
     svg.appendChild(this.routeLine);
 
     // Airport dots — clustered cities are hidden on the world map and
@@ -259,14 +277,10 @@ class Menu {
 
       const lsvg = loupe.querySelector(".loupe-map");
       const land = cluster.id === "nyc" ? NYC_LAND : [];
-      land.forEach((poly) => {
-        const pts = poly.map(([lon, lat]) => {
-          const x = ((lon - cluster.lon0) / (cluster.lon1 - cluster.lon0)) * 100;
-          const y = ((cluster.lat1 - lat) / (cluster.lat1 - cluster.lat0)) * 100;
-          return `${x},${y}`;
-        }).join(" ");
-        lsvg.appendChild(this._svgEl("polygon", { points: pts, class: "map-continent" }));
-      });
+      land.forEach((poly) => lsvg.appendChild(this._landPath(poly, (lon, lat) => ({
+        x: ((lon - cluster.lon0) / (cluster.lon1 - cluster.lon0)) * 100,
+        y: ((cluster.lat1 - lat) / (cluster.lat1 - cluster.lat0)) * 100,
+      }))));
 
       const ldots = loupe.querySelector(".loupe-dots");
       cluster.iatas.forEach((iata) => {
@@ -313,6 +327,20 @@ class Menu {
       else el.setAttribute(k, attrs[k]);
     }
     return el;
+  }
+
+  _landPath(ring, project) {
+    const d = ring.map(([lon, lat], i) => {
+      const { x, y } = project(lon, lat);
+      return `${i === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+    }).join(" ") + " Z";
+    return this._svgEl("path", {
+      d,
+      class: "map-continent",
+      fill: "#3c8f5c",
+      stroke: "#6ec48a",
+      "stroke-width": "0.5",
+    });
   }
 
   _openPopup(ap, dot) {

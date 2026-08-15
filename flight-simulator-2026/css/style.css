@@ -127,8 +127,8 @@ html, body {
   display: block;
   z-index: 0;
 }
-.map-continent { fill: #24503a; stroke: #2f6349; stroke-width: 0.4; vector-effect: non-scaling-stroke; }
-.map-grid { stroke: rgba(255,255,255,0.05); stroke-width: 0.3; vector-effect: non-scaling-stroke; }
+.map-continent { fill: #3c8f5c; stroke: #6ec48a; stroke-width: 0.5; }
+.map-grid { stroke: rgba(255,255,255,0.16); stroke-width: 0.35; }
 .route-line { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; opacity: 0.9; vector-effect: non-scaling-stroke; }
 
 .map-dots { position: absolute; inset: 0; z-index: 1; }
