@@ -426,18 +426,25 @@ class Game {
     return pickAirportTraffic(this.world.dep, exclude);
   }
 
-  /* Prefer an airline/type that is not already on the field. */
-  _pickFreshTraffic(extraKey) {
-    const all = uniqueAirportTraffic(this.world.dep);
+  _usedTrafficKeys() {
     const used = new Set();
-    if (extraKey) used.add(extraKey);
     for (const t of this.traffic || []) {
       if (t.phase === "gone" || t.phase === "cruise") continue;
       used.add(t.airline.id + "|" + t.spec.id);
     }
-    const fresh = all.filter((p) => !used.has(p.airline.id + "|" + p.spec.id));
-    const pool = fresh.length ? fresh : all;
-    return pool[Math.floor(Math.random() * pool.length)];
+    return used;
+  }
+
+  /* Weighted pick, preferring types/liveries not already on the field. */
+  _pickFreshTraffic(extraKey) {
+    const avoid = this._usedTrafficKeys();
+    if (extraKey) avoid.add(extraKey);
+    return pickAirportTraffic(this.world.dep, null, { avoid });
+  }
+
+  _hubAirlineId() {
+    const fleet = AIRPORT_FLEETS[this.world.dep.iata] || [];
+    return fleet.length ? fleet[0][0] : null;
   }
 
   _holdingTraffic() {
@@ -564,11 +571,14 @@ class Game {
     this.traffic = [];
     this._gateOcc = new Array(slots.length).fill(null);
     const nParked = Math.min(4, slots.length - 2);
-    const used = new Set();
+    const hubId = this._hubAirlineId();
+    const usedAl = new Set();
     for (let i = 0; i < nParked; i++) {
-      let pick = this._pickTraffic();
-      for (let n = 0; n < 8 && used.has(pick.airline.id); n++) pick = this._pickTraffic();
-      used.add(pick.airline.id);
+      const avoid = this._usedTrafficKeys();
+      const pick = (i < 2 && hubId)
+        ? pickAirportTraffic(this.world.dep, null, { airlineId: hubId, avoid })
+        : pickAirportTraffic(this.world.dep, null, { avoid });
+      usedAl.add(pick.airline.id);
       const t = new TrafficPlane(pick.spec, pick.airline, slots[i], gy);
       t.phase = "gate";
       t.facing = -1;

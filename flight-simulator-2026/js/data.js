@@ -601,54 +601,41 @@ function typesAtAirportForAirline(iata, airlineId) {
   return types;
 }
 
-/* Weighted (airline, type) pairs that actually operate at this airport. */
-function pickAirportTraffic(airport, excludeId) {
+/* Weighted (airline, type) pairs that actually operate at this airport.
+ * opts.avoid: skip these "airlineId|typeId" keys when others exist.
+ * opts.airlineId: only this carrier (hub seed). */
+function pickAirportTraffic(airport, excludeId, opts) {
+  opts = opts || {};
   const iata = airport.iata;
   const specById = Object.fromEntries(AIRCRAFT_TYPES.map((t) => [t.id, t]));
-  const pairs = [];
-  for (const [id, count] of (AIRPORT_FLEETS[iata] || [])) {
-    if (id === excludeId || id === "pvt") continue;
-    const al = AIRLINE_BY_ID[id];
-    if (!al) continue;
-    const types = typesAtAirportForAirline(iata, id);
-    for (const tid of types) {
-      const spec = specById[tid];
-      if (!spec) continue;
-      for (let n = 0; n < count; n++) pairs.push({ spec, airline: al });
+  const avoid = opts.avoid || new Set();
+  const forceId = opts.airlineId || null;
+
+  const build = (useAvoid) => {
+    const pairs = [];
+    for (const [id, count] of (AIRPORT_FLEETS[iata] || [])) {
+      if (id === excludeId || id === "pvt") continue;
+      if (forceId && id !== forceId) continue;
+      const al = AIRLINE_BY_ID[id];
+      if (!al) continue;
+      const types = typesAtAirportForAirline(iata, id);
+      for (const tid of types) {
+        const spec = specById[tid];
+        if (!spec) continue;
+        if (useAvoid && avoid.has(id + "|" + tid)) continue;
+        for (let n = 0; n < count; n++) pairs.push({ spec, airline: al });
+      }
     }
-  }
+    return pairs;
+  };
+
+  let pairs = build(true);
+  if (!pairs.length) pairs = build(false);
   if (!pairs.length) {
     const tid = (AIRPORT_TYPES[iata] || ["a320"])[0];
     return { spec: specById[tid] || AIRCRAFT_TYPES[2], airline: AIRLINES[0] };
   }
   return pairs[Math.floor(Math.random() * pairs.length)];
-}
-
-/* Unique (airline, type) pairs at a field — used so Free Cam traffic
- * doesn't keep recycling the same few liveries. */
-function uniqueAirportTraffic(airport) {
-  const iata = airport.iata;
-  const specById = Object.fromEntries(AIRCRAFT_TYPES.map((t) => [t.id, t]));
-  const pairs = [];
-  const seen = new Set();
-  for (const [id] of (AIRPORT_FLEETS[iata] || [])) {
-    if (id === "pvt") continue;
-    const al = AIRLINE_BY_ID[id];
-    if (!al) continue;
-    for (const tid of typesAtAirportForAirline(iata, id)) {
-      const spec = specById[tid];
-      if (!spec) continue;
-      const key = id + "|" + tid;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      pairs.push({ spec, airline: al });
-    }
-  }
-  if (!pairs.length) {
-    const tid = (AIRPORT_TYPES[iata] || ["a320"])[0];
-    return [{ spec: specById[tid] || AIRCRAFT_TYPES[2], airline: AIRLINES[0] }];
-  }
-  return pairs;
 }
 
 /* Plain, liveryless aircraft scheme + a neutral field for Training Mode. */
