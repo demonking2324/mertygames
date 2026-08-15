@@ -317,24 +317,12 @@ class Game {
   }
 
   _holdingTraffic() {
-    return (this.traffic || []).filter((t) =>
-      t.phase === "hold" || t.phase === "advance" || t.phase === "taxi" ||
-      t.phase === "lineup" || t.phase === "spool" || t.phase === "roll" ||
-      (t.onGround && t.phase !== "gone" && t.phase !== "fade"));
+    return (this.traffic || []).filter((t) => t.phase !== "gone" && t.phase !== "fade");
   }
 
+  /* True while any traffic is using (or still over) the runway. */
   _runwayBusy() {
-    const thresh = this.world.depRunwayStart;
-    const gy = this.world.groundElevation;
-    return (this.traffic || []).some((t) => {
-      if (t.phase === "gone" || t.phase === "fade" || t.phase === "hold" || t.phase === "advance") {
-        return false;
-      }
-      if (t.phase === "taxi" || t.phase === "lineup" || t.phase === "spool" || t.phase === "roll") {
-        return true;
-      }
-      return t.x >= thresh && t.y - gy < 22;
-    });
+    return (this.traffic || []).some((t) => t.active);
   }
 
   _queueHint() {
@@ -346,7 +334,7 @@ class Game {
       return;
     }
     const rolling = this._runwayBusy();
-    const ahead = this.traffic.filter((t) => t.phase !== "gone" && t.phase !== "fade" && t.phase !== "climb").length;
+    const ahead = this.traffic.filter((t) => t.phase !== "gone" && t.phase !== "fade").length;
     if (rolling) this.hud.setStatus("Traffic rolling — hold position.");
     else this.hud.setStatus("Hold position — number " + (ahead + 1) + " for departure.");
   }
@@ -367,6 +355,7 @@ class Game {
         next.wait -= dt;
         if (next.wait <= 0) {
           next.phase = "taxi";
+          next.active = true;
           this._refreshQueueSlots();
         }
       }
@@ -1182,6 +1171,7 @@ class TrafficPlane {
     this.alpha = 1;
     this.wait = 0;
     this.goalX = x;
+    this.active = false;
   }
 
   update(dt, groundY, thresh) {
@@ -1274,11 +1264,15 @@ class TrafficPlane {
       this.y += this.vy * dt;
       this.airspeed = Math.hypot(this.vx, this.vy);
       if (this.y - groundY > 25) this.gearDown = false;
-      if (this.y - groundY > 170) this.phase = "fade";
+      if (this.y - groundY > 220) {
+        this.active = false;
+        this.phase = "fade";
+      }
       return;
     }
 
     if (this.phase === "fade") {
+      this.active = false;
       this.x += this.vx * dt;
       this.y += this.vy * dt;
       this.alpha = Math.max(0, this.alpha - dt / 1.5);
