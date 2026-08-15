@@ -849,6 +849,103 @@ class Game {
       ctx.lineTo(cx - s * 0.18, cy - s * 0.18);
       ctx.closePath();
       ctx.fill();
+    } else if (mark === "chakra") {
+      ctx.strokeStyle = "#f4f7fa";
+      ctx.lineWidth = Math.max(1.4, s * 0.1);
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.42, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * s * 0.42, cy + Math.sin(a) * s * 0.42);
+        ctx.stroke();
+      }
+    } else if (mark === "eagle") {
+      ctx.fillStyle = "#c8102e";
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - s * 0.55);
+      ctx.quadraticCurveTo(cx + s * 0.55, cy - s * 0.1, cx + s * 0.15, cy + s * 0.45);
+      ctx.lineTo(cx, cy + s * 0.2);
+      ctx.lineTo(cx - s * 0.15, cy + s * 0.45);
+      ctx.quadraticCurveTo(cx - s * 0.55, cy - s * 0.1, cx, cy - s * 0.55);
+      ctx.fill();
+    } else if (mark === "brushwing") {
+      ctx.fillStyle = "#f4f7fa";
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.5, cy + s * 0.15);
+      ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.65, cx + s * 0.55, cy - s * 0.25);
+      ctx.quadraticCurveTo(cx + s * 0.1, cy + s * 0.05, cx - s * 0.5, cy + s * 0.15);
+      ctx.fill();
+    } else if (mark === "ana") {
+      ctx.fillStyle = "#f4f7fa";
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#003da5";
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (mark === "ezy") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.38, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ff6600";
+      ctx.fillRect(cx - s * 0.22, cy - s * 0.08, s * 0.44, s * 0.16);
+    } else if (mark === "lady") {
+      ctx.fillStyle = "#f4f7fa";
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.1, cy + s * 0.5);
+      ctx.quadraticCurveTo(cx - s * 0.45, cy - s * 0.1, cx - s * 0.05, cy - s * 0.55);
+      ctx.quadraticCurveTo(cx + s * 0.45, cy - s * 0.2, cx + s * 0.2, cy + s * 0.45);
+      ctx.closePath();
+      ctx.fill();
+    } else if (mark === "face") {
+      ctx.fillStyle = "#f4f7fa";
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#01426a";
+      ctx.beginPath();
+      ctx.arc(cx - s * 0.14, cy - s * 0.08, s * 0.07, 0, Math.PI * 2);
+      ctx.arc(cx + s * 0.14, cy - s * 0.08, s * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#01426a";
+      ctx.lineWidth = Math.max(1.4, s * 0.08);
+      ctx.beginPath();
+      ctx.arc(cx, cy + s * 0.08, s * 0.22, 0.15, Math.PI - 0.15);
+      ctx.stroke();
+    } else if (mark === "koru") {
+      ctx.strokeStyle = "#f4f7fa";
+      ctx.lineWidth = Math.max(2.2, s * 0.16);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.38, 0.4, Math.PI * 1.7);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.08, cy - s * 0.05, s * 0.16, Math.PI * 0.2, Math.PI * 1.5);
+      ctx.stroke();
+    } else if (mark === "orchid") {
+      ctx.fillStyle = "#c5a35a";
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        ctx.beginPath();
+        ctx.ellipse(cx + Math.cos(a) * s * 0.18, cy + Math.sin(a) * s * 0.18, s * 0.16, s * 0.28, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (mark === "horus") {
+      ctx.fillStyle = "#c8a24a";
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.45, cy + s * 0.1);
+      ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.55, cx + s * 0.5, cy - s * 0.2);
+      ctx.quadraticCurveTo(cx + s * 0.15, cy + s * 0.15, cx - s * 0.45, cy + s * 0.1);
+      ctx.fill();
+      ctx.fillStyle = "#f4f7fa";
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.18, cy - s * 0.12, s * 0.1, 0, Math.PI * 2);
+      ctx.fill();
     }
     ctx.restore();
   }
