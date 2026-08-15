@@ -385,7 +385,7 @@ const AIRPORTS = [
     theme: { terrain: ["#b89a4e", "#7a6224"], sky: ["#8fb8d8", "#e6dcc0"], landmark: "africa" } },
   { icao: "HKJK", iata: "NBO", name: "Nairobi Jomo Kenyatta", city: "Nairobi",    lat: -1.3192,  lon: 36.9278,   elevation: 1624, runway: 4117,
     theme: { terrain: ["#a89a54", "#6f6228"], sky: ["#8fbad6", "#e3ddc4"], landmark: "africa" } },
-  { icao: "LTFJ", iata: "SAW", name: "Istanbul Sabiha Gökçen", city: "Istanbul", lat: 40.8986,  lon: 29.3092,   elevation: 95,  runway: 3000,
+  { icao: "LTFJ", iata: "SAW", name: "Istanbul Sabiha Gökçen", city: "Istanbul", lat: 40.8986,  lon: 29.3092,   elevation: 95,  runway: 3000, runways: 1,
     theme: { terrain: ["#6f8a44", "#4a6228"], sky: ["#7eb6d8", "#e4d6a8"], landmark: "mosque" } },
   { icao: "OTHH", iata: "DOH", name: "Doha Hamad",          city: "Doha",         lat: 25.2731,  lon: 51.6080,   elevation: 4,   runway: 4850,
     theme: { terrain: ["#d2b176", "#a3843c"], sky: ["#7ec2e8", "#f3e2b4"], landmark: "dhow" } },
@@ -428,6 +428,16 @@ const AIRPORTS = [
   { icao: "YMML", iata: "MEL", name: "Melbourne Intl",      city: "Melbourne",    lat: -37.6733, lon: 144.8433,  elevation: 132, runway: 3657,
     theme: { terrain: ["#6f9a44", "#4a6b2c"], sky: ["#7fbce8", "#dcefff"], landmark: "spire" } },
 ];
+
+/* How many runways the field has. Most hubs in this set have 2+; only
+ * explicitly-marked single-strip airports (SAW, training) stay at 1.
+ * In the 2D view, 2+ draws a departure runway on the left and an
+ * arrival runway on the right. */
+function airportRunwayCount(ap) {
+  if (!ap) return 1;
+  if (ap.runways != null) return ap.runways;
+  return 2;
+}
 
 /* Airlines commonly seen parked at each airport (id → count), used to
  * populate the background gates. Rough real-world hub presence. */
@@ -647,7 +657,7 @@ const TRAINING_AIRLINE = {
 };
 const TRAINING_AIRPORT = {
   icao: "TRNG", iata: "TRN", name: "Training Field", city: "Training",
-  lat: 0, lon: 0, elevation: 0, runway: 4000,
+  lat: 0, lon: 0, elevation: 0, runway: 4000, runways: 1,
   theme: { terrain: ["#5c8a3c", "#33501e"], sky: ["#8fb6d8", "#cfe0ee"], landmark: "none" },
 };
 

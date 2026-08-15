@@ -40,15 +40,29 @@ class World {
     this.runwayScale = 1.35;
     this.depRunwayStart = 0;
     this.depRunwayEnd = depAirport.runway * this.runwayScale;
+    this.depDual = airportRunwayCount(depAirport) >= 2;
+    this.arrDual = airportRunwayCount(arrAirport) >= 2;
+    this.dualRunways = this.singleField && this.depDual;
+    this.originArrStart = null;
+    this.originArrEnd = null;
+    this.destDepStart = null;
+    this.destDepEnd = null;
 
     // Flat ground at departure elevation keeps the collision model simple.
     this.groundElevation = depAirport.elevation;
 
     if (this.singleField) {
       this.realDistanceKm = 0;
-      this.distance = this.depRunwayEnd + 3200;
-      this.arrRunwayStart = this.depRunwayStart;
-      this.arrRunwayEnd = this.depRunwayEnd;
+      if (this.dualRunways) {
+        const gap = 2000;
+        this.arrRunwayStart = this.depRunwayEnd + gap;
+        this.arrRunwayEnd = this.arrRunwayStart + this.depRunwayEnd;
+        this.distance = this.arrRunwayEnd + 2800;
+      } else {
+        this.arrRunwayStart = this.depRunwayStart;
+        this.arrRunwayEnd = this.depRunwayEnd;
+        this.distance = this.depRunwayEnd + 3200;
+      }
       this.crossesOcean = false;
       this.oceanStart = null;
       this.oceanEnd = null;
@@ -62,6 +76,16 @@ class World {
       this.crossesOcean = routeCrossesOcean(depAirport, arrAirport);
       this.oceanStart = this.crossesOcean ? this.distance * 0.16 : null;
       this.oceanEnd = this.crossesOcean ? this.distance * 0.84 : null;
+      if (this.depDual) {
+        const taxLen = 1800;
+        this.originArrEnd = this.depRunwayStart - taxLen;
+        this.originArrStart = this.originArrEnd - this.depRunwayEnd;
+      }
+      if (this.arrDual) {
+        const taxLen = 1800;
+        this.destDepStart = this.arrRunwayEnd + taxLen;
+        this.destDepEnd = this.destDepStart + arrAirport.runway * this.runwayScale;
+      }
     }
 
     // Biome bands describe the terrain the whole way along the route.
@@ -126,19 +150,42 @@ class World {
     this._drawClouds(ctx, cam);
     this._drawGround(ctx, cam);
     // Scenery/landmarks sit behind the runways.
-    this._drawScenery(ctx, cam, this.depTheme, this.depRunwayStart - 900);
-    if (!this.singleField) {
-      this._drawScenery(ctx, cam, this.arrTheme, this.arrRunwayEnd + 900);
+    const depSceneryX = this.originArrStart != null
+      ? this.originArrStart - 900
+      : this.depRunwayStart - 900;
+    this._drawScenery(ctx, cam, this.depTheme, depSceneryX);
+    if (!this.singleField || this.dualRunways) {
+      const arrSceneryX = this.destDepEnd != null
+        ? this.destDepEnd + 900
+        : this.arrRunwayEnd + 900;
+      this._drawScenery(ctx, cam, this.arrTheme, arrSceneryX);
     }
     this._drawGates(ctx, cam, this.dep, this.depRunwayStart, -1);
-    if (!this.singleField) {
+    if (!this.singleField || this.dualRunways) {
       this._drawGates(ctx, cam, this.arr, this.arrRunwayEnd, 1);
     }
-    this._drawRunway(ctx, cam, this.depRunwayStart, this.depRunwayEnd, this.dep, true);
-    if (!this.singleField) {
-      this._drawRunway(ctx, cam, this.arrRunwayStart, this.arrRunwayEnd, this.arr, false);
-      this._drawDistanceMarkers(ctx, cam);
+    const depKind = (this.dualRunways || this.depDual) ? "dep" : null;
+    const arrKind = (this.dualRunways || this.arrDual) ? "arr" : null;
+    this._drawRunway(ctx, cam, this.depRunwayStart, this.depRunwayEnd, this.dep, true, {
+      kind: depKind,
+    });
+    if (this.originArrStart != null) {
+      this._drawRunway(ctx, cam, this.originArrStart, this.originArrEnd, this.dep, false, {
+        kind: "arr",
+      });
     }
+    if (!this.singleField || this.dualRunways) {
+      this._drawRunway(ctx, cam, this.arrRunwayStart, this.arrRunwayEnd, this.arr, false, {
+        kind: arrKind,
+        taxiAfter: this.dualRunways,
+      });
+    }
+    if (this.destDepStart != null) {
+      this._drawRunway(ctx, cam, this.destDepStart, this.destDepEnd, this.arr, true, {
+        kind: "dep",
+      });
+    }
+    if (!this.singleField) this._drawDistanceMarkers(ctx, cam);
   }
 
   _drawSky(ctx, cam) {
@@ -1388,14 +1435,15 @@ class World {
     ctx.fill();
   }
 
-  _drawRunway(ctx, cam, startX, endX, airport, isDeparture) {
+  _drawRunway(ctx, cam, startX, endX, airport, isDeparture, opts) {
+    opts = opts || {};
     const gy = cam.worldToScreenY(this.groundElevation);
     if (gy > cam.h + 60 || gy < -200) return;
 
     const sx0 = cam.worldToScreenX(startX);
     const sx1 = cam.worldToScreenX(endX);
     if (sx1 < -50 || sx0 > cam.w + 50) {
-      if (!isDeparture) return;
+      if (!isDeparture && !opts.taxiAfter) return;
     }
 
     const rwHeight = Math.max(4, cam.toScreenLen(10));
@@ -1407,6 +1455,24 @@ class World {
       const taxLen = this.singleField ? 2200 : 1800;
       const tax0 = cam.worldToScreenX(startX - taxLen);
       const tax1 = sx0;
+      if (tax1 > -40 && tax0 < cam.w + 40) {
+        ctx.fillStyle = "#32363c";
+        ctx.fillRect(tax0, top, tax1 - tax0, rwHeight);
+        ctx.strokeStyle = "#eab308";
+        ctx.lineWidth = Math.max(1, rwHeight * 0.1);
+        ctx.setLineDash([Math.max(5, cam.toScreenLen(18)), Math.max(5, cam.toScreenLen(14))]);
+        ctx.beginPath();
+        ctx.moveTo(tax0, gy + rwHeight / 2);
+        ctx.lineTo(tax1, gy + rwHeight / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    if (opts.taxiAfter) {
+      const taxLen = 1800;
+      const tax0 = sx1;
+      const tax1 = cam.worldToScreenX(endX + taxLen);
       if (tax1 > -40 && tax0 < cam.w + 40) {
         ctx.fillStyle = "#32363c";
         ctx.fillRect(tax0, top, tax1 - tax0, rwHeight);
@@ -1462,17 +1528,25 @@ class World {
       ctx.stroke();
     }
 
-    // Airport label.
+    // Airport label. On dual fields, pin it to the inner end so both
+    // strips are named where they meet in the middle.
     ctx.fillStyle = "rgba(9,15,28,0.85)";
-    const label = `${airport.iata} · ${airport.name}`;
+    const role = opts.kind === "dep" ? " · Departures"
+      : opts.kind === "arr" ? " · Arrivals" : "";
+    const label = `${airport.iata} · ${airport.name}${role}`;
     ctx.font = "600 14px system-ui, sans-serif";
     const tw = ctx.measureText(label).width + 16;
-    const lx = clamp((sx0 + sx1) / 2 - tw / 2, 8, cam.w - tw - 8);
-    const ly = top - 48;
-    roundRect(ctx, lx, ly, tw, 22, 6);
-    ctx.fill();
-    ctx.fillStyle = "#e5eefb";
-    ctx.fillText(label, lx + 8, ly + 15);
+    const rawLx = opts.kind === "dep" ? sx1 - tw - 20
+      : opts.kind === "arr" ? sx0 + 16
+      : (sx0 + sx1) / 2 - tw / 2;
+    if (rawLx < cam.w && rawLx + tw > 0) {
+      const lx = rawLx;
+      const ly = top - 48;
+      roundRect(ctx, lx, ly, tw, 22, 6);
+      ctx.fill();
+      ctx.fillStyle = "#e5eefb";
+      ctx.fillText(label, lx + 8, ly + 15);
+    }
   }
 
   _drawDistanceMarkers(ctx, cam) {

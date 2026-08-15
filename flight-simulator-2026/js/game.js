@@ -167,22 +167,29 @@ class Game {
     this.ac = null;
     this.world = new World(ap, ap, { singleField: true });
     this.world.liveApron = true;
-    this.apron = this.world.apronLayout(ap, this.world.depRunwayStart, -1);
+    const w = this.world;
+    this.apron = w.apronLayout(ap, w.depRunwayStart, -1);
+    this.arrApron = w.dualRunways ? w.apronLayout(ap, w.arrRunwayEnd, 1) : this.apron;
     this._gateOcc = new Array(this.apron.n).fill(null);
+    this._arrGateOcc = w.dualRunways ? new Array(this.arrApron.n).fill(null) : this._gateOcc;
     this._nextAppear = 7 + Math.random() * 5;
     this._spawnAirportTheater();
-    this._spawnArrival(1300);
+    this._spawnArrival(w.dualRunways ? 1600 : 1300);
 
     this.cam.scale = 0.55;
-    this.cam.x = this.world.depRunwayStart + 80;
-    this.cam.y = Math.max(this.world.groundElevation + 110, 110);
+    this.cam.x = w.dualRunways
+      ? (w.depRunwayEnd + w.arrRunwayStart) / 2
+      : w.depRunwayStart + 80;
+    this.cam.y = Math.max(w.groundElevation + 110, 110);
     this.smoke = [];
     this.input.clear();
     this.state = "flying";
     this._hideMessage();
     this.resetBtn.classList.add("hidden");
     this.hud.setSpectator(true, ap);
-    this.hud.setStatus("Arrivals come from the left · WASD / drag to pan · scroll up for sky · Q/E to zoom · Esc menu");
+    this.hud.setStatus(w.dualRunways
+      ? "Departures on the left · Arrivals on the right · WASD / drag to pan · scroll up for sky · Q/E to zoom · Esc menu"
+      : "Arrivals come from the left · WASD / drag to pan · scroll up for sky · Q/E to zoom · Esc menu");
 
     document.getElementById("menu").classList.add("hidden");
     document.getElementById("game").classList.remove("hidden");
@@ -192,7 +199,9 @@ class Game {
   _clampFreeCam() {
     if (!this.world) return;
     const w = this.world;
-    this.cam.x = clamp(this.cam.x, w.depRunwayStart - 2300, w.depRunwayEnd + 8000);
+    const left = w.dualRunways ? w.depRunwayStart - 2300 : w.depRunwayStart - 2300;
+    const right = w.dualRunways ? w.arrRunwayEnd + 5000 : w.depRunwayEnd + 8000;
+    this.cam.x = clamp(this.cam.x, left, right);
     const gy = w.groundElevation;
     this.cam.y = clamp(this.cam.y, gy + 40, gy + 14000);
   }
@@ -586,16 +595,52 @@ class Game {
       t.goalX = slots[i];
       t.wait = 0.8 + (nParked - 1 - i) * 0.9 + Math.random() * 0.6;
       t.persist = true;
+      t.strip = "dep";
+      t.apron = "dep";
+      t.rw0 = this.world.depRunwayStart;
+      t.rw1 = this.world.depRunwayEnd;
       this.traffic.push(t);
       this._gateOcc[i] = t;
     }
   }
 
   _freeGate() {
-    for (let i = 0; i < this._gateOcc.length; i++) {
-      if (!this._gateOcc[i]) return i;
+    const occ = this._gateOcc || [];
+    for (let i = 0; i < occ.length; i++) {
+      if (!occ[i]) return i;
     }
     return -1;
+  }
+
+  _freeArrGate() {
+    const occ = this._arrGateOcc || this._gateOcc || [];
+    for (let i = 0; i < occ.length; i++) {
+      if (!occ[i]) return i;
+    }
+    return -1;
+  }
+
+  _stripBusy(strip) {
+    return (this.traffic || []).some((t) => t.active && (t.strip || "dep") === strip);
+  }
+
+  _canStartDep() {
+    if (this.world.dualRunways) return !this._stripBusy("dep");
+    return !this._runwayBusy();
+  }
+
+  _canStartArr() {
+    if (this.world.dualRunways) return !this._stripBusy("arr");
+    return !this._runwayBusy();
+  }
+
+  _depPipelineBusy() {
+    const block = new Set(["turn", "taxiOut", "hold", "advance", "taxi", "lineup", "spool", "roll"]);
+    return this.traffic.some((t) => {
+      if (!block.has(t.phase)) return false;
+      if (t.phase === "turn" && t.afterTurn === "taxiIn") return false;
+      return (t.strip || "dep") !== "arr";
+    });
   }
 
   _pipelineBusy() {
@@ -604,7 +649,8 @@ class Game {
   }
 
   _findRecyclableCruiser() {
-    const far = this.world.depRunwayEnd + 1800;
+    const w = this.world;
+    const far = (w.dualRunways ? w.arrRunwayEnd : w.depRunwayEnd) + 1800;
     return this.traffic.find((p) => {
       if (p.phase !== "cruise" || p.x < far) return false;
       return this.cam.worldToScreenX(p.x) > this.cam.w + 160;
@@ -613,77 +659,144 @@ class Game {
 
   _updateFreeCamTraffic(dt) {
     const gy = this.world.groundElevation;
-    const thresh = this.world.depRunwayStart;
+    const w = this.world;
+    const thresh = w.depRunwayStart;
     const list = this.traffic;
+    const dual = w.dualRunways;
 
     for (const t of list) {
       if (t.phase === "gate") t.wait -= dt;
     }
 
-    if (!this._runwayBusy()) {
+    if (dual) {
+      if (this._canStartArr()) this._tryStartArrival();
+      this._tryStartDep();
+    } else if (!this._runwayBusy()) {
+      const holding = list.filter((t) => t.phase === "hold");
       const ops = [];
-      const freeGate = this._freeGate() >= 0;
+      const freeGate = this._freeArrGate() >= 0;
       const inbound = list.some((t) => t.phase === "approach" || t.phase === "rollout");
       const canRecycle = !!this._findRecyclableCruiser();
-      const canSpawnArr = freeGate && list.length < 8;
-      if (freeGate && !inbound && (canRecycle || canSpawnArr)) ops.push("arrival");
-
-      const holding = list.filter((t) => t.phase === "hold");
+      const live = list.filter((t) => t.phase !== "gone").length;
+      if (freeGate && !inbound && (canRecycle || live < 8)) ops.push("arrival");
       if (holding.length) ops.push("depart");
       else if (!this._pipelineBusy()) {
-        const ready = list.filter((t) => t.phase === "gate" && t.wait <= 0);
-        if (ready.length) ops.push("push");
+        const ready = list.some((t) => t.phase === "gate" && t.wait <= 0);
+        if (ready) ops.push("push");
       }
-
       if (ops.length) {
         const op = ops[Math.floor(Math.random() * ops.length)];
-        if (op === "arrival") {
-          if (!this._recycleCruiserAsArrival()) this._spawnArrival(1300);
-        } else if (op === "depart") {
-          let next = holding[0];
-          for (const t of holding) if (t.x > next.x) next = t;
-          next.phase = "taxi";
-          next.active = true;
-        } else if (op === "push") {
-          let next = null;
-          for (const t of list) {
-            if (t.phase !== "gate" || t.wait > 0) continue;
-            if (!next || t.x > next.x) next = t;
-          }
-          if (next) {
-            this._gateOcc[next.gateSlot] = null;
-            next.gateSlot = -1;
-            next.phase = "turn";
-            next.wait = 0.35;
-            next.turnTo = 1;
-            next.afterTurn = "taxiOut";
-            next.goalX = thresh - 90;
-          }
-        }
+        if (op === "arrival") this._tryStartArrival();
+        else this._tryStartDep();
       }
     }
 
     this._nextAppear -= dt;
-    if (this._nextAppear <= 0) this._nextAppear = 8;
+    if (this._nextAppear <= 0) {
+      this._nextAppear = 8 + Math.random() * 6;
+      if (dual) {
+        const slot = this._freeGate();
+        const depParked = list.filter((t) => t.apron !== "arr" && (t.phase === "gate" || t.phase === "appear")).length;
+        const live = list.filter((t) => t.phase !== "gone").length;
+        if (slot >= 0 && depParked < 4 && live < 8) this._spawnAtGate(slot);
+      }
+    }
 
     for (const t of list) {
       if (t.phase === "gone") continue;
-      t.update(dt, gy, thresh, this.world.depRunwayEnd);
+      const t0 = t.rw0 != null ? t.rw0 : thresh;
+      const t1 = t.rw1 != null ? t.rw1 : w.depRunwayEnd;
+      t.update(dt, gy, t0, t1);
       if (t.justLanded) {
         t.justLanded = false;
         this._spawnPlaneSmoke(t);
+      }
+      // After a dual-field landing, skip the long down-runway taxi once
+      // the jet has rolled off the right of the screen.
+      if (dual && t.phase === "taxiIn" && (t.taxiInDir || -1) > 0 && t.x < w.arrRunwayEnd - 200) {
+        if (this.cam.worldToScreenX(t.x) > this.cam.w + 80) {
+          t.x = w.arrRunwayEnd - 40;
+          t.vx = 16;
+          t.active = false;
+        }
+      }
+    }
+  }
+
+  _tryStartArrival() {
+    const list = this.traffic;
+    const dual = this.world.dualRunways;
+    this._releaseOffscreenArrGate();
+    const freeArr = this._freeArrGate() >= 0;
+    const inbound = list.some((t) => t.phase === "approach" || t.phase === "rollout");
+    const canRecycle = !!this._findRecyclableCruiser();
+    const live = list.filter((t) => t.phase !== "gone").length;
+    if (!freeArr || inbound || (!canRecycle && live >= 8)) return false;
+    if (!this._recycleCruiserAsArrival()) this._spawnArrival(dual ? 1600 : 1300);
+    return true;
+  }
+
+  _tryStartDep() {
+    if (!this._canStartDep()) return false;
+    const w = this.world;
+    const list = this.traffic;
+    const dual = w.dualRunways;
+    const holding = list.filter((t) => t.phase === "hold");
+    if (holding.length) {
+      let next = holding[0];
+      for (const t of holding) if (t.x > next.x) next = t;
+      next.phase = "taxi";
+      next.active = true;
+      next.strip = "dep";
+      next.rw0 = w.depRunwayStart;
+      next.rw1 = w.depRunwayEnd;
+      return true;
+    }
+    if (dual ? this._depPipelineBusy() : this._pipelineBusy()) return false;
+    let next = null;
+    for (const t of list) {
+      if (t.phase !== "gate" || t.wait > 0) continue;
+      if (t.apron === "arr") continue;
+      if (!next || t.x > next.x) next = t;
+    }
+    if (!next) return false;
+    this._gateOcc[next.gateSlot] = null;
+    next.gateSlot = -1;
+    next.phase = "turn";
+    next.wait = 0.35;
+    next.turnTo = 1;
+    next.afterTurn = "taxiOut";
+    next.goalX = w.depRunwayStart - 90;
+    next.strip = "dep";
+    next.rw0 = w.depRunwayStart;
+    next.rw1 = w.depRunwayEnd;
+    next.apron = "dep";
+    return true;
+  }
+
+  _releaseOffscreenArrGate() {
+    if (!this.world.dualRunways) return;
+    if (this._freeArrGate() >= 0) return;
+    for (const t of this.traffic) {
+      if (t.apron !== "arr" || t.phase !== "gate" || t.wait > 0) continue;
+      const sx = this.cam.worldToScreenX(t.x);
+      if (sx < -120 || sx > this.cam.w + 120) {
+        this._arrGateOcc[t.gateSlot] = null;
+        t.phase = "gone";
+        return;
       }
     }
   }
 
   _recycleCruiserAsArrival() {
-    const slot = this._freeGate();
+    const slot = this._freeArrGate();
     if (slot < 0) return false;
     const t = this._findRecyclableCruiser();
     if (!t) return false;
-    const gy = this.world.groundElevation;
-    const thresh = this.world.depRunwayStart;
-    const dist = 1300;
+    const w = this.world;
+    const gy = w.groundElevation;
+    const thresh = w.dualRunways ? w.arrRunwayStart : w.depRunwayStart;
+    const dist = w.dualRunways ? 1600 : 1300;
     t.phase = "approach";
     t.x = thresh - dist;
     t.y = gy + dist * 0.052;
@@ -698,14 +811,19 @@ class Game {
     t.flaps = Math.min(t.spec.flapNotches, 3);
     t.throttle = 0.38;
     t.gateSlot = slot;
-    t.goalX = this.apron.slots[slot];
+    t.goalX = this.arrApron.slots[slot];
     t.wait = 0;
     t.handoff = null;
+    t.strip = w.dualRunways ? "arr" : "dep";
+    t.rw0 = thresh;
+    t.rw1 = w.dualRunways ? w.arrRunwayEnd : w.depRunwayEnd;
+    t.taxiInDir = w.dualRunways ? 1 : -1;
+    t.apron = w.dualRunways ? "arr" : "dep";
     const pick = this._pickFreshTraffic(t.airline.id + "|" + t.spec.id);
     t.spec = pick.spec;
     t.airline = pick.airline;
     t.flaps = Math.min(t.spec.flapNotches, 3);
-    this._gateOcc[slot] = t;
+    this._arrGateOcc[slot] = t;
     return true;
   }
 
@@ -720,31 +838,42 @@ class Game {
     t.goalX = x;
     t.alpha = 0;
     t.wait = 3 + Math.random() * 5;
+    t.persist = true;
+    t.strip = "dep";
+    t.apron = "dep";
+    t.rw0 = this.world.depRunwayStart;
+    t.rw1 = this.world.depRunwayEnd;
     this.traffic.push(t);
     this._gateOcc[slot] = t;
   }
 
   _spawnArrival(dist) {
-    const slot = this._freeGate();
+    const slot = this._freeArrGate();
     if (slot < 0) return;
-    const gy = this.world.groundElevation;
-    const thresh = this.world.depRunwayStart;
+    const w = this.world;
+    const gy = w.groundElevation;
+    const thresh = w.dualRunways ? w.arrRunwayStart : w.depRunwayStart;
     const pick = this._pickTraffic();
-    dist = dist || 2100;
+    dist = dist || (w.dualRunways ? 1600 : 2100);
     const t = new TrafficPlane(pick.spec, pick.airline, thresh - dist, gy + dist * 0.052);
     t.phase = "approach";
     t.facing = 1;
     t.onGround = false;
     t.gearDown = true;
     t.flaps = Math.min(t.spec.flapNotches, 3);
-    t.goalX = this.apron.slots[slot];
+    t.goalX = this.arrApron.slots[slot];
     t.gateSlot = slot;
     t.active = true;
     t.persist = true;
     t.alpha = 1;
     t.vx = (t.spec.vApproach || 138) / MS_TO_KT;
+    t.strip = w.dualRunways ? "arr" : "dep";
+    t.rw0 = thresh;
+    t.rw1 = w.dualRunways ? w.arrRunwayEnd : w.depRunwayEnd;
+    t.taxiInDir = w.dualRunways ? 1 : -1;
+    t.apron = w.dualRunways ? "arr" : "dep";
     this.traffic.push(t);
-    this._gateOcc[slot] = t;
+    this._arrGateOcc[slot] = t;
   }
 
   _spawnPlaneSmoke(ac) {
@@ -1542,6 +1671,11 @@ class TrafficPlane {
     this.justLanded = false;
     this.handoff = null;
     this.persist = false;
+    this.strip = "dep";
+    this.rw0 = null;
+    this.rw1 = null;
+    this.taxiInDir = -1;
+    this.apron = "dep";
   }
 
   update(dt, groundY, thresh, runwayEnd) {
@@ -1578,6 +1712,10 @@ class TrafficPlane {
       if (this.wait <= 0) {
         this.facing = this.turnTo || 1;
         this.phase = this.afterTurn || "taxiOut";
+        if (this.phase === "gate") {
+          this.wait = 4 + Math.random() * 6;
+          this.active = false;
+        }
       }
       return;
     }
@@ -1639,32 +1777,48 @@ class TrafficPlane {
       this.x += this.vx * dt;
       this.airspeed = this.vx;
       if (this.x >= thresh + rolloutMin && this.vx <= taxiSpeed + 1.5) {
-        this.phase = "turn";
-        this.wait = 0.55;
-        this.turnTo = -1;
-        this.afterTurn = "taxiIn";
+        if ((this.taxiInDir || -1) > 0) {
+          this.phase = "taxiIn";
+        } else {
+          this.phase = "turn";
+          this.wait = 0.55;
+          this.turnTo = -1;
+          this.afterTurn = "taxiIn";
+        }
       }
       return;
     }
 
     if (this.phase === "taxiIn") {
-      this.facing = -1;
+      const dir = this.taxiInDir || -1;
+      this.facing = dir;
       this.throttle = 0.14;
-      this.vx = lerp(this.vx, -taxiSpeed, 1 - Math.exp(-dt * 3));
+      this.vx = lerp(this.vx, dir * taxiSpeed, 1 - Math.exp(-dt * 3));
       this.x += this.vx * dt;
       this.airspeed = Math.abs(this.vx);
       this.y = groundY;
       this.onGround = true;
       this.pitch = 0;
-      this.active = this.x > thresh - 40;
-      if (this.x <= this.goalX) {
+      const vacated = dir > 0
+        ? this.x > (runwayEnd != null ? runwayEnd : thresh) + 40
+        : this.x < thresh - 40;
+      this.active = !vacated;
+      const arrived = dir > 0 ? this.x >= this.goalX : this.x <= this.goalX;
+      if (arrived) {
         this.x = this.goalX;
         this.vx = 0;
         this.airspeed = 0;
         this.throttle = 0;
         this.active = false;
-        this.phase = "gate";
-        this.wait = 4 + Math.random() * 6;
+        if (dir > 0 && this.facing !== -1) {
+          this.phase = "turn";
+          this.wait = 0.4;
+          this.turnTo = -1;
+          this.afterTurn = "gate";
+        } else {
+          this.phase = "gate";
+          this.wait = 4 + Math.random() * 6;
+        }
       }
       return;
     }
