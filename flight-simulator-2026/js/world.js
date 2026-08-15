@@ -987,6 +987,81 @@ class World {
         hts.forEach((h, i) => { const off = 20 + i * 72; box(off, 54, h, i % 2 ? haze : hazeDark); windows(off, 54, h); });
         break;
       }
+      case "indiagate": {
+        // Delhi: India Gate arch and a low sandstone skyline.
+        box(-240, 70, 90, haze); windows(-240, 70, 90);
+        box(-140, 52, 70, hazeDark);
+        ctx.fillStyle = "#c4a574";
+        ctx.fillRect(at(20) - m(90), gy - m(40), m(180), m(40));
+        ctx.fillRect(at(20) - m(110), gy - m(160), m(40), m(160));
+        ctx.fillRect(at(20) + m(70), gy - m(160), m(40), m(160));
+        ctx.beginPath();
+        ctx.moveTo(at(20) - m(70), gy - m(160));
+        ctx.lineTo(at(20) - m(70), gy - m(210));
+        ctx.quadraticCurveTo(at(20), gy - m(250), at(20) + m(70), gy - m(210));
+        ctx.lineTo(at(20) + m(70), gy - m(160));
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#0b1220";
+        ctx.beginPath();
+        ctx.moveTo(at(20) - m(48), gy - m(40));
+        ctx.lineTo(at(20) - m(48), gy - m(150));
+        ctx.quadraticCurveTo(at(20), gy - m(195), at(20) + m(48), gy - m(150));
+        ctx.lineTo(at(20) + m(48), gy - m(40));
+        ctx.closePath();
+        ctx.fill();
+        box(220, 60, 110, haze); windows(220, 60, 110);
+        break;
+      }
+      case "pearl": {
+        // Shanghai: Oriental Pearl stacked spheres plus a Pudong skyline.
+        const hts = [160, 240, 320, 280, 200, 360];
+        hts.forEach((h, i) => { const off = -40 + i * 70; box(off, 48, h, i % 2 ? haze : hazeDark); windows(off, 48, h); });
+        ctx.fillStyle = hazeDark;
+        ctx.fillRect(at(-220) - m(8), gy - m(300), m(16), m(300));
+        ctx.fillStyle = haze;
+        ctx.beginPath();
+        ctx.arc(at(-220), gy - m(120), m(36), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(at(-220), gy - m(230), m(24), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = hazeDark;
+        ctx.lineWidth = m(3);
+        ctx.beginPath();
+        ctx.moveTo(at(-220), gy - m(300));
+        ctx.lineTo(at(-220), gy - m(340));
+        ctx.stroke();
+        break;
+      }
+      case "andes": {
+        // Santiago: snow peaks behind a low city.
+        ctx.fillStyle = "#6a7a8c";
+        ctx.beginPath();
+        ctx.moveTo(at(-420), gy);
+        ctx.lineTo(at(-280), gy - m(220));
+        ctx.lineTo(at(-140), gy - m(90));
+        ctx.lineTo(at(0), gy - m(280));
+        ctx.lineTo(at(140), gy - m(110));
+        ctx.lineTo(at(260), gy - m(240));
+        ctx.lineTo(at(400), gy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#e8eef4";
+        ctx.beginPath();
+        ctx.moveTo(at(-310), gy - m(170));
+        ctx.lineTo(at(-280), gy - m(220));
+        ctx.lineTo(at(-250), gy - m(170));
+        ctx.moveTo(at(-30), gy - m(210));
+        ctx.lineTo(at(0), gy - m(280));
+        ctx.lineTo(at(30), gy - m(210));
+        ctx.moveTo(at(230), gy - m(190));
+        ctx.lineTo(at(260), gy - m(240));
+        ctx.lineTo(at(290), gy - m(190));
+        ctx.fill();
+        [ -180, -80, 80, 180 ].forEach((off, i) => { box(off, 50, 70 + i * 18, haze); windows(off, 50, 70 + i * 18); });
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);

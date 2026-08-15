@@ -381,6 +381,12 @@ const AIRPORTS = [
     theme: { terrain: ["#3f6e3a", "#244a22"], sky: ["#8aa8c0", "#d4e0e8"], landmark: "needle" } },
   { icao: "FAOR", iata: "JNB", name: "Johannesburg OR Tambo", city: "Johannesburg", lat: -26.1392, lon: 28.2460, elevation: 1694, runway: 4418,
     theme: { terrain: ["#a89a54", "#6f6228"], sky: ["#8fbad6", "#e3ddc4"], landmark: "highveld" } },
+  { icao: "VIDP", iata: "DEL", name: "Delhi Indira Gandhi", city: "Delhi",        lat: 28.5562,  lon: 77.1000,   elevation: 237, runway: 4430,
+    theme: { terrain: ["#b89a4e", "#7a6224"], sky: ["#8fb8d8", "#f0e0b8"], landmark: "indiagate" } },
+  { icao: "ZSPD", iata: "PVG", name: "Shanghai Pudong",     city: "Shanghai",     lat: 31.1443,  lon: 121.8083,  elevation: 4,   runway: 4000,
+    theme: { terrain: ["#4d7538", "#314e22"], sky: ["#8fb6d8", "#d8e6f0"], landmark: "pearl" } },
+  { icao: "SCEL", iata: "SCL", name: "Santiago Intl",       city: "Santiago",     lat: -33.3930, lon: -70.7858,  elevation: 474, runway: 3800,
+    theme: { terrain: ["#3f6e3a", "#244a22"], sky: ["#8aa8c0", "#d4e0e8"], landmark: "andes" } },
 ];
 
 /* Airlines commonly seen parked at each airport (id → count), used to
@@ -442,6 +448,9 @@ const AIRPORT_FLEETS = {
   BKK: [["sia", 3], ["qtr", 2], ["thy", 2], ["kal", 1], ["qfa", 1], ["uae", 1], ["dlh", 1]],
   SEA: [["ual", 4], ["aal", 3], ["dal", 2], ["aca", 2], ["jal", 1], ["qfa", 1]],
   JNB: [["eth", 3], ["baw", 2], ["qtr", 2], ["kqa", 2], ["dlh", 1], ["afr", 1]],
+  DEL: [["qtr", 3], ["uae", 2], ["baw", 2], ["sia", 1], ["dlh", 1], ["afr", 1], ["thy", 1]],
+  PVG: [["kal", 3], ["jal", 2], ["sia", 2], ["dlh", 1], ["ual", 1], ["qfa", 1], ["qtr", 1]],
+  SCL: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["dal", 1]],
   GRU: [["lan", 5], ["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["ibe", 1]],
   EZE: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["qtr", 1]],
   YYZ: [["aca", 7], ["ual", 1], ["aal", 1], ["baw", 1], ["dlh", 1], ["afr", 1]],
@@ -482,9 +491,9 @@ const AIRPORT_REGION = {
   KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na", MMMX: "na", KSEA: "na",
   EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu", EKCH: "eu",
   OMDB: "me", OTHH: "me",
-  RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia", VTBS: "asia",
+  RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia", VTBS: "asia", VIDP: "asia", ZSPD: "asia",
   YSSY: "oceania", NZAA: "oceania",
-  SBGR: "sa", SAEZ: "sa",
+  SBGR: "sa", SAEZ: "sa", SCEL: "sa",
   HAAB: "af", HKJK: "af", FACT: "af", FAOR: "af",
 };
 
