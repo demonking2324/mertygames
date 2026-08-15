@@ -169,7 +169,6 @@ class Game {
     this.world.liveApron = true;
     this.apron = this.world.apronLayout(ap, this.world.depRunwayStart, -1);
     this._gateOcc = new Array(this.apron.n).fill(null);
-    this._nextRunway = "departure";
     this._nextAppear = 7 + Math.random() * 5;
     this._spawnAirportTheater();
     this._spawnArrival(1300);
@@ -589,14 +588,17 @@ class Game {
     return -1;
   }
 
-  _canStartDeparture() {
+  _pipelineBusy() {
     const block = new Set(["turn", "taxiOut", "hold", "advance", "taxi", "lineup", "spool", "roll", "approach", "rollout", "taxiIn"]);
-    return this._nextRunway === "departure" && !this.traffic.some((t) => block.has(t.phase));
+    return this.traffic.some((t) => block.has(t.phase));
   }
 
-  _canStartArrival() {
-    return this._nextRunway === "arrival" && this._freeGate() >= 0 &&
-      !this.traffic.some((t) => t.phase === "approach" || t.phase === "rollout");
+  _findRecyclableCruiser() {
+    const far = this.world.depRunwayEnd + 1800;
+    return this.traffic.find((p) => {
+      if (p.phase !== "cruise" || p.x < far) return false;
+      return this.cam.worldToScreenX(p.x) > this.cam.w + 160;
+    }) || null;
   }
 
   _updateFreeCamTraffic(dt) {
@@ -604,43 +606,48 @@ class Game {
     const thresh = this.world.depRunwayStart;
     const list = this.traffic;
 
-    if (this._canStartDeparture()) {
-      let next = null;
-      for (const t of list) {
-        if (t.phase !== "gate") continue;
-        t.wait -= dt;
-        if (t.wait <= 0 && (!next || t.x > next.x)) next = t;
-      }
-      if (next) {
-        this._gateOcc[next.gateSlot] = null;
-        next.gateSlot = -1;
-        next.phase = "turn";
-        next.wait = 0.35;
-        next.turnTo = 1;
-        next.afterTurn = "taxiOut";
-        next.goalX = thresh - 90;
-      }
+    for (const t of list) {
+      if (t.phase === "gate") t.wait -= dt;
     }
 
     if (!this._runwayBusy()) {
-      if (this._canStartArrival()) {
-        if (this._recycleCruiserAsArrival()) {
-          this._nextRunway = "departure";
-        } else if (!this.traffic.some((t) => t.phase === "cruise" || t.phase === "climb")) {
-          this._spawnArrival(1300);
-          this._nextRunway = "departure";
-        }
-      } else {
-        let holding = null;
-        for (const t of list) {
-          if (t.phase !== "hold") continue;
-          if (!holding || t.x > holding.x) holding = t;
-        }
-        if (holding && this._nextRunway === "departure") {
-          holding.wait -= dt;
-          if (holding.wait <= 0) {
-            holding.phase = "taxi";
-            holding.active = true;
+      const ops = [];
+      const freeGate = this._freeGate() >= 0;
+      const inbound = list.some((t) => t.phase === "approach" || t.phase === "rollout");
+      const canRecycle = !!this._findRecyclableCruiser();
+      const canSpawnArr = freeGate && list.length < 8;
+      if (freeGate && !inbound && (canRecycle || canSpawnArr)) ops.push("arrival");
+
+      const holding = list.filter((t) => t.phase === "hold");
+      if (holding.length) ops.push("depart");
+      else if (!this._pipelineBusy()) {
+        const ready = list.filter((t) => t.phase === "gate" && t.wait <= 0);
+        if (ready.length) ops.push("push");
+      }
+
+      if (ops.length) {
+        const op = ops[Math.floor(Math.random() * ops.length)];
+        if (op === "arrival") {
+          if (!this._recycleCruiserAsArrival()) this._spawnArrival(1300);
+        } else if (op === "depart") {
+          let next = holding[0];
+          for (const t of holding) if (t.x > next.x) next = t;
+          next.phase = "taxi";
+          next.active = true;
+        } else if (op === "push") {
+          let next = null;
+          for (const t of list) {
+            if (t.phase !== "gate" || t.wait > 0) continue;
+            if (!next || t.x > next.x) next = t;
+          }
+          if (next) {
+            this._gateOcc[next.gateSlot] = null;
+            next.gateSlot = -1;
+            next.phase = "turn";
+            next.wait = 0.35;
+            next.turnTo = 1;
+            next.afterTurn = "taxiOut";
+            next.goalX = thresh - 90;
           }
         }
       }
@@ -656,21 +663,13 @@ class Game {
         t.justLanded = false;
         this._spawnPlaneSmoke(t);
       }
-      if (t.handoff) {
-        this._nextRunway = t.handoff;
-        t.handoff = null;
-      }
     }
   }
 
   _recycleCruiserAsArrival() {
     const slot = this._freeGate();
     if (slot < 0) return false;
-    const far = this.world.depRunwayEnd + 1800;
-    const t = this.traffic.find((p) => {
-      if (p.phase !== "cruise" || p.x < far) return false;
-      return this.cam.worldToScreenX(p.x) > this.cam.w + 160;
-    });
+    const t = this._findRecyclableCruiser();
     if (!t) return false;
     const gy = this.world.groundElevation;
     const thresh = this.world.depRunwayStart;
