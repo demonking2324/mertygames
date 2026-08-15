@@ -164,8 +164,8 @@ class Game {
     this.world.liveApron = true;
     this.apron = this.world.apronLayout(ap, this.world.depRunwayStart, -1);
     this._gateOcc = new Array(this.apron.n).fill(null);
-    this._nextArrival = 8 + Math.random() * 5;
-    this._nextAppear = 12 + Math.random() * 8;
+    this._nextArrival = 5 + Math.random() * 3;
+    this._nextAppear = 7 + Math.random() * 5;
     this._spawnAirportTheater();
 
     this.cam.scale = 0.55;
@@ -406,7 +406,7 @@ class Game {
       const x = holdShort - (i + 1) * gap;
       const t = new TrafficPlane(pick.spec, pick.airline, x, w.groundElevation);
       t.goalX = x;
-      t.wait = i === 0 ? 2.2 : 1.4;
+      t.wait = i === 0 ? 1.1 : 0.7;
       this.traffic.push(t);
     }
     this.ac.x = holdShort - (n + 1) * gap;
@@ -553,7 +553,7 @@ class Game {
       t.facing = -1;
       t.gateSlot = i;
       t.goalX = slots[i];
-      t.wait = 2.8 + (nParked - 1 - i) * 3.2 + Math.random() * 3;
+      t.wait = 1.4 + (nParked - 1 - i) * 1.6 + Math.random() * 1.2;
       this.traffic.push(t);
       this._gateOcc[i] = t;
     }
@@ -592,7 +592,7 @@ class Game {
         this._gateOcc[next.gateSlot] = null;
         next.gateSlot = -1;
         next.phase = "turn";
-        next.wait = 0.7;
+        next.wait = 0.35;
         next.turnTo = 1;
         next.afterTurn = "taxiOut";
         next.goalX = thresh - 90;
@@ -617,7 +617,7 @@ class Game {
     this._nextArrival -= dt;
     if (this._nextArrival <= 0 && this._canStartArrival()) {
       this._spawnArrival();
-      this._nextArrival = 16 + Math.random() * 10;
+      this._nextArrival = 9 + Math.random() * 5;
     }
 
     this._nextAppear -= dt;
@@ -627,7 +627,7 @@ class Game {
       if (slot >= 0 && parked < this.apron.n - 1) {
         this._spawnAtGate(slot);
       }
-      this._nextAppear = 12 + Math.random() * 10;
+      this._nextAppear = 8 + Math.random() * 6;
     }
 
     for (const t of list) {
@@ -654,7 +654,7 @@ class Game {
     t.gateSlot = slot;
     t.goalX = x;
     t.alpha = 0;
-    t.wait = 6 + Math.random() * 14;
+    t.wait = 3 + Math.random() * 5;
     this.traffic.push(t);
     this._gateOcc[slot] = t;
   }
@@ -1477,7 +1477,7 @@ class TrafficPlane {
 
   update(dt, groundY, thresh) {
     const vr = (this.spec.vRotate || 145) / MS_TO_KT;
-    const taxiSpeed = 17;
+    const taxiSpeed = 38;
 
     if (this.phase === "gate" || this.phase === "appear") {
       this.throttle = 0;
@@ -1523,7 +1523,7 @@ class TrafficPlane {
         this.throttle = 0;
         this.airspeed = 0;
         this.phase = "hold";
-        this.wait = 1.1 + Math.random() * 0.8;
+        this.wait = 0.35 + Math.random() * 0.25;
       }
       return;
     }
@@ -1560,13 +1560,13 @@ class TrafficPlane {
       this.y = groundY;
       this.throttle = 0;
       this.active = true;
-      this.vx = Math.max(15, this.vx - 24 * dt);
+      this.vx = Math.max(taxiSpeed, this.vx - 38 * dt);
       this.x += this.vx * dt;
       this.airspeed = this.vx;
       this.pitch = 0;
-      if (this.vx <= 16.5) {
+      if (this.vx <= taxiSpeed + 0.5) {
         this.phase = "turn";
-        this.wait = 0.8;
+        this.wait = 0.35;
         this.turnTo = -1;
         this.afterTurn = "taxiIn";
       }
@@ -1576,7 +1576,7 @@ class TrafficPlane {
     if (this.phase === "taxiIn") {
       this.facing = -1;
       this.throttle = 0.16;
-      this.vx = lerp(this.vx, -15, 1 - Math.exp(-dt * 2.2));
+      this.vx = lerp(this.vx, -taxiSpeed, 1 - Math.exp(-dt * 3));
       this.x += this.vx * dt;
       this.airspeed = Math.abs(this.vx);
       this.y = groundY;
@@ -1590,7 +1590,7 @@ class TrafficPlane {
         this.throttle = 0;
         this.active = false;
         this.phase = "gate";
-        this.wait = 8 + Math.random() * 14;
+        this.wait = 3.5 + Math.random() * 5;
       }
       return;
     }
@@ -1632,12 +1632,12 @@ class TrafficPlane {
       this.onGround = true;
       this.pitch = 0;
       if (this.x >= thresh + 50) {
-        this.vx *= Math.exp(-dt * 5);
-        if (this.vx < 1.8) {
+        this.vx *= Math.exp(-dt * 8);
+        if (this.vx < 2.4) {
           this.vx = 0;
           this.airspeed = 0;
           this.phase = "lineup";
-          this.wait = 1.15;
+          this.wait = 0.4;
         }
       }
       return;
@@ -1654,14 +1654,14 @@ class TrafficPlane {
     }
 
     if (this.phase === "spool") {
-      this.throttle = Math.min(1, this.throttle + dt * 0.5);
+      this.throttle = Math.min(1, this.throttle + dt * 1.15);
       if (this.throttle >= 0.95) this.phase = "roll";
       return;
     }
 
     if (this.phase === "roll") {
       this.throttle = 1;
-      this.vx += 10.5 * dt;
+      this.vx += 22 * dt;
       this.x += this.vx * dt;
       this.airspeed = this.vx;
       this.pitch = 0;
@@ -1674,14 +1674,14 @@ class TrafficPlane {
     if (this.phase === "climb") {
       this.throttle = 1;
       this.onGround = false;
-      this.pitch = lerp(this.pitch, rad(11), 1 - Math.exp(-dt * 2.2));
-      this.vx = Math.max(this.vx, vr * 1.05);
-      this.vy = 16;
+      this.pitch = lerp(this.pitch, rad(12), 1 - Math.exp(-dt * 3.2));
+      this.vx = Math.max(this.vx, vr * 1.12);
+      this.vy = 28;
       this.x += this.vx * dt;
       this.y += this.vy * dt;
       this.airspeed = Math.hypot(this.vx, this.vy);
       if (this.y - groundY > 25) this.gearDown = false;
-      if (this.y - groundY > 220) {
+      if (this.y - groundY > 160) {
         this.active = false;
         this.phase = "fade";
       }
