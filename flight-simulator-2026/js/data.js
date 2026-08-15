@@ -387,6 +387,16 @@ const AIRPORTS = [
     theme: { terrain: ["#4d7538", "#314e22"], sky: ["#8fb6d8", "#d8e6f0"], landmark: "pearl" } },
   { icao: "SCEL", iata: "SCL", name: "Santiago Intl",       city: "Santiago",     lat: -33.3930, lon: -70.7858,  elevation: 474, runway: 3800,
     theme: { terrain: ["#3f6e3a", "#244a22"], sky: ["#8aa8c0", "#d4e0e8"], landmark: "andes" } },
+  { icao: "VABB", iata: "BOM", name: "Mumbai Chhatrapati S.", city: "Mumbai",     lat: 19.0896,  lon: 72.8656,   elevation: 11,  runway: 3445,
+    theme: { terrain: ["#8a9a52", "#5f6f33"], sky: ["#6db4e6", "#ffd9a0"], landmark: "gateway" } },
+  { icao: "EIDW", iata: "DUB", name: "Dublin Intl",         city: "Dublin",       lat: 53.4264,  lon: -6.2499,   elevation: 74,  runway: 2637,
+    theme: { terrain: ["#3e6f39", "#274b22"], sky: ["#9fb0bd", "#cbd6dd"], landmark: "castle" } },
+  { icao: "KBOS", iata: "BOS", name: "Boston Logan",        city: "Boston",       lat: 42.3656,  lon: -71.0096,  elevation: 6,   runway: 3069,
+    theme: { terrain: ["#4f7a3a", "#2f4d24"], sky: ["#7aa7d6", "#b9d3ea"], landmark: "boston" } },
+  { icao: "HECA", iata: "CAI", name: "Cairo Intl",          city: "Cairo",        lat: 30.1219,  lon: 31.4056,   elevation: 116, runway: 4000,
+    theme: { terrain: ["#d8b676", "#a9863f"], sky: ["#7fc0e8", "#f4e2b0"], landmark: "giza" } },
+  { icao: "YMML", iata: "MEL", name: "Melbourne Intl",      city: "Melbourne",    lat: -37.6733, lon: 144.8433,  elevation: 132, runway: 3657,
+    theme: { terrain: ["#6f9a44", "#4a6b2c"], sky: ["#7fbce8", "#dcefff"], landmark: "spire" } },
 ];
 
 /* Airlines commonly seen parked at each airport (id → count), used to
@@ -451,6 +461,11 @@ const AIRPORT_FLEETS = {
   DEL: [["qtr", 3], ["uae", 2], ["baw", 2], ["sia", 1], ["dlh", 1], ["afr", 1], ["thy", 1]],
   PVG: [["kal", 3], ["jal", 2], ["sia", 2], ["dlh", 1], ["ual", 1], ["qfa", 1], ["qtr", 1]],
   SCL: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["dal", 1]],
+  BOM: [["qtr", 3], ["uae", 2], ["sia", 2], ["baw", 1], ["dlh", 1], ["thy", 1]],
+  DUB: [["ryr", 5], ["baw", 2], ["aal", 1], ["ual", 1], ["dlh", 1], ["sas", 1]],
+  BOS: [["jbu", 4], ["dal", 3], ["aal", 2], ["ual", 1], ["aca", 1], ["baw", 1]],
+  CAI: [["uae", 2], ["qtr", 2], ["dlh", 1], ["baw", 1], ["afr", 1], ["thy", 1], ["eth", 1]],
+  MEL: [["qfa", 6], ["sia", 1], ["uae", 1], ["qtr", 1], ["ual", 1]],
   GRU: [["lan", 5], ["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["ibe", 1]],
   EZE: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["qtr", 1]],
   YYZ: [["aca", 7], ["ual", 1], ["aal", 1], ["baw", 1], ["dlh", 1], ["afr", 1]],
@@ -488,13 +503,13 @@ function airportFleet(airport) {
 /* Coarse continent per airport — used to decide when a route flies over
  * open ocean (e.g., JFK→LHR crosses the Atlantic). */
 const AIRPORT_REGION = {
-  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na", MMMX: "na", KSEA: "na",
-  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu", EKCH: "eu",
+  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na", MMMX: "na", KSEA: "na", KBOS: "na",
+  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu", EKCH: "eu", EIDW: "eu",
   OMDB: "me", OTHH: "me",
-  RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia", VTBS: "asia", VIDP: "asia", ZSPD: "asia",
-  YSSY: "oceania", NZAA: "oceania",
+  RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia", VTBS: "asia", VIDP: "asia", ZSPD: "asia", VABB: "asia",
+  YSSY: "oceania", NZAA: "oceania", YMML: "oceania",
   SBGR: "sa", SAEZ: "sa", SCEL: "sa",
-  HAAB: "af", HKJK: "af", FACT: "af", FAOR: "af",
+  HAAB: "af", HKJK: "af", FACT: "af", FAOR: "af", HECA: "af",
 };
 
 /* Continent zoom windows for the route map. lon/lat bounds in degrees. */

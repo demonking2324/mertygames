@@ -1062,6 +1062,106 @@ class World {
         [ -180, -80, 80, 180 ].forEach((off, i) => { box(off, 50, 70 + i * 18, haze); windows(off, 50, 70 + i * 18); });
         break;
       }
+      case "gateway": {
+        // Mumbai: Gateway of India arch by the waterfront.
+        box(-240, 64, 85, haze); windows(-240, 64, 85);
+        ctx.fillStyle = "#c4a574";
+        ctx.fillRect(at(20) - m(100), gy - m(36), m(200), m(36));
+        ctx.fillRect(at(20) - m(110), gy - m(170), m(44), m(170));
+        ctx.fillRect(at(20) + m(66), gy - m(170), m(44), m(170));
+        ctx.fillRect(at(20) - m(70), gy - m(210), m(140), m(50));
+        ctx.beginPath();
+        ctx.moveTo(at(20) - m(66), gy - m(36));
+        ctx.lineTo(at(20) - m(66), gy - m(150));
+        ctx.quadraticCurveTo(at(20), gy - m(200), at(20) + m(66), gy - m(150));
+        ctx.lineTo(at(20) + m(66), gy - m(36));
+        ctx.closePath();
+        ctx.fillStyle = "#0b1220";
+        ctx.fill();
+        box(230, 58, 100, haze); windows(230, 58, 100);
+        break;
+      }
+      case "castle": {
+        // Dublin: a keep with corner towers.
+        box(-200, 60, 80, haze); windows(-200, 60, 80);
+        ctx.fillStyle = hazeDark;
+        ctx.fillRect(at(20) - m(80), gy - m(130), m(160), m(130));
+        ctx.fillRect(at(20) - m(100), gy - m(170), m(40), m(170));
+        ctx.fillRect(at(20) + m(60), gy - m(170), m(40), m(170));
+        ctx.fillStyle = "#3a2a22";
+        ctx.beginPath();
+        ctx.moveTo(at(20) - m(108), gy - m(170));
+        ctx.lineTo(at(20) - m(80), gy - m(200));
+        ctx.lineTo(at(20) - m(52), gy - m(170));
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(at(20) + m(52), gy - m(170));
+        ctx.lineTo(at(20) + m(80), gy - m(200));
+        ctx.lineTo(at(20) + m(108), gy - m(170));
+        ctx.closePath();
+        ctx.fill();
+        windows(20, 140, 110);
+        box(220, 52, 90, haze); windows(220, 52, 90);
+        break;
+      }
+      case "boston": {
+        // Boston: a brick row and a pointed downtown tower.
+        const bricks = "#8a4a3a";
+        [-220, -150, -80].forEach((off, i) => {
+          ctx.fillStyle = i % 2 ? bricks : "#6e3c30";
+          ctx.fillRect(at(off) - m(28), gy - m(70 + i * 10), m(56), m(70 + i * 10));
+        });
+        const hts = [140, 200, 280, 170, 230];
+        hts.forEach((h, i) => { const off = 40 + i * 68; box(off, 48, h, i % 2 ? haze : hazeDark); windows(off, 48, h); });
+        ctx.strokeStyle = hazeDark;
+        ctx.lineWidth = m(4);
+        ctx.beginPath();
+        ctx.moveTo(at(176), gy - m(280));
+        ctx.lineTo(at(176), gy - m(330));
+        ctx.stroke();
+        break;
+      }
+      case "giza": {
+        // Cairo: three pyramids on the sand.
+        const pyramid = (off, h, col) => {
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(at(off) - m(h * 0.7), gy);
+          ctx.lineTo(at(off), gy - m(h));
+          ctx.lineTo(at(off) + m(h * 0.7), gy);
+          ctx.closePath();
+          ctx.fill();
+        };
+        pyramid(-80, 140, "#c4a574");
+        pyramid(80, 220, "#d4b45a");
+        pyramid(220, 110, "#b89658");
+        ctx.fillStyle = "#c4a574";
+        ctx.beginPath();
+        ctx.ellipse(at(-240), gy - m(28), m(50), m(28), 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(at(-240) - m(18), gy - m(70), m(36), m(50));
+        break;
+      }
+      case "spire": {
+        // Melbourne: Arts Centre spire plus a river-city skyline.
+        const hts = [120, 190, 260, 210, 300, 160];
+        hts.forEach((h, i) => { const off = -80 + i * 70; box(off, 50, h, i % 2 ? haze : hazeDark); windows(off, 50, h); });
+        ctx.fillStyle = hazeDark;
+        ctx.beginPath();
+        ctx.moveTo(at(-260) - m(40), gy);
+        ctx.lineTo(at(-260), gy - m(220));
+        ctx.lineTo(at(-260) + m(40), gy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = haze;
+        ctx.lineWidth = m(3);
+        ctx.beginPath();
+        ctx.moveTo(at(-260), gy - m(220));
+        ctx.lineTo(at(-260), gy - m(320));
+        ctx.stroke();
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);
