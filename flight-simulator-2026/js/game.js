@@ -373,7 +373,7 @@ class Game {
   /* Detailed side-view airliner/GA drawing in local (nose-right) coordinates. */
   _drawPlaneBody(ctx, ac, L) {
     const spec = ac.spec;
-    const H = L * (spec.doubleDeck ? 0.20 : spec.wide ? 0.14 : 0.115);
+    const H = L * (spec.wide ? 0.14 : 0.115);
     const al = ac.airline;
     const body = al.fuselage;
     const belly = al.belly || shade(body, -14);
@@ -478,18 +478,13 @@ class Game {
 
     // ---- Cabin windows ----
     ctx.fillStyle = "rgba(150,200,235,0.95)";
-    const decks = spec.doubleDeck ? 2 : 1;
     const count = spec.engineType === "prop" ? 4 : (spec.wide ? 14 : 9);
     const startX = L * 0.28, endX = -L * 0.28;
-    const wsz = Math.max(1.2, H * (spec.doubleDeck ? 0.16 : 0.22));
-    for (let deck = 0; deck < decks; deck++) {
-      const winY = spec.doubleDeck
-        ? (deck === 0 ? -H * 0.62 : -H * 0.12)
-        : -H * 0.18;
-      for (let i = 0; i < count; i++) {
-        const wx = lerp(startX, endX, i / (count - 1));
-        ctx.fillRect(wx - wsz / 2, winY, wsz, wsz * 1.3);
-      }
+    const winY = -H * 0.18;
+    const wsz = Math.max(1.2, H * 0.22);
+    for (let i = 0; i < count; i++) {
+      const wx = lerp(startX, endX, i / (count - 1));
+      ctx.fillRect(wx - wsz / 2, winY, wsz, wsz * 1.3);
     }
 
     // ---- Landing gear ----
@@ -896,31 +891,21 @@ class Game {
       return;
     }
 
-    // Jet: underslung turbofan pod(s) below the wing.
+    // Jet: underslung turbofan pod below the wing.
     const ey = wingY + wingDrop * H * 1.05;
     const ew = spec.wide ? L * 0.26 : L * 0.20;
     const eh = spec.wide ? H * 1.15 : H * 0.95;
-    const paint = () => {
-      ctx.fillStyle = ac.airline.engine || shade(ac.airline.fuselage, -28);
-      roundRect(ctx, -L * 0.02, ey - eh / 2, ew, eh, eh * 0.45);
-      ctx.fill();
-      ctx.fillStyle = "#0f1620";
-      ctx.beginPath();
-      ctx.ellipse(-L * 0.02 + ew, ey, eh * 0.16, eh * 0.42, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = shade(ac.airline.engine || ac.airline.fuselage, -40);
-      ctx.beginPath();
-      ctx.ellipse(-L * 0.02, ey, eh * 0.12, eh * 0.32, 0, 0, Math.PI * 2);
-      ctx.fill();
-    };
-    paint();
-    if ((spec.engineCount || 2) >= 4) {
-      ctx.save();
-      ctx.translate(-L * 0.16, wingDrop * H * 0.22);
-      ctx.scale(0.82, 0.82);
-      paint();
-      ctx.restore();
-    }
+    ctx.fillStyle = ac.airline.engine || shade(ac.airline.fuselage, -28);
+    roundRect(ctx, -L * 0.02, ey - eh / 2, ew, eh, eh * 0.45);
+    ctx.fill();
+    ctx.fillStyle = "#0f1620";
+    ctx.beginPath();
+    ctx.ellipse(-L * 0.02 + ew, ey, eh * 0.16, eh * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = shade(ac.airline.engine || ac.airline.fuselage, -40);
+    ctx.beginPath();
+    ctx.ellipse(-L * 0.02, ey, eh * 0.12, eh * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   _showMessage(titleHtml, bodyHtml, withButtons) {

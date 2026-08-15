@@ -302,33 +302,6 @@ const AIRCRAFT_TYPES = [
     winglets: true,
     wide: true,
   },
-  {
-    id: "a388",
-    name: "Airbus A380-800",
-    class: "Superjumbo",
-    length: 72.7,
-    mass: 360000,
-    wingArea: 845.0,
-    maxThrust: 1240000,
-    clSlope: 6.0,
-    clMax: 1.38,
-    alphaStall: rad(13.5),
-    flapCl: 0.58,
-    flapNotches: 5,
-    cd0: 0.021,
-    induced: 0.036,
-    pitchAuthority: 0.52,
-    vRotate: 170,
-    vApproach: 150,
-    cruiseAlt: 11800,
-    engineType: "jet",
-    engineCount: 4,
-    highWing: false,
-    fixedGear: false,
-    winglets: true,
-    wide: true,
-    doubleDeck: true,
-  },
 ];
 
 /* Real-world airports (subset). elevation in meters, runway length in meters.
@@ -402,6 +375,12 @@ const AIRPORTS = [
     theme: { terrain: ["#8a9a52", "#5f6f33"], sky: ["#6db4e6", "#ffd9a0"], landmark: "pyramid" } },
   { icao: "EKCH", iata: "CPH", name: "Copenhagen Kastrup",  city: "Copenhagen",   lat: 55.6180,  lon: 12.6508,   elevation: 5,   runway: 3600,
     theme: { terrain: ["#4e7f39", "#2c4a20"], sky: ["#9db3c2", "#cdd8df"], landmark: "nyhavn" } },
+  { icao: "VTBS", iata: "BKK", name: "Bangkok Suvarnabhumi", city: "Bangkok",     lat: 13.6900,  lon: 100.7501,  elevation: 2,   runway: 4000,
+    theme: { terrain: ["#3f8a4a", "#256b34"], sky: ["#6db4e6", "#ffe0b0"], landmark: "wat" } },
+  { icao: "KSEA", iata: "SEA", name: "Seattle-Tacoma Intl", city: "Seattle",      lat: 47.4502,  lon: -122.3088, elevation: 132, runway: 3627,
+    theme: { terrain: ["#3f6e3a", "#244a22"], sky: ["#8aa8c0", "#d4e0e8"], landmark: "needle" } },
+  { icao: "FAOR", iata: "JNB", name: "Johannesburg OR Tambo", city: "Johannesburg", lat: -26.1392, lon: 28.2460, elevation: 1694, runway: 4418,
+    theme: { terrain: ["#a89a54", "#6f6228"], sky: ["#8fbad6", "#e3ddc4"], landmark: "highveld" } },
 ];
 
 /* Airlines commonly seen parked at each airport (id → count), used to
@@ -419,7 +398,6 @@ const AIRCRAFT_OPERATORS = {
   e175:  ["aal", "dal", "ual", "aca", "klm"],
   b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "ibe", "lan", "kal"],
   a359:  ["dal", "afr", "dlh", "sia", "qtr", "jal", "ibe", "thy", "aca", "qfa", "lan", "sas", "kal"],
-  a388:  ["uae", "sia", "baw", "qfa", "dlh", "afr", "kal"],
 };
 
 function liveriesForAircraft(spec) {
@@ -461,6 +439,9 @@ const AIRPORT_FLEETS = {
   ICN: [["kal", 7], ["jal", 2], ["sia", 1], ["dlh", 1], ["ual", 1], ["qtr", 1]],
   MEX: [["aal", 3], ["ual", 2], ["lan", 2], ["dal", 1], ["ibe", 1], ["aca", 1]],
   CPH: [["sas", 7], ["dlh", 1], ["baw", 1], ["klm", 1], ["afr", 1], ["thy", 1]],
+  BKK: [["sia", 3], ["qtr", 2], ["thy", 2], ["kal", 1], ["qfa", 1], ["uae", 1], ["dlh", 1]],
+  SEA: [["ual", 4], ["aal", 3], ["dal", 2], ["aca", 2], ["jal", 1], ["qfa", 1]],
+  JNB: [["eth", 3], ["baw", 2], ["qtr", 2], ["kqa", 2], ["dlh", 1], ["afr", 1]],
   GRU: [["lan", 5], ["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["ibe", 1]],
   EZE: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["qtr", 1]],
   YYZ: [["aca", 7], ["ual", 1], ["aal", 1], ["baw", 1], ["dlh", 1], ["afr", 1]],
@@ -498,13 +479,13 @@ function airportFleet(airport) {
 /* Coarse continent per airport — used to decide when a route flies over
  * open ocean (e.g., JFK→LHR crosses the Atlantic). */
 const AIRPORT_REGION = {
-  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na", MMMX: "na",
+  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na", MMMX: "na", KSEA: "na",
   EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu", EKCH: "eu",
   OMDB: "me", OTHH: "me",
-  RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia",
+  RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia", VTBS: "asia",
   YSSY: "oceania", NZAA: "oceania",
   SBGR: "sa", SAEZ: "sa",
-  HAAB: "af", HKJK: "af", FACT: "af",
+  HAAB: "af", HKJK: "af", FACT: "af", FAOR: "af",
 };
 
 /* Continent zoom windows for the route map. lon/lat bounds in degrees. */

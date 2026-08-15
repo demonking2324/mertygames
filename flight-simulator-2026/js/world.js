@@ -934,6 +934,59 @@ class World {
         });
         break;
       }
+      case "wat": {
+        // Bangkok: golden temple spires and a low tropical skyline.
+        box(-220, 64, 80, haze); windows(-220, 64, 80);
+        box(-130, 48, 60, hazeDark);
+        const spire = (off, h) => {
+          ctx.fillStyle = "#d4b45a";
+          ctx.beginPath();
+          ctx.moveTo(at(off) - m(28), gy);
+          ctx.lineTo(at(off) - m(10), gy - m(h * 0.45));
+          ctx.lineTo(at(off), gy - m(h));
+          ctx.lineTo(at(off) + m(10), gy - m(h * 0.45));
+          ctx.lineTo(at(off) + m(28), gy);
+          ctx.closePath();
+          ctx.fill();
+        };
+        spire(20, 220);
+        spire(90, 160);
+        spire(155, 190);
+        box(260, 58, 95, haze); windows(260, 58, 95);
+        break;
+      }
+      case "needle": {
+        // Seattle: Space Needle plus a wet-coast skyline.
+        const hts = [90, 150, 210, 170, 240, 130];
+        hts.forEach((h, i) => { const off = -260 + i * 68; box(off, 50, h, i % 2 ? haze : hazeDark); windows(off, 50, h); });
+        ctx.fillStyle = hazeDark;
+        ctx.fillRect(at(160) - m(8), gy - m(280), m(16), m(280));
+        ctx.fillStyle = haze;
+        ctx.beginPath();
+        ctx.ellipse(at(160), gy - m(210), m(36), m(22), 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = hazeDark;
+        ctx.lineWidth = m(3);
+        ctx.beginPath();
+        ctx.moveTo(at(160), gy - m(280));
+        ctx.lineTo(at(160), gy - m(330));
+        ctx.stroke();
+        box(260, 54, 100, haze); windows(260, 54, 100);
+        break;
+      }
+      case "highveld": {
+        // Johannesburg: a mine dump hill and a downtown cluster.
+        ctx.fillStyle = "#c4b07a";
+        ctx.beginPath();
+        ctx.moveTo(at(-280), gy);
+        ctx.lineTo(at(-160), gy - m(90));
+        ctx.lineTo(at(-40), gy);
+        ctx.closePath();
+        ctx.fill();
+        const hts = [140, 220, 300, 180, 260, 160];
+        hts.forEach((h, i) => { const off = 20 + i * 72; box(off, 54, h, i % 2 ? haze : hazeDark); windows(off, 54, h); });
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);
