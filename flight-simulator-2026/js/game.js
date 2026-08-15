@@ -796,6 +796,24 @@ class Game {
       ctx.fillRect(cx - s * 0.55, cy - s * 0.18, s * 1.1, s * 0.22);
       ctx.fillStyle = "#d7042c";
       ctx.fillRect(cx - s * 0.55, cy + s * 0.04, s * 1.1, s * 0.14);
+    } else if (mark === "harp") {
+      ctx.fillStyle = "#073590";
+      ctx.beginPath();
+      ctx.arc(cx, cy, s * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#073590";
+      ctx.lineWidth = Math.max(1.4, s * 0.12);
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.05, cy - s * 0.55);
+      ctx.quadraticCurveTo(cx + s * 0.45, cy, cx - s * 0.05, cy + s * 0.55);
+      ctx.stroke();
+    } else if (mark === "latam") {
+      ctx.fillStyle = "#e0001b";
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.45, cy + s * 0.35);
+      ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.7, cx + s * 0.5, cy - s * 0.15);
+      ctx.quadraticCurveTo(cx + s * 0.15, cy + s * 0.15, cx - s * 0.45, cy + s * 0.35);
+      ctx.fill();
     }
     ctx.restore();
   }

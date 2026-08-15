@@ -838,6 +838,39 @@ class World {
         ctx.fill();
         break;
       }
+      case "obelisk": {
+        // Buenos Aires: a tall needle plus a low civic skyline.
+        box(-140, 70, 110, haze); windows(-140, 70, 110);
+        box(160, 55, 90, hazeDark); windows(160, 55, 90);
+        ctx.fillStyle = haze;
+        ctx.fillRect(at(0) - m(14), gy - m(280), m(28), m(280));
+        ctx.beginPath();
+        ctx.moveTo(at(0) - m(18), gy - m(280));
+        ctx.lineTo(at(0), gy - m(340));
+        ctx.lineTo(at(0) + m(18), gy - m(280));
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
+      case "skytower": {
+        // Auckland: a needle tower with a pod, harbour buildings.
+        box(-180, 70, 90, haze); windows(-180, 70, 90);
+        box(-80, 48, 70, hazeDark);
+        ctx.fillStyle = hazeDark;
+        ctx.fillRect(at(40) - m(8), gy - m(360), m(16), m(360));
+        ctx.fillStyle = haze;
+        ctx.beginPath();
+        ctx.ellipse(at(40), gy - m(250), m(28), m(18), 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = hazeDark;
+        ctx.lineWidth = m(3);
+        ctx.beginPath();
+        ctx.moveTo(at(40), gy - m(360));
+        ctx.lineTo(at(40), gy - m(410));
+        ctx.stroke();
+        box(160, 50, 80, haze); windows(160, 50, 80);
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);

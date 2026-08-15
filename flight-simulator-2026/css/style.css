@@ -111,8 +111,6 @@ html, body {
   position: relative;
   width: 100%;
   aspect-ratio: 2 / 1;
-  min-height: 200px;
-  max-height: 460px;
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
@@ -126,12 +124,15 @@ html, body {
   height: 100%;
   display: block;
   z-index: 0;
+  pointer-events: auto;
 }
+.ap-mark { cursor: pointer; }
+.ap-label { pointer-events: none; }
 .map-continent { fill: #3c8f5c; stroke: #6ec48a; stroke-width: 0.5; }
 .map-grid { stroke: rgba(255,255,255,0.16); stroke-width: 0.35; }
 .route-line { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; opacity: 0.9; vector-effect: non-scaling-stroke; }
 
-.map-dots { position: absolute; inset: 0; z-index: 1; }
+.map-dots { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .dot {
   position: absolute; transform: translate(-50%, -50%);
   width: 22px; height: 22px; padding: 0; border: none; background: transparent;
@@ -191,6 +192,7 @@ html, body {
 
 .map-popup {
   position: absolute; z-index: 10;
+  pointer-events: auto;
   transform: translate(-50%, calc(-100% - 14px));
   width: 196px;
   background: rgba(12,20,34,.97);

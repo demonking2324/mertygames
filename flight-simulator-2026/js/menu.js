@@ -5,7 +5,7 @@
 /* Simplified continent outlines as [lon, lat] rings (equirectangular). */
 const CONTINENTS = [
   // North America
-  [[-168,66],[-160,71],[-140,70],[-120,72],[-95,73],[-82,73],[-64,60],[-56,52],[-66,49],[-64,45],[-65,41.2],[-70,38],[-75,36],[-81,26],[-90,29],[-97,26],[-107,24],[-117,32],[-124,40],[-124,48],[-133,54],[-145,60],[-160,60],[-168,66]],
+  [[-168,66],[-160,71],[-140,70],[-120,72],[-95,73],[-82,73],[-64,60],[-56,52],[-66,49],[-64,45],[-65,41.2],[-70,38],[-75,36],[-80.4,32],[-81.3,30.4],[-80.1,25.1],[-81.8,24.5],[-82.8,27.6],[-84.2,30],[-90,29],[-97,26],[-107,24],[-117,32],[-124,40],[-124,48],[-133,54],[-145,60],[-160,60],[-168,66]],
   // Central America
   [[-106,23],[-97,16],[-92,15],[-88,16],[-83,9],[-78,8],[-80,13],[-86,16],[-92,18],[-99,19],[-106,23]],
   // South America
@@ -20,6 +20,14 @@ const CONTINENTS = [
   [[130,31],[133,34],[137,35],[141,40],[143,44],[141,42],[137,37],[133,33],[130,31]],
   // Australia
   [[113,-22],[114,-30],[118,-34],[125,-33],[132,-32],[138,-35],[145,-38],[150,-37],[153,-30],[148,-24],[145,-16],[138,-12],[132,-11],[126,-14],[120,-19],[113,-22]],
+  // New Zealand (North + South)
+  [[172.6,-34.4],[174.8,-35.3],[175.9,-37.0],[178.5,-37.6],[178.0,-40.6],[175.3,-41.6],[174.5,-39.9],[172.8,-39.1],[172.6,-34.4]],
+  [[172.6,-40.6],[174.3,-41.3],[173.2,-43.9],[170.4,-46.6],[166.5,-46.3],[166.5,-45.0],[169.3,-43.6],[172.5,-41.2],[172.6,-40.6]],
+  // British Isles (keeps LHR / MAN on land)
+  [[-5.7,50.0],[-5.0,51.7],[-4.8,53.4],[-3.4,54.6],[-1.8,55.8],[0.2,53.6],[1.8,52.8],[1.4,51.1],[-0.2,50.6],[-5.7,50.0]],
+  [[-10.4,51.4],[-9.8,53.4],[-6.2,55.3],[-5.4,53.3],[-6.1,52.0],[-8.6,51.4],[-10.4,51.4]],
+  // Italy (keeps FCO on the boot)
+  [[8.4,44.1],[12.4,45.5],[13.7,45.6],[12.5,43.6],[15.6,38.2],[18.4,40.2],[16.6,38.8],[15.3,37.9],[12.5,37.5],[12.4,41.8],[10.2,42.8],[8.4,44.1]],
 ];
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -164,6 +172,11 @@ class Menu {
       ".map-continent { fill: #3c8f5c; stroke: #6ec48a; stroke-width: 0.5; }",
       ".map-grid { stroke: rgba(255,255,255,0.16); stroke-width: 0.35; }",
       ".route-line { stroke: #38bdf8; stroke-width: 1.6; stroke-dasharray: 4 3; fill: none; }",
+      ".ap-mark .ap-core { stroke: #0a1728; }",
+      ".ap-mark.from .ap-core { fill: #22c55e; }",
+      ".ap-mark.to .ap-core { fill: #ef4444; }",
+      ".ap-mark:hover .ap-core { fill: #ffffff; }",
+      ".ap-label { pointer-events: none; }",
     ].join(" ");
     svg.appendChild(css);
 
@@ -195,20 +208,8 @@ class Menu {
     });
     svg.appendChild(this.routeLine);
 
-    // Airport dots — all fields stay on the map. Continent zoom (and a
-    // small nudge) keeps nearby ones clickable.
-    const dots = document.getElementById("map-dots");
-    dots.innerHTML = "";
-    this.dotEls = {};
-    AIRPORTS.forEach((ap) => {
-      const { left, top } = this._pct(ap);
-      const dot = this._makeDot(ap, left, top);
-      dots.appendChild(dot);
-      this.dotEls[ap.iata] = dot;
-    });
-
+    this._drawAirports();
     this._buildZoomBar();
-    this._layoutDots();
 
     const wrap = document.getElementById("map-wrap");
     wrap.addEventListener("click", () => this._closePopup());
@@ -216,15 +217,61 @@ class Menu {
     popup.addEventListener("click", (e) => e.stopPropagation());
   }
 
-  _makeDot(ap, left, top) {
-    const dot = document.createElement("button");
-    dot.className = "dot";
-    dot.style.left = left + "%";
-    dot.style.top = top + "%";
-    dot.title = `${ap.iata} — ${ap.name}`;
-    dot.innerHTML = `<span class="dot-core"></span><span class="dot-label">${ap.iata}</span>`;
-    dot.addEventListener("click", (e) => { e.stopPropagation(); this._openPopup(ap, dot); });
-    return dot;
+  _drawAirports() {
+    const svg = document.getElementById("world-map");
+    svg.querySelectorAll(".ap-mark").forEach((n) => n.remove());
+    this.dotEls = {};
+    const z = this._view();
+    const span = z.lon1 - z.lon0;
+    const world = !this.zoom;
+    const r = world ? 2.15 : Math.max(1.05, span * 0.011);
+    const fs = Math.max(2.2, span * 0.01);
+    const pts = AIRPORTS.filter((ap) => this._inView(ap)).map((ap) => ({
+      ap, x: ap.lon + 180, y: 90 - ap.lat,
+    }));
+    // Only split pins whose dots actually cover each other (JFK/LGA).
+    const minD = r * 2.15;
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = 0; j < i; j++) {
+        const dx = pts[i].x - pts[j].x;
+        const dy = pts[i].y - pts[j].y;
+        const d = Math.hypot(dx, dy) || 0.001;
+        if (d < minD) {
+          const push = (minD - d) * 0.5;
+          pts[i].x += (dx / d) * push;
+          pts[i].y += (dy / d) * push;
+          pts[j].x -= (dx / d) * push;
+          pts[j].y -= (dy / d) * push;
+        }
+      }
+    }
+    pts.forEach(({ ap, x, y }) => {
+      const g = this._svgEl("g", { class: "ap-mark" });
+      const hit = this._svgEl("circle", { cx: x, cy: y, r: r * 2.6, fill: "transparent" });
+      const core = this._svgEl("circle", {
+        cx: x, cy: y, r, class: "ap-core",
+        fill: "#d7e6f5", stroke: "#0a1728", "stroke-width": String(r * 0.28),
+      });
+      g.appendChild(hit);
+      g.appendChild(core);
+      if (!world) {
+        const label = this._svgEl("text", {
+          x, y: y + r * 2.5, class: "ap-label",
+          fill: "#eaf2ff", stroke: "#0b1220", "stroke-width": String(fs * 0.08),
+          "text-anchor": "middle", "font-size": String(fs), "font-weight": "800",
+          "paint-order": "stroke",
+        });
+        label.textContent = ap.iata;
+        g.appendChild(label);
+      }
+      g.style.cursor = "pointer";
+      g.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._openPopup(ap, core);
+      });
+      svg.appendChild(g);
+      this.dotEls[ap.iata] = { g, core };
+    });
   }
 
   _buildZoomBar() {
@@ -256,39 +303,9 @@ class Menu {
       svg.setAttribute("viewBox",
         `${zoom.lon0 + 180} ${90 - zoom.lat1} ${zoom.lon1 - zoom.lon0} ${zoom.lat1 - zoom.lat0}`);
     }
-    this._layoutDots();
+    this._drawAirports();
     this._buildZoomBar();
     this._refreshMap();
-  }
-
-  _layoutDots() {
-    const shown = [];
-    AIRPORTS.forEach((ap) => {
-      const el = this.dotEls[ap.iata];
-      if (!el) return;
-      if (!this._inView(ap)) {
-        el.classList.add("hidden");
-        return;
-      }
-      el.classList.remove("hidden");
-      const p = this._pct(ap);
-      shown.push({ el, left: p.left, top: p.top });
-    });
-    const min = this.zoom ? 6.2 : 3.4;
-    for (let i = 0; i < shown.length; i++) {
-      for (let j = 0; j < i; j++) {
-        const dx = shown[i].left - shown[j].left;
-        const dy = shown[i].top - shown[j].top;
-        if (Math.hypot(dx, dy) < min) {
-          shown[i].left += min * 0.72;
-          shown[i].top += min * 0.55;
-        }
-      }
-    }
-    shown.forEach((s) => {
-      s.el.style.left = Math.min(96, Math.max(4, s.left)) + "%";
-      s.el.style.top = Math.min(94, Math.max(6, s.top)) + "%";
-    });
   }
 
   _svgEl(tag, attrs) {
@@ -363,9 +380,12 @@ class Menu {
 
   _refreshMap() {
     for (const iata in this.dotEls) {
-      const el = this.dotEls[iata];
-      el.classList.toggle("from", !!this.from && this.from.iata === iata);
-      el.classList.toggle("to", !!this.to && this.to.iata === iata);
+      const { g, core } = this.dotEls[iata];
+      const isFrom = !!this.from && this.from.iata === iata;
+      const isTo = !!this.to && this.to.iata === iata;
+      g.classList.toggle("from", isFrom);
+      g.classList.toggle("to", isTo);
+      core.setAttribute("fill", isFrom ? "#22c55e" : isTo ? "#ef4444" : "#d7e6f5");
     }
 
     const line = this.routeLine;
