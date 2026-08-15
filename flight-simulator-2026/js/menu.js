@@ -351,6 +351,7 @@ class Menu {
       <div class="popup-actions">
         <button class="pop-btn dep" data-act="dep">Set as Takeoff</button>
         <button class="pop-btn arr" data-act="arr">Set as Landing</button>
+        <button class="pop-btn cam" data-act="freecam">Free Cam</button>
         <button class="pop-btn cancel" data-act="cancel">Cancel</button>
       </div>`;
 
@@ -370,6 +371,7 @@ class Menu {
         const act = b.dataset.act;
         if (act === "dep") this._setFrom(ap);
         else if (act === "arr") this._setTo(ap);
+        else if (act === "freecam") this._startFreeCam(ap);
         this._closePopup();
       });
     });
@@ -439,6 +441,15 @@ class Menu {
       aircraft: this.selectedAircraft,
       from: this.from,
       to: this.to,
+    });
+  }
+
+  /* Spectator at a single field — no aircraft, pan the 2D camera, watch AI. */
+  _startFreeCam(ap) {
+    this.onStart({
+      freeCam: true,
+      from: ap,
+      to: ap,
     });
   }
 }

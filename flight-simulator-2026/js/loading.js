@@ -20,6 +20,13 @@ const LOAD_STAGES_TAKEOFF = [
   { t: 0.88, text: "Cleared for takeoff" },
 ];
 
+const LOAD_STAGES_FREECAM = [
+  { t: 0.00, text: "Opening the field…" },
+  { t: 0.22, text: "Spawning traffic…" },
+  { t: 0.55, text: "Clearing the apron…" },
+  { t: 0.88, text: "Free cam ready" },
+];
+
 const LOAD_STAGES_LANDING = [
   { t: 0.00, text: "Briefing the approach…" },
   { t: 0.22, text: "Vectoring onto final…" },
@@ -107,6 +114,7 @@ class LoadingScreen {
   }
 
   _stagesFor(config) {
+    if (config.freeCam) return LOAD_STAGES_FREECAM;
     if (config.training && config.trainingMode === "landing") return LOAD_STAGES_LANDING;
     if (config.training) return LOAD_STAGES_TAKEOFF;
     return LOAD_STAGES_FLIGHT;
@@ -118,13 +126,19 @@ class LoadingScreen {
     const from = config.from;
     const to = config.to;
 
-    const accent = (airline && airline.accent) || "#38bdf8";
+    const accent = (airline && airline.accent) || (from && from.theme && from.theme.sky[0]) || "#38bdf8";
     const tail = (airline && airline.tail) || "#1d3f73";
     this.el.style.setProperty("--load-accent", accent);
     this.el.style.setProperty("--load-tail", tail);
     this.accentEl.style.background = `linear-gradient(90deg, ${tail}, ${accent})`;
 
-    if (config.training) {
+    if (config.freeCam) {
+      this.titleEl.textContent = "Entering Free Cam";
+      this.metaEl.textContent = "Spectator · no aircraft";
+      this.routeEl.innerHTML = from
+        ? `<b>${from.city}</b> (${from.iata}) · ${from.name}`
+        : "";
+    } else if (config.training) {
       const mode = config.trainingMode === "landing" ? "Landing" : "Takeoff";
       this.titleEl.textContent = "Preparing training";
       this.metaEl.textContent = `${spec ? spec.name : "Aircraft"} · ${mode} practice`;

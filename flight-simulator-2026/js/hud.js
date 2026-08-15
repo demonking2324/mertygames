@@ -16,7 +16,7 @@ class HUD {
       <div class="hud-tr">
         <div class="route-badge">
           <div><b id="hud-dep">---</b> <span class="arrow">→</span> <b id="hud-arr">---</b></div>
-          <div class="dist-line"><span id="hud-dist">0</span> km to go · <span id="hud-real">0</span> km real</div>
+          <div class="dist-line" id="hud-dist-line"><span id="hud-dist">0</span> km to go · <span id="hud-real">0</span> km real</div>
           <div class="prog"><div id="hud-prog" class="prog-bar"></div></div>
         </div>
       </div>
@@ -41,6 +41,7 @@ class HUD {
   }
 
   update(ac, world) {
+    if (this.el.classList.contains("hud-spectator")) return;
     this._c("#hud-spd").textContent = Math.round(msToKnots(ac.airspeed));
     const altFt = mToFeet(ac.y);
     this._c("#hud-alt").textContent = Math.round(altFt).toLocaleString();
@@ -74,6 +75,18 @@ class HUD {
   }
 
   setStatus(text) { this._c("#hud-status").textContent = text || ""; }
+
+  setSpectator(on, airport) {
+    this.el.classList.toggle("hud-spectator", !!on);
+    const line = this._c("#hud-dist-line");
+    if (on && airport) {
+      this._c("#hud-dep").textContent = airport.iata;
+      this._c("#hud-arr").textContent = "CAM";
+      line.textContent = airport.city + " · " + airport.name;
+    } else if (line) {
+      line.innerHTML = `<span id="hud-dist">0</span> km to go · <span id="hud-real">0</span> km real`;
+    }
+  }
 
   _injectStyle() {
     if (document.getElementById("hud-style")) return;
@@ -115,6 +128,13 @@ class HUD {
         background:rgba(9,15,28,.72); border:1px solid #26344b; border-radius:10px;
         padding:8px 16px; font-size:13px; color:#e5eefb; max-width:60%; text-align:center; }
       .status-line:empty { display:none; }
+
+      .hud-spectator .hud-tl,
+      .hud-spectator .hud-bl,
+      .hud-spectator .stall-warn { display:none; }
+      .hud-spectator .prog { display:none; }
+      .hud-spectator .arrow,
+      .hud-spectator #hud-arr { display:none; }
     `;
     document.head.appendChild(s);
   }

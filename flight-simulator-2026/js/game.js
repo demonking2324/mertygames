@@ -19,11 +19,15 @@ class Game {
 
     this.training = false;
     this.trainingConfig = null;
+    this.freeCam = false;
+    this._lastConfig = null;
+    this._camDrag = null;
     this.loading = new LoadingScreen();
     this.resetBtn = document.getElementById("reset-btn");
     this.resetBtn.addEventListener("click", () => this._resetTraining());
 
     this._bindKeys();
+    this._bindFreeCamPointer();
     window.addEventListener("resize", () => this._resize());
     this._resize();
 
@@ -51,7 +55,39 @@ class Game {
     };
   }
 
+  _bindFreeCamPointer() {
+    const c = this.canvas;
+    c.addEventListener("pointerdown", (e) => {
+      if (!this.freeCam || (this.state !== "flying" && this.state !== "paused")) return;
+      this._camDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, cx: this.cam.x, cy: this.cam.y };
+      c.classList.add("dragging");
+      try { c.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    c.addEventListener("pointermove", (e) => {
+      if (!this._camDrag || e.pointerId !== this._camDrag.id) return;
+      const dx = e.clientX - this._camDrag.x;
+      const dy = e.clientY - this._camDrag.y;
+      this.cam.x = this._camDrag.cx - dx / this.cam.scale;
+      this.cam.y = this._camDrag.cy + dy / this.cam.scale;
+      this._clampFreeCam();
+    });
+    const end = (e) => {
+      if (!this._camDrag || (e && e.pointerId !== this._camDrag.id)) return;
+      this._camDrag = null;
+      c.classList.remove("dragging");
+    };
+    c.addEventListener("pointerup", end);
+    c.addEventListener("pointercancel", end);
+    c.addEventListener("wheel", (e) => {
+      if (!this.freeCam || (this.state !== "flying" && this.state !== "paused")) return;
+      e.preventDefault();
+      const f = e.deltaY > 0 ? 0.9 : 1.11;
+      this.cam.scale = clamp(this.cam.scale * f, 0.18, 1.35);
+    }, { passive: false });
+  }
+
   start(config) {
+    this._lastConfig = config;
     this.state = "loading";
     this._hideMessage();
     document.getElementById("menu").classList.add("hidden");
@@ -65,11 +101,22 @@ class Game {
     this.training = !!config.training;
     this.trainingMode = config.trainingMode || "takeoff";
     this.trainingConfig = this.training ? config : null;
+    this.freeCam = !!config.freeCam;
     this._landedAtArrival = false;
     this._landQuality = null;
     this._announcedClimb = false;
     this.traffic = [];
     this._depCleared = true;
+    this._camDrag = null;
+
+    if (this.freeCam) {
+      this._beginFreeCam(config);
+      return;
+    }
+
+    document.body.classList.remove("freecam");
+    this.hud.setSpectator(false);
+    this.cam.scale = 0.55;
 
     this.world = new World(from, to);
     this.ac = new Aircraft(aircraft, airline, this.world.groundElevation);
@@ -107,6 +154,43 @@ class Game {
     this._resize();
   }
 
+  /* Spectator at one airport: no player ship, pan the 2D camera, AI theater. */
+  _beginFreeCam(config) {
+    const ap = config.from;
+    document.body.classList.add("freecam");
+    this.training = false;
+    this.ac = null;
+    this.world = new World(ap, ap, { singleField: true });
+    this.world.liveApron = true;
+    this.apron = this.world.apronLayout(ap, this.world.depRunwayStart, -1);
+    this._gateOcc = new Array(this.apron.n).fill(null);
+    this._nextArrival = 8 + Math.random() * 5;
+    this._nextAppear = 12 + Math.random() * 8;
+    this._spawnAirportTheater();
+
+    this.cam.scale = 0.55;
+    this.cam.x = this.world.depRunwayStart - 180;
+    this.cam.y = Math.max(this.world.groundElevation + 90, 90);
+    this.smoke = [];
+    this.input.clear();
+    this.state = "flying";
+    this._hideMessage();
+    this.resetBtn.classList.add("hidden");
+    this.hud.setSpectator(true, ap);
+    this.hud.setStatus("WASD / arrows or drag to pan · Q/E or scroll to zoom · Esc menu");
+
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+    this._resize();
+  }
+
+  _clampFreeCam() {
+    if (!this.world) return;
+    const w = this.world;
+    this.cam.x = clamp(this.cam.x, w.depRunwayStart - 2300, w.depRunwayEnd + 3600);
+    this.cam.y = clamp(this.cam.y, 45, 1100);
+  }
+
   /* Place the aircraft airborne on a ~3.5° final approach to the runway. */
   _setupLandingApproach() {
     const ac = this.ac, w = this.world, spec = ac.spec;
@@ -130,6 +214,12 @@ class Game {
 
   toMenu() {
     this.state = "idle";
+    this.freeCam = false;
+    this._camDrag = null;
+    this.ac = null;
+    document.body.classList.remove("freecam");
+    this.hud.setSpectator(false);
+    this.canvas.classList.remove("dragging");
     this.loading.hide();
     this.resetBtn.classList.add("hidden");
     document.getElementById("game").classList.add("hidden");
@@ -150,18 +240,26 @@ class Game {
   _loop(t) {
     const dt = Math.min(0.05, (t - this.lastT) / 1000 || 0);
     this.lastT = t;
-
-    if (this.state === "flying") {
-      this._update(dt);
-      this._render();
-    } else if (this.state === "paused" || this.state === "ended") {
-      this._render();
+    try {
+      if (this.state === "flying") {
+        this._update(dt);
+        this._render();
+      } else if (this.state === "paused" || this.state === "ended") {
+        this._render();
+      }
+      this.input.endFrame();
+    } catch (err) {
+      console.error(err);
     }
-    this.input.endFrame();
     requestAnimationFrame(this._loop);
   }
 
   _update(dt) {
+    if (this.freeCam) {
+      this._updateFreeCam(dt);
+      return;
+    }
+
     const ac = this.ac;
     const ctrl = this.input.sample(dt);
 
@@ -278,6 +376,10 @@ class Game {
   }
 
   _resetSame() {
+    if (this._lastConfig) {
+      this.start(this._lastConfig);
+      return;
+    }
     if (this.training && this.trainingConfig) {
       this.start(this.trainingConfig);
       return;
@@ -313,7 +415,8 @@ class Game {
   }
 
   _pickTraffic() {
-    return pickAirportTraffic(this.world.dep, this.ac.airline && this.ac.airline.id);
+    const exclude = this.ac && this.ac.airline && this.ac.airline.id;
+    return pickAirportTraffic(this.world.dep, exclude);
   }
 
   _holdingTraffic() {
@@ -389,7 +492,7 @@ class Game {
   /* Hold short of the runway until traffic is gone, and don't nose into the jet ahead. */
   _holdForQueue() {
     const ac = this.ac;
-    if (this._depCleared || !ac.onGround) return;
+    if (!ac || this._depCleared || !ac.onGround) return;
     const thresh = this.world.depRunwayStart;
     const holdShort = thresh - 40;
     if (ac.x > holdShort) {
@@ -408,6 +511,189 @@ class Game {
     if (nearest.x - ac.x < minGap) {
       ac.x = nearest.x - minGap;
       ac.vx = 0;
+    }
+  }
+
+  _updateFreeCam(dt) {
+    const speed = (this.input.down("ShiftLeft") || this.input.down("ShiftRight")) ? 920 : 420;
+    let dx = 0, dy = 0;
+    if (this.input.down("KeyA") || this.input.down("ArrowLeft")) dx -= 1;
+    if (this.input.down("KeyD") || this.input.down("ArrowRight")) dx += 1;
+    if (this.input.down("KeyW") || this.input.down("ArrowUp")) dy += 1;
+    if (this.input.down("KeyS") || this.input.down("ArrowDown")) dy -= 1;
+    if (dx || dy) {
+      const mag = Math.hypot(dx, dy) || 1;
+      this.cam.x += (dx / mag) * speed * dt;
+      this.cam.y += (dy / mag) * speed * dt;
+    }
+    if (this.input.down("KeyQ") || this.input.down("Minus")) {
+      this.cam.scale = clamp(this.cam.scale - dt * 0.38, 0.18, 1.35);
+    }
+    if (this.input.down("KeyE") || this.input.down("Equal")) {
+      this.cam.scale = clamp(this.cam.scale + dt * 0.38, 0.18, 1.35);
+    }
+    this._clampFreeCam();
+    this._updateFreeCamTraffic(dt);
+    this._updateSmoke(dt);
+  }
+
+  _spawnAirportTheater() {
+    const gy = this.world.groundElevation;
+    const slots = this.apron.slots;
+    this.traffic = [];
+    this._gateOcc = new Array(slots.length).fill(null);
+    const nParked = slots.length - 2;
+    const used = new Set();
+    for (let i = 0; i < nParked; i++) {
+      let pick = this._pickTraffic();
+      for (let n = 0; n < 8 && used.has(pick.airline.id); n++) pick = this._pickTraffic();
+      used.add(pick.airline.id);
+      const t = new TrafficPlane(pick.spec, pick.airline, slots[i], gy);
+      t.phase = "gate";
+      t.facing = -1;
+      t.gateSlot = i;
+      t.goalX = slots[i];
+      t.wait = 2.8 + (nParked - 1 - i) * 3.2 + Math.random() * 3;
+      this.traffic.push(t);
+      this._gateOcc[i] = t;
+    }
+  }
+
+  _freeGate() {
+    for (let i = 0; i < this._gateOcc.length; i++) {
+      if (!this._gateOcc[i]) return i;
+    }
+    return -1;
+  }
+
+  _canStartDeparture() {
+    const block = new Set(["turn", "taxiOut", "hold", "advance", "taxi", "lineup", "spool", "roll", "approach", "rollout", "taxiIn"]);
+    return !this.traffic.some((t) => block.has(t.phase));
+  }
+
+  _canStartArrival() {
+    return !this._runwayBusy() && this._freeGate() >= 0 &&
+      !this.traffic.some((t) => t.phase === "approach" || t.phase === "rollout");
+  }
+
+  _updateFreeCamTraffic(dt) {
+    const gy = this.world.groundElevation;
+    const thresh = this.world.depRunwayStart;
+    const list = this.traffic;
+
+    if (this._canStartDeparture()) {
+      let next = null;
+      for (const t of list) {
+        if (t.phase !== "gate") continue;
+        t.wait -= dt;
+        if (t.wait <= 0 && (!next || t.x > next.x)) next = t;
+      }
+      if (next) {
+        this._gateOcc[next.gateSlot] = null;
+        next.gateSlot = -1;
+        next.phase = "turn";
+        next.wait = 0.7;
+        next.turnTo = 1;
+        next.afterTurn = "taxiOut";
+        next.goalX = thresh - 90;
+      }
+    }
+
+    if (!this._runwayBusy()) {
+      let holding = null;
+      for (const t of list) {
+        if (t.phase !== "hold") continue;
+        if (!holding || t.x > holding.x) holding = t;
+      }
+      if (holding) {
+        holding.wait -= dt;
+        if (holding.wait <= 0) {
+          holding.phase = "taxi";
+          holding.active = true;
+        }
+      }
+    }
+
+    this._nextArrival -= dt;
+    if (this._nextArrival <= 0 && this._canStartArrival()) {
+      this._spawnArrival();
+      this._nextArrival = 16 + Math.random() * 10;
+    }
+
+    this._nextAppear -= dt;
+    if (this._nextAppear <= 0) {
+      const slot = this._freeGate();
+      const parked = list.filter((t) => t.phase === "gate" || t.phase === "appear").length;
+      if (slot >= 0 && parked < this.apron.n - 1) {
+        this._spawnAtGate(slot);
+      }
+      this._nextAppear = 12 + Math.random() * 10;
+    }
+
+    for (const t of list) {
+      if (t.phase === "gone") continue;
+      t.update(dt, gy, thresh);
+      if (t.justLanded) {
+        t.justLanded = false;
+        this._spawnPlaneSmoke(t);
+      }
+    }
+
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (list[i].phase === "gone") list.splice(i, 1);
+    }
+  }
+
+  _spawnAtGate(slot) {
+    const gy = this.world.groundElevation;
+    const x = this.apron.slots[slot];
+    const pick = this._pickTraffic();
+    const t = new TrafficPlane(pick.spec, pick.airline, x, gy);
+    t.phase = "appear";
+    t.facing = -1;
+    t.gateSlot = slot;
+    t.goalX = x;
+    t.alpha = 0;
+    t.wait = 6 + Math.random() * 14;
+    this.traffic.push(t);
+    this._gateOcc[slot] = t;
+  }
+
+  _spawnArrival() {
+    const slot = this._freeGate();
+    if (slot < 0) return;
+    const gy = this.world.groundElevation;
+    const thresh = this.world.depRunwayStart;
+    const pick = this._pickTraffic();
+    const dist = 4200;
+    const t = new TrafficPlane(pick.spec, pick.airline, thresh - dist, gy + dist * 0.052);
+    t.phase = "approach";
+    t.facing = 1;
+    t.onGround = false;
+    t.gearDown = true;
+    t.flaps = Math.min(t.spec.flapNotches, 3);
+    t.goalX = this.apron.slots[slot];
+    t.gateSlot = slot;
+    t.active = true;
+    t.vx = (t.spec.vApproach || 138) / MS_TO_KT;
+    this.traffic.push(t);
+    this._gateOcc[slot] = t;
+  }
+
+  _spawnPlaneSmoke(ac) {
+    const gyw = this.world.groundElevation;
+    const speed = ac.airspeed || ac.vx || 40;
+    const spread = ac.spec.length * 0.7;
+    for (let i = 0; i < 12; i++) {
+      this.smoke.push({
+        x: ac.x - ac.spec.length * 0.1 + (Math.random() - 0.5) * spread,
+        y: gyw + Math.random() * 1.5,
+        vx: -speed * 0.12 - Math.random() * 4,
+        vy: 2.5 + Math.random() * 6,
+        r: ac.spec.length * (0.12 + Math.random() * 0.18),
+        age: 0,
+        ttl: 0.9 + Math.random() * 0.9,
+      });
     }
   }
 
@@ -472,7 +758,7 @@ class Game {
         this._paintPlane(ctx, t, t.alpha);
       }
     }
-    this._paintPlane(ctx, this.ac, 1);
+    if (this.ac) this._paintPlane(ctx, this.ac, 1);
     this._drawSmoke(ctx);
   }
 
@@ -495,11 +781,13 @@ class Game {
     ctx.globalAlpha = alpha == null ? 1 : alpha;
     ctx.translate(sx, sy);
     ctx.rotate(-ac.pitch); // screen y is inverted
+    if ((ac.facing || 1) < 0) ctx.scale(-1, 1);
     ctx.translate(0, -contactY); // lift body so wheels pivot on the ground point
     this._drawPlaneBody(ctx, ac, px);
     ctx.restore();
 
     if (alpha < 0.2) return;
+    if (ac.phase === "gate" || ac.phase === "appear") return;
     ctx.save();
     ctx.globalAlpha = alpha == null ? 1 : alpha;
     ctx.fillStyle = "rgba(9,15,28,0.7)";
@@ -595,7 +883,7 @@ class Game {
     const bellyTop = al.cheat === "split" ? H * 0.15 : H * 0.22;
     ctx.fillRect(-L * 0.52, bellyTop, L * 1.06, H * 1.2);
     this._drawCheat(ctx, al, L, H);
-    this._drawTitles(ctx, al, L, H);
+    this._drawTitles(ctx, al, L, H, ac.facing);
     ctx.restore();
 
     // Subtle belly shading for volume.
@@ -728,14 +1016,22 @@ class Game {
     }
   }
 
-  _drawTitles(ctx, al, L, H) {
+  _drawTitles(ctx, al, L, H, facing) {
     const text = al.titles;
     if (!text || H < 7) return;
+    ctx.save();
     ctx.fillStyle = al.titleColor || "#1a1a1a";
     ctx.font = `800 ${Math.max(7, H * 0.52)}px system-ui, sans-serif`;
-    ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(text, -L * 0.08, -H * 0.52);
+    if ((facing || 1) < 0) {
+      ctx.scale(-1, 1);
+      ctx.textAlign = "right";
+      ctx.fillText(text, L * 0.08, -H * 0.52);
+    } else {
+      ctx.textAlign = "left";
+      ctx.fillText(text, -L * 0.08, -H * 0.52);
+    }
+    ctx.restore();
   }
 
   _drawTailMark(ctx, al, L, H) {
@@ -1172,11 +1468,132 @@ class TrafficPlane {
     this.wait = 0;
     this.goalX = x;
     this.active = false;
+    this.facing = 1;
+    this.gateSlot = -1;
+    this.turnTo = 1;
+    this.afterTurn = "taxiOut";
+    this.justLanded = false;
   }
 
   update(dt, groundY, thresh) {
     const vr = (this.spec.vRotate || 145) / MS_TO_KT;
     const taxiSpeed = 17;
+
+    if (this.phase === "gate" || this.phase === "appear") {
+      this.throttle = 0;
+      this.vx = 0;
+      this.pitch = 0;
+      this.y = groundY;
+      this.onGround = true;
+      this.airspeed = 0;
+      this.facing = -1;
+      if (this.phase === "appear") {
+        this.alpha = Math.min(1, this.alpha + dt / 1.15);
+        if (this.alpha >= 1) this.phase = "gate";
+      }
+      return;
+    }
+
+    if (this.phase === "turn") {
+      this.throttle = 0;
+      this.vx = 0;
+      this.y = groundY;
+      this.onGround = true;
+      this.airspeed = 0;
+      this.wait -= dt;
+      if (this.wait <= 0) {
+        this.facing = this.turnTo || 1;
+        this.phase = this.afterTurn || "taxiOut";
+      }
+      return;
+    }
+
+    if (this.phase === "taxiOut") {
+      this.facing = 1;
+      this.throttle = 0.2;
+      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 3));
+      this.x += this.vx * dt;
+      this.airspeed = this.vx;
+      this.y = groundY;
+      this.onGround = true;
+      this.pitch = 0;
+      if (this.x >= this.goalX) {
+        this.x = this.goalX;
+        this.vx = 0;
+        this.throttle = 0;
+        this.airspeed = 0;
+        this.phase = "hold";
+        this.wait = 1.1 + Math.random() * 0.8;
+      }
+      return;
+    }
+
+    if (this.phase === "approach") {
+      this.facing = 1;
+      this.onGround = false;
+      this.gearDown = true;
+      this.active = true;
+      const spd = (this.spec.vApproach || 138) / MS_TO_KT;
+      this.vx = spd;
+      this.x += this.vx * dt;
+      const remain = (thresh + 50) - this.x;
+      const alt = Math.max(0, remain * 0.052);
+      this.y = groundY + alt;
+      this.vy = -spd * 0.052;
+      this.pitch = rad(-2.4);
+      this.airspeed = Math.hypot(this.vx, this.vy);
+      this.throttle = 0.4;
+      if (remain <= 0 || this.y <= groundY + 1.2) {
+        this.y = groundY;
+        this.onGround = true;
+        this.pitch = 0;
+        this.phase = "rollout";
+        this.justLanded = true;
+        this.airspeed = this.vx;
+      }
+      return;
+    }
+
+    if (this.phase === "rollout") {
+      this.facing = 1;
+      this.onGround = true;
+      this.y = groundY;
+      this.throttle = 0;
+      this.active = true;
+      this.vx = Math.max(15, this.vx - 24 * dt);
+      this.x += this.vx * dt;
+      this.airspeed = this.vx;
+      this.pitch = 0;
+      if (this.vx <= 16.5) {
+        this.phase = "turn";
+        this.wait = 0.8;
+        this.turnTo = -1;
+        this.afterTurn = "taxiIn";
+      }
+      return;
+    }
+
+    if (this.phase === "taxiIn") {
+      this.facing = -1;
+      this.throttle = 0.16;
+      this.vx = lerp(this.vx, -15, 1 - Math.exp(-dt * 2.2));
+      this.x += this.vx * dt;
+      this.airspeed = Math.abs(this.vx);
+      this.y = groundY;
+      this.onGround = true;
+      this.pitch = 0;
+      this.active = this.x > thresh - 50;
+      if (this.x <= this.goalX) {
+        this.x = this.goalX;
+        this.vx = 0;
+        this.airspeed = 0;
+        this.throttle = 0;
+        this.active = false;
+        this.phase = "gate";
+        this.wait = 8 + Math.random() * 14;
+      }
+      return;
+    }
 
     if (this.phase === "hold") {
       this.throttle = 0;

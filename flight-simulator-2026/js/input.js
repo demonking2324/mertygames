@@ -29,6 +29,7 @@ class Input {
     return [
       "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
       "KeyW", "KeyS", "KeyA", "KeyD", "KeyF", "KeyR", "KeyG",
+      "KeyQ", "KeyE", "Minus", "Equal",
       "Space", "KeyP",
     ].includes(code);
   }

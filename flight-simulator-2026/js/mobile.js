@@ -165,6 +165,7 @@ class MobileControls {
   /* Reflect live aircraft state on the controls (called each frame). */
   sync(ac) {
     if (!document.body.classList.contains("touch")) return;
+    if (!ac) return;
     if (!this.dragThrottle) this._renderThrottle(ac.throttle);
     this.gearBtn.textContent = ac.gearDown ? "GEAR DN" : "GEAR UP";
     this.gearBtn.classList.toggle("on", ac.gearDown);

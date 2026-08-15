@@ -27,34 +27,42 @@ const BIOME_COLORS = {
 };
 
 class World {
-  constructor(depAirport, arrAirport) {
+  constructor(depAirport, arrAirport, opts) {
+    opts = opts || {};
+    this.singleField = !!opts.singleField;
+    this.liveApron = false;
     this.dep = depAirport;
     this.arr = arrAirport;
     this.depTheme = depAirport.theme;
     this.arrTheme = arrAirport.theme;
-
-    this.realDistanceKm = routeDistanceKm(depAirport, arrAirport);
-
-    // Compressed, flyable distance (meters). Short hops stay short,
-    // long hauls are capped so a flight lasts minutes, not hours.
-    this.distance = 8000 + Math.min(this.realDistanceKm, 16000) * 8;
-
-    // Flat ground at departure elevation keeps the collision model simple.
-    this.groundElevation = depAirport.elevation;
 
     // Runways drawn a bit longer than the raw field length for extra room.
     this.runwayScale = 1.35;
     this.depRunwayStart = 0;
     this.depRunwayEnd = depAirport.runway * this.runwayScale;
 
-    this.arrRunwayStart = this.distance;
-    this.arrRunwayEnd = this.distance + arrAirport.runway * this.runwayScale;
+    // Flat ground at departure elevation keeps the collision model simple.
+    this.groundElevation = depAirport.elevation;
 
-    // Transoceanic routes (e.g., JFK→LHR) show land near each coast with
-    // open water in between; domestic routes stay land the whole way.
-    this.crossesOcean = routeCrossesOcean(depAirport, arrAirport);
-    this.oceanStart = this.crossesOcean ? this.distance * 0.16 : null;
-    this.oceanEnd = this.crossesOcean ? this.distance * 0.84 : null;
+    if (this.singleField) {
+      this.realDistanceKm = 0;
+      this.distance = this.depRunwayEnd + 3200;
+      this.arrRunwayStart = this.depRunwayStart;
+      this.arrRunwayEnd = this.depRunwayEnd;
+      this.crossesOcean = false;
+      this.oceanStart = null;
+      this.oceanEnd = null;
+    } else {
+      this.realDistanceKm = routeDistanceKm(depAirport, arrAirport);
+      // Compressed, flyable distance (meters). Short hops stay short,
+      // long hauls are capped so a flight lasts minutes, not hours.
+      this.distance = 8000 + Math.min(this.realDistanceKm, 16000) * 8;
+      this.arrRunwayStart = this.distance;
+      this.arrRunwayEnd = this.distance + arrAirport.runway * this.runwayScale;
+      this.crossesOcean = routeCrossesOcean(depAirport, arrAirport);
+      this.oceanStart = this.crossesOcean ? this.distance * 0.16 : null;
+      this.oceanEnd = this.crossesOcean ? this.distance * 0.84 : null;
+    }
 
     // Biome bands describe the terrain the whole way along the route.
     this.bands = this._buildBands(depAirport, arrAirport);
@@ -69,6 +77,10 @@ class World {
     const bArr = REGION_BIOME[AIRPORT_REGION[arr.icao]] || "plains";
     const D = this.distance;
     const far = 60000; // extend past the ends so ground is always covered
+
+    if (this.singleField) {
+      return [{ x0: -far, x1: D + far, biome: bDep }];
+    }
 
     if (this.crossesOcean) {
       return [
@@ -115,12 +127,18 @@ class World {
     this._drawGround(ctx, cam);
     // Scenery/landmarks sit behind the runways.
     this._drawScenery(ctx, cam, this.depTheme, this.depRunwayStart - 900);
-    this._drawScenery(ctx, cam, this.arrTheme, this.arrRunwayEnd + 900);
+    if (!this.singleField) {
+      this._drawScenery(ctx, cam, this.arrTheme, this.arrRunwayEnd + 900);
+    }
     this._drawGates(ctx, cam, this.dep, this.depRunwayStart, -1);
-    this._drawGates(ctx, cam, this.arr, this.arrRunwayEnd, 1);
+    if (!this.singleField) {
+      this._drawGates(ctx, cam, this.arr, this.arrRunwayEnd, 1);
+    }
     this._drawRunway(ctx, cam, this.depRunwayStart, this.depRunwayEnd, this.dep, true);
-    this._drawRunway(ctx, cam, this.arrRunwayStart, this.arrRunwayEnd, this.arr, false);
-    this._drawDistanceMarkers(ctx, cam);
+    if (!this.singleField) {
+      this._drawRunway(ctx, cam, this.arrRunwayStart, this.arrRunwayEnd, this.arr, false);
+      this._drawDistanceMarkers(ctx, cam);
+    }
   }
 
   _drawSky(ctx, cam) {
@@ -1190,12 +1208,30 @@ class World {
     }
   }
 
+  /* World-meter gate stand positions left of the departure threshold.
+   * Spacing is wide enough for the on-screen aircraft sprites. */
+  apronLayout(airport, anchorX, side) {
+    const n = 6;
+    const gap = 280;
+    const clearance = 240;
+    const totalW = (n - 1) * gap;
+    const centerX = anchorX + side * (clearance + totalW / 2);
+    const slots = [];
+    for (let i = 0; i < n; i++) slots.push(centerX - totalW / 2 + i * gap);
+    return { n, gap, totalW, centerX, slots, leftX: slots[0], rightX: slots[n - 1] };
+  }
+
   /* Terminal + a row of parked airliners in their liveries beside a runway.
    * side = -1 places the apron before the departure threshold, +1 after
    * the arrival end. */
   _drawGates(ctx, cam, airport, anchorX, side) {
     const gy = cam.worldToScreenY(this.groundElevation);
     if (gy < -40 || gy > cam.h + 60) return;
+
+    if (this.liveApron) {
+      this._drawLiveTerminal(ctx, cam, airport, anchorX, side, gy);
+      return;
+    }
 
     const fleet = airportFleet(airport);
     const n = fleet.length;
@@ -1231,6 +1267,28 @@ class World {
       const sx = leftSx + i * gap;
       if (sx < -L || sx > cam.w + L) continue;
       this._drawParkedPlane(ctx, sx, gy, L, fleet[i]);
+    }
+  }
+
+  /* Terminal only — live AI occupy the stands in Free Cam. */
+  _drawLiveTerminal(ctx, cam, airport, anchorX, side, gy) {
+    const layout = this.apronLayout(airport, anchorX, side);
+    const leftSx = cam.worldToScreenX(layout.leftX);
+    const rightSx = cam.worldToScreenX(layout.rightX);
+    const pad = cam.toScreenLen(90);
+    const bx = Math.min(leftSx, rightSx) - pad;
+    const bw = Math.abs(rightSx - leftSx) + pad * 2;
+    if (bx > cam.w + 40 || bx + bw < -40) return;
+    const bh = 46;
+    ctx.fillStyle = "#54657c";
+    roundRect(ctx, bx, gy - bh, bw, bh, 6);
+    ctx.fill();
+    ctx.fillStyle = "#3f4d61";
+    ctx.fillRect(bx, gy - bh, bw, 7);
+    ctx.fillStyle = "rgba(200,225,245,0.45)";
+    for (let wx = bx + 8; wx < bx + bw - 8; wx += 12) {
+      ctx.fillRect(wx, gy - bh + 16, 6, 10);
+      ctx.fillRect(wx, gy - bh + 30, 6, 8);
     }
   }
 
@@ -1346,7 +1404,8 @@ class World {
     // Taxiway leading up to the departure threshold so the queue sits
     // off the runway.
     if (isDeparture) {
-      const tax0 = cam.worldToScreenX(startX - 1800);
+      const taxLen = this.singleField ? 2200 : 1800;
+      const tax0 = cam.worldToScreenX(startX - taxLen);
       const tax1 = sx0;
       if (tax1 > -40 && tax0 < cam.w + 40) {
         ctx.fillStyle = "#32363c";

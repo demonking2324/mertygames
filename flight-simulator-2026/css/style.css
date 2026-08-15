@@ -210,6 +210,7 @@ html, body {
 }
 .pop-btn.dep:hover { border-color: var(--accent-2); background: #12331f; }
 .pop-btn.arr:hover { border-color: var(--danger); background: #331416; }
+.pop-btn.cam:hover { border-color: #38bdf8; background: #123044; }
 .pop-btn.cancel { text-align: center; font-weight: 600; color: var(--muted); }
 .pop-btn.cancel:hover { border-color: #3a557d; }
 
@@ -429,7 +430,17 @@ html, body {
 
 /* ===== Game ===== */
 #game { background: #87b8e0; }
-#canvas { display: block; width: 100%; height: 100%; }
+#canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+body.freecam #canvas { cursor: grab; }
+body.freecam #canvas.dragging { cursor: grabbing; }
+body.freecam .controls-help { display: none; }
+body.freecam.touch .mc-throttle,
+body.freecam.touch .mc-stick,
+body.freecam.touch .mc-chip,
+body.freecam.touch .mc-brake,
+body.freecam.touch #mc-flapdn,
+body.freecam.touch #mc-flapup,
+body.freecam.touch #mc-gear { display: none !important; }
 
 .hud {
   position: absolute;

@@ -714,7 +714,8 @@ const LOADING_TIPS = [
   { tags: ["ga"], text: "The Cessna 172 has fixed gear — no need to toggle G." },
   { tags: ["general"], text: "Hold Space for wheel brakes. They only work on the ground." },
   { tags: ["general"], text: "Press P to pause, Esc to return to the menu." },
-  { tags: ["training"], text: "Training Mode lets you practice takeoffs and landings at a quiet field — no airline, no traffic." },
+  { tags: ["freecam"], text: "Free Cam has no aircraft. Pan with WASD or arrows, drag the view, and zoom with Q/E or the scroll wheel." },
+  { tags: ["freecam"], text: "Watch airliners appear at the gates, taxi out and take off, or land and taxi back to a stand." },
   { tags: ["training", "landing"], text: "Landing practice starts you on a ~3.5° final. Manage the descent; don't chase the runway." },
   { tags: ["general"], text: "On-screen touch controls (throttle slider + pitch stick) can be toggled from the main menu." },
   { tags: ["route"], text: "Transoceanic routes show land near each coast and open water in between. Short hops stay over terrain." },
@@ -728,20 +729,24 @@ let _lastLoadingTip = -1;
 /* Pick a tip, preferring ones whose tags match the upcoming flight. */
 function pickLoadingTip(config) {
   const wanted = new Set(["general"]);
-  wanted.add("takeoff");
-  wanted.add("landing");
-  if (config.training) wanted.add("training");
-  const spec = config.aircraft;
-  if (spec) {
-    if (spec.engineType === "jet") wanted.add("jet");
-    if (spec.fixedGear) wanted.add("ga");
-    wanted.add("flaps");
-    wanted.add("stall");
-    wanted.add("climb");
+  if (config.freeCam) {
+    wanted.add("freecam");
+  } else {
+    wanted.add("takeoff");
+    wanted.add("landing");
+    if (config.training) wanted.add("training");
+    const spec = config.aircraft;
+    if (spec) {
+      if (spec.engineType === "jet") wanted.add("jet");
+      if (spec.fixedGear) wanted.add("ga");
+      wanted.add("flaps");
+      wanted.add("stall");
+      wanted.add("climb");
+    }
+    if (!config.training) wanted.add("route");
+    wanted.add("score");
+    wanted.add("pitch");
   }
-  if (!config.training) wanted.add("route");
-  wanted.add("score");
-  wanted.add("pitch");
 
   const ranked = LOADING_TIPS.map((tip, i) => ({
     i, tip,
