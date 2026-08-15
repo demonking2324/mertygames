@@ -413,6 +413,7 @@ const MAP_CLUSTERS = [
   {
     id: "nyc",
     label: "New York",
+    short: "NYC",
     iatas: ["JFK", "LGA"],
     lat: 40.71,
     lon: -73.90,
@@ -420,6 +421,18 @@ const MAP_CLUSTERS = [
     lon1: -73.58,
     lat0: 40.50,
     lat1: 40.92,
+  },
+  {
+    id: "uk",
+    label: "United Kingdom",
+    short: "UK",
+    iatas: ["LHR", "MAN"],
+    lat: 52.40,
+    lon: -1.50,
+    lon0: -3.35,
+    lon1: 1.20,
+    lat0: 50.50,
+    lat1: 54.05,
   },
 ];
 

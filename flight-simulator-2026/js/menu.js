@@ -5,13 +5,13 @@
 /* Simplified continent outlines as [lon, lat] rings (equirectangular). */
 const CONTINENTS = [
   // North America
-  [[-168,66],[-160,71],[-140,70],[-120,72],[-95,73],[-82,73],[-64,60],[-56,52],[-66,49],[-70,43],[-75,36],[-81,26],[-90,29],[-97,26],[-107,24],[-117,32],[-124,40],[-124,48],[-133,54],[-145,60],[-160,60],[-168,66]],
+  [[-168,66],[-160,71],[-140,70],[-120,72],[-95,73],[-82,73],[-64,60],[-56,52],[-66,49],[-64,45],[-65,41.2],[-70,38],[-75,36],[-81,26],[-90,29],[-97,26],[-107,24],[-117,32],[-124,40],[-124,48],[-133,54],[-145,60],[-160,60],[-168,66]],
   // Central America
   [[-106,23],[-97,16],[-92,15],[-88,16],[-83,9],[-78,8],[-80,13],[-86,16],[-92,18],[-99,19],[-106,23]],
   // South America
   [[-78,8],[-72,11],[-62,10],[-50,0],[-44,-2],[-35,-6],[-38,-13],[-48,-25],[-58,-35],[-66,-45],[-70,-53],[-74,-50],[-72,-42],[-71,-30],[-74,-18],[-78,-10],[-81,-4],[-80,3],[-78,8]],
   // Europe
-  [[-10,44],[-9,39],[-2,37],[3,43],[10,44],[14,40],[19,42],[25,41],[28,45],[30,50],[27,55],[24,58],[30,62],[28,66],[22,66],[15,62],[8,60],[6,58],[8,54],[3,52],[-2,49],[-6,50],[-10,48],[-10,44]],
+  [[-10,44],[-9,39],[-2,37],[3,43],[10,44],[14,40],[19,42],[25,41],[28,45],[30,50],[27,55],[24,58],[30,62],[28,66],[22,66],[15,62],[8,60],[6,58],[8,54],[3,52],[-0.4,51.5],[-3.4,51.7],[-4.8,53.3],[-2.2,54.1],[0.8,53.1],[-2,49],[-6,50],[-10,48],[-10,44]],
   // Africa
   [[-16,15],[-16,21],[-10,28],[-4,32],[2,35],[10,37],[20,33],[26,32],[32,31],[35,24],[38,15],[43,12],[51,12],[48,2],[42,-4],[40,-12],[35,-20],[26,-34],[19,-35],[14,-28],[12,-17],[13,-6],[9,2],[2,4],[-8,4],[-13,9],[-16,15]],
   // Asia
@@ -22,10 +22,17 @@ const CONTINENTS = [
   [[113,-22],[114,-30],[118,-34],[125,-33],[132,-32],[138,-35],[145,-38],[150,-37],[153,-30],[148,-24],[145,-16],[138,-12],[132,-11],[126,-14],[120,-19],[113,-22]],
 ];
 
-/* Close-up coastline used inside the New York magnifying-glass loupe. */
-const NYC_LAND = [
-  [[-74.22,40.50],[-74.22,40.92],[-73.93,40.92],[-73.78,40.87],[-73.70,40.86],[-73.58,40.80],[-73.58,40.58],[-73.78,40.54],[-73.95,40.50],[-74.22,40.50]],
-];
+/* Close-up coastlines used inside magnifying-glass loupes. */
+const CLUSTER_LAND = {
+  nyc: [
+    [[-74.22,40.50],[-74.22,40.92],[-73.93,40.92],[-73.78,40.87],[-73.70,40.86],[-73.58,40.80],[-73.58,40.58],[-73.78,40.54],[-73.95,40.50],[-74.22,40.50]],
+  ],
+  uk: [
+    [[-3.2,50.7],[-1.8,50.55],[-0.2,50.65],[0.9,50.95],[1.15,51.45],[0.85,52.05],
+     [0.15,52.85],[-0.35,53.65],[-1.15,53.85],[-2.45,53.75],[-3.2,53.45],
+     [-3.1,52.35],[-3.2,51.45],[-3.2,50.7]],
+  ],
+};
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -145,11 +152,19 @@ class Menu {
     const p = this._project(ap);
     return { left: (p.x / 360) * 100, top: (p.y / 180) * 100 };
   }
-  _clusterPct(ap, cluster) {
+  /* Project a lon/lat into loupe space, inset so dots stay inside the circle. */
+  _clusterXY(lon, lat, cluster) {
+    const pad = 0.22;
+    const nx = (lon - cluster.lon0) / (cluster.lon1 - cluster.lon0);
+    const ny = (cluster.lat1 - lat) / (cluster.lat1 - cluster.lat0);
     return {
-      left: ((ap.lon - cluster.lon0) / (cluster.lon1 - cluster.lon0)) * 100,
-      top: ((cluster.lat1 - ap.lat) / (cluster.lat1 - cluster.lat0)) * 100,
+      x: (pad + nx * (1 - 2 * pad)) * 100,
+      y: (pad + ny * (1 - 2 * pad)) * 100,
     };
+  }
+  _clusterPct(ap, cluster) {
+    const p = this._clusterXY(ap.lon, ap.lat, cluster);
+    return { left: p.x, top: p.y };
   }
   _clusteredIatas() {
     const set = new Set();
@@ -242,29 +257,30 @@ class Menu {
     if (typeof MAP_CLUSTERS === "undefined" || !MAP_CLUSTERS.length) return;
     MAP_CLUSTERS.forEach((cluster) => {
       const { left, top } = this._pct(cluster);
-      // Sit the glass in the Atlantic, just SE of NYC, so Toronto / other
-      // nearby dots stay clickable.
-      const btnLeft = left + 3.4;
-      const btnTop = top + 2.8;
       const btn = document.createElement("button");
       btn.className = "mag-btn";
-      btn.style.left = btnLeft + "%";
-      btn.style.top = btnTop + "%";
+      btn.style.left = left + "%";
+      btn.style.top = top + "%";
       btn.title = `Zoom ${cluster.label}`;
       btn.innerHTML = `
         <span class="mag-lens"></span>
         <span class="mag-handle"></span>
-        <span class="mag-label">${cluster.label === "New York" ? "NYC" : cluster.label}</span>`;
+        <span class="mag-label">${cluster.short || cluster.label}</span>`;
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         this._toggleCluster(cluster);
       });
       host.appendChild(btn);
 
+      const wrapH = host.parentElement ? host.parentElement.clientHeight : 400;
+      const pinY = (top / 100) * wrapH;
+      const loupeR = 110;
+      const loupeY = Math.max(pinY, loupeR + 8);
+
       const loupe = document.createElement("div");
       loupe.className = "loupe hidden";
-      loupe.style.left = btnLeft + "%";
-      loupe.style.top = `calc(${btnTop}% + 42px)`;
+      loupe.style.left = left + "%";
+      loupe.style.top = loupeY + "px";
       loupe.innerHTML = `
         <span class="loupe-handle"></span>
         <div class="loupe-glass">
@@ -276,11 +292,9 @@ class Menu {
       host.appendChild(loupe);
 
       const lsvg = loupe.querySelector(".loupe-map");
-      const land = cluster.id === "nyc" ? NYC_LAND : [];
-      land.forEach((poly) => lsvg.appendChild(this._landPath(poly, (lon, lat) => ({
-        x: ((lon - cluster.lon0) / (cluster.lon1 - cluster.lon0)) * 100,
-        y: ((cluster.lat1 - lat) / (cluster.lat1 - cluster.lat0)) * 100,
-      }))));
+      const land = CLUSTER_LAND[cluster.id] || [];
+      land.forEach((poly) => lsvg.appendChild(this._landPath(poly, (lon, lat) =>
+        this._clusterXY(lon, lat, cluster))));
 
       const ldots = loupe.querySelector(".loupe-dots");
       cluster.iatas.forEach((iata) => {
