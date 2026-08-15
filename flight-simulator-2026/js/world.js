@@ -871,6 +871,69 @@ class World {
         box(160, 50, 80, haze); windows(160, 50, 80);
         break;
       }
+      case "namsan": {
+        // Seoul: N Seoul Tower on a hill plus a dense skyline.
+        const hts = [110, 170, 240, 190, 280, 210, 150];
+        hts.forEach((h, i) => { const off = -280 + i * 70; box(off, 52, h, i % 2 ? haze : hazeDark); windows(off, 52, h); });
+        ctx.fillStyle = "#5a6a4a";
+        ctx.beginPath();
+        ctx.moveTo(at(80), gy);
+        ctx.quadraticCurveTo(at(160), gy - m(90), at(240), gy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = hazeDark;
+        ctx.fillRect(at(160) - m(10), gy - m(90) - m(220), m(20), m(220));
+        ctx.fillStyle = haze;
+        ctx.beginPath();
+        ctx.ellipse(at(160), gy - m(90) - m(150), m(32), m(18), 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = hazeDark;
+        ctx.lineWidth = m(3);
+        ctx.beginPath();
+        ctx.moveTo(at(160), gy - m(90) - m(220));
+        ctx.lineTo(at(160), gy - m(90) - m(270));
+        ctx.stroke();
+        break;
+      }
+      case "pyramid": {
+        // Mexico City: a stepped pyramid and a low colonial skyline.
+        box(-220, 70, 90, haze); windows(-220, 70, 90);
+        box(-120, 55, 70, hazeDark);
+        ctx.fillStyle = "#c4a574";
+        ctx.beginPath();
+        ctx.moveTo(at(40) - m(140), gy);
+        ctx.lineTo(at(40) - m(28), gy - m(160));
+        ctx.lineTo(at(40) + m(28), gy - m(160));
+        ctx.lineTo(at(40) + m(140), gy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#a88858";
+        ctx.fillRect(at(40) - m(22), gy - m(186), m(44), m(26));
+        box(220, 64, 110, haze); windows(220, 64, 110);
+        break;
+      }
+      case "nyhavn": {
+        // Copenhagen: a row of narrow colored townhouses.
+        const colors = ["#c45c3a", "#d9b24a", "#3d6fa8", "#c46b7a", "#4a8a62", "#d97a3a"];
+        colors.forEach((col, i) => {
+          const off = -200 + i * 72;
+          ctx.fillStyle = col;
+          ctx.fillRect(at(off) - m(28), gy - m(110 + (i % 3) * 18), m(56), m(110 + (i % 3) * 18));
+          ctx.fillStyle = "#3a2a22";
+          ctx.beginPath();
+          ctx.moveTo(at(off) - m(32), gy - m(110 + (i % 3) * 18));
+          ctx.lineTo(at(off), gy - m(138 + (i % 3) * 18));
+          ctx.lineTo(at(off) + m(32), gy - m(110 + (i % 3) * 18));
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = "rgba(255,240,190,0.55)";
+          for (let r = 0; r < 3; r++) {
+            ctx.fillRect(at(off) - m(16), gy - m(90) + r * m(22), m(12), m(14));
+            ctx.fillRect(at(off) + m(4), gy - m(90) + r * m(22), m(12), m(14));
+          }
+        });
+        break;
+      }
       default: {
         ctx.fillStyle = hazeDark;
         ctx.beginPath(); ctx.moveTo(at(-500), gy);

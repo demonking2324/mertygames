@@ -80,6 +80,12 @@ const AIRLINES = [
   { id: "lan", name: "LATAM",              code: "LA", fuselage: "#f4f7fa", belly: "#1a1a1a", tail: "#1a1a1a",
     accent: "#e0001b", cheat: "none", titles: "LATAM", titleColor: "#e0001b",
     tailMark: "latam", engine: "#1a1a1a" },
+  { id: "kal", name: "Korean Air",         code: "KE", fuselage: "#8fd4ea", belly: "#f4f7fa", tail: "#6ec4e0",
+    accent: "#c8102e", cheat: "none", titles: "KOREAN AIR", titleColor: "#0a3d6b",
+    tailMark: "taegeuk", engine: "#6ec4e0" },
+  { id: "sas", name: "SAS",                code: "SK", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#0c1c47",
+    accent: "#c5a35a", cheat: "none", titles: "SAS", titleColor: "#0c1c47",
+    tailMark: "sas", engine: "#0c1c47" },
   { id: "pvt", name: "Private",             code: "N",  fuselage: "#f2f4f6", belly: "#d9dee4", tail: "#c5ccd4",
     accent: "#2f5f8a", cheat: "thin", titles: "", titleColor: "#2f5f8a",
     tailMark: "none", engine: "#c5ccd4" },
@@ -296,6 +302,33 @@ const AIRCRAFT_TYPES = [
     winglets: true,
     wide: true,
   },
+  {
+    id: "a388",
+    name: "Airbus A380-800",
+    class: "Superjumbo",
+    length: 72.7,
+    mass: 360000,
+    wingArea: 845.0,
+    maxThrust: 1240000,
+    clSlope: 6.0,
+    clMax: 1.38,
+    alphaStall: rad(13.5),
+    flapCl: 0.58,
+    flapNotches: 5,
+    cd0: 0.021,
+    induced: 0.036,
+    pitchAuthority: 0.52,
+    vRotate: 170,
+    vApproach: 150,
+    cruiseAlt: 11800,
+    engineType: "jet",
+    engineCount: 4,
+    highWing: false,
+    fixedGear: false,
+    winglets: true,
+    wide: true,
+    doubleDeck: true,
+  },
 ];
 
 /* Real-world airports (subset). elevation in meters, runway length in meters.
@@ -363,6 +396,12 @@ const AIRPORTS = [
     theme: { terrain: ["#4f7a3a", "#2f4d24"], sky: ["#8ab6d0", "#d5e4ee"], landmark: "obelisk" } },
   { icao: "NZAA", iata: "AKL", name: "Auckland Intl",       city: "Auckland",     lat: -37.0082, lon: 174.7917,  elevation: 7,   runway: 3635,
     theme: { terrain: ["#3f7e3a", "#255022"], sky: ["#7eb6d8", "#dff0e8"], landmark: "skytower" } },
+  { icao: "RKSI", iata: "ICN", name: "Seoul Incheon",       city: "Seoul",        lat: 37.4602,  lon: 126.4407,  elevation: 7,   runway: 4000,
+    theme: { terrain: ["#4d7538", "#314e22"], sky: ["#8fb6d8", "#d8e6f0"], landmark: "namsan" } },
+  { icao: "MMMX", iata: "MEX", name: "Mexico City Intl",    city: "Mexico City",  lat: 19.4363,  lon: -99.0721,  elevation: 2230, runway: 3963,
+    theme: { terrain: ["#8a9a52", "#5f6f33"], sky: ["#6db4e6", "#ffd9a0"], landmark: "pyramid" } },
+  { icao: "EKCH", iata: "CPH", name: "Copenhagen Kastrup",  city: "Copenhagen",   lat: 55.6180,  lon: 12.6508,   elevation: 5,   runway: 3600,
+    theme: { terrain: ["#4e7f39", "#2c4a20"], sky: ["#9db3c2", "#cdd8df"], landmark: "nyhavn" } },
 ];
 
 /* Airlines commonly seen parked at each airport (id → count), used to
@@ -374,12 +413,13 @@ const AIRLINE_BY_ID = Object.fromEntries(AIRLINES.map((a) => [a.id, a]));
 const AIRCRAFT_OPERATORS = {
   c172:  ["pvt"],
   dash8: ["aca", "qfa", "eth"],
-  a320:  ["aal", "dal", "ual", "jbu", "baw", "dlh", "afr", "aca", "pgt", "thy", "ibe", "qtr", "lan"],
+  a320:  ["aal", "dal", "ual", "jbu", "baw", "dlh", "afr", "aca", "pgt", "thy", "ibe", "qtr", "lan", "sas"],
   b738:  ["aal", "dal", "ual", "swa", "klm", "qfa", "jal", "aca", "eth", "kqa", "ryr"],
-  b77w:  ["aal", "ual", "baw", "afr", "klm", "uae", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr"],
+  b77w:  ["aal", "ual", "baw", "afr", "klm", "uae", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "kal"],
   e175:  ["aal", "dal", "ual", "aca", "klm"],
-  b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "ibe", "lan"],
-  a359:  ["dal", "afr", "dlh", "sia", "qtr", "jal", "ibe", "thy", "aca", "qfa", "lan"],
+  b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "ibe", "lan", "kal"],
+  a359:  ["dal", "afr", "dlh", "sia", "qtr", "jal", "ibe", "thy", "aca", "qfa", "lan", "sas", "kal"],
+  a388:  ["uae", "sia", "baw", "qfa", "dlh", "afr", "kal"],
 };
 
 function liveriesForAircraft(spec) {
@@ -418,6 +458,9 @@ const AIRPORT_FLEETS = {
   SIN: [["sia", 6], ["uae", 1], ["baw", 1], ["qfa", 1], ["dlh", 1], ["jal", 1], ["qtr", 1]],
   SYD: [["qfa", 6], ["uae", 1], ["sia", 1], ["ual", 1], ["qtr", 1]],
   AKL: [["qfa", 3], ["sia", 2], ["ual", 1], ["dal", 1], ["lan", 1]],
+  ICN: [["kal", 7], ["jal", 2], ["sia", 1], ["dlh", 1], ["ual", 1], ["qtr", 1]],
+  MEX: [["aal", 3], ["ual", 2], ["lan", 2], ["dal", 1], ["ibe", 1], ["aca", 1]],
+  CPH: [["sas", 7], ["dlh", 1], ["baw", 1], ["klm", 1], ["afr", 1], ["thy", 1]],
   GRU: [["lan", 5], ["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["ibe", 1]],
   EZE: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["qtr", 1]],
   YYZ: [["aca", 7], ["ual", 1], ["aal", 1], ["baw", 1], ["dlh", 1], ["afr", 1]],
@@ -455,10 +498,10 @@ function airportFleet(airport) {
 /* Coarse continent per airport — used to decide when a route flies over
  * open ocean (e.g., JFK→LHR crosses the Atlantic). */
 const AIRPORT_REGION = {
-  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na",
-  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu",
+  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na", MMMX: "na",
+  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu", EKCH: "eu",
   OMDB: "me", OTHH: "me",
-  RJTT: "asia", WSSS: "asia", VHHH: "asia",
+  RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia",
   YSSY: "oceania", NZAA: "oceania",
   SBGR: "sa", SAEZ: "sa",
   HAAB: "af", HKJK: "af", FACT: "af",
@@ -466,7 +509,7 @@ const AIRPORT_REGION = {
 
 /* Continent zoom windows for the route map. lon/lat bounds in degrees. */
 const MAP_ZOOMS = [
-  { id: "na",  label: "North America", short: "N. America", lon0: -130, lon1: -65,  lat0: 22,  lat1: 55 },
+  { id: "na",  label: "North America", short: "N. America", lon0: -130, lon1: -65,  lat0: 14,  lat1: 55 },
   { id: "sa",  label: "South America", short: "S. America", lon0: -85,  lon1: -32,  lat0: -56, lat1: 14 },
   { id: "eu",  label: "Europe",        short: "Europe",     lon0: -12,  lon1: 36,   lat0: 35,  lat1: 61 },
   { id: "af",  label: "Africa",        short: "Africa",     lon0: -20,  lon1: 54,   lat0: -38, lat1: 38 },
