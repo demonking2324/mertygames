@@ -629,6 +629,40 @@ class World {
         acacia(60, 0.7);
         break;
       }
+      case "mosque": {
+        // Istanbul: central dome, half-domes, and two minarets.
+        const stone = "#cbb896";
+        const stoneDark = "#a89068";
+        box(0, 200, 95, stone);
+        box(-70, 90, 70, stoneDark);
+        box(70, 90, 70, stoneDark);
+        const dome = (off, rx, ry, lift) => {
+          ctx.fillStyle = stoneDark;
+          ctx.beginPath();
+          ctx.ellipse(at(off), gy - m(lift), m(rx), m(ry), 0, Math.PI, 0, true);
+          ctx.fill();
+          ctx.strokeStyle = stoneDark;
+          ctx.lineWidth = m(3);
+          ctx.beginPath();
+          ctx.moveTo(at(off), gy - m(lift + ry));
+          ctx.lineTo(at(off), gy - m(lift + ry + 18));
+          ctx.stroke();
+        };
+        dome(0, 72, 58, 95);
+        dome(-70, 42, 32, 70);
+        dome(70, 42, 32, 70);
+        [-150, 150].forEach((off) => {
+          box(off, 14, 220, stone);
+          ctx.fillStyle = stoneDark;
+          ctx.beginPath();
+          ctx.moveTo(at(off) - m(10), gy - m(220));
+          ctx.lineTo(at(off), gy - m(248));
+          ctx.lineTo(at(off) + m(10), gy - m(220));
+          ctx.closePath();
+          ctx.fill();
+        });
+        break;
+      }
       case "hills":
       default: {
         ctx.fillStyle = hazeDark;

@@ -29,6 +29,7 @@ const AIRLINES = [
   { id: "aca", name: "Air Canada",          code: "AC", fuselage: "#e9edf1", tail: "#1b1c1e", accent: "#d0112b" },
   { id: "eth", name: "Ethiopian Airlines",  code: "ET", fuselage: "#eef2f6", tail: "#1a7a3a", accent: "#f2b301", accent2: "#d21b34" },
   { id: "kqa", name: "Kenya Airways",       code: "KQ", fuselage: "#eef2f6", tail: "#b81330", accent: "#0f7d3b", accent2: "#111418" },
+  { id: "pgt", name: "Pegasus Airlines",    code: "PC", fuselage: "#eef2f6", tail: "#f5c400", accent: "#1a1a1a" },
 ];
 
 /* Aircraft aerodynamic + performance model.
@@ -225,6 +226,8 @@ const AIRCRAFT_TYPES = [
 const AIRPORTS = [
   { icao: "KJFK", iata: "JFK", name: "New York JFK",        city: "New York",     lat: 40.6413,  lon: -73.7781, elevation: 4,   runway: 4423,
     theme: { terrain: ["#4f7a3a", "#2f4d24"], sky: ["#7aa7d6", "#b9d3ea"], landmark: "nyc" } },
+  { icao: "KLGA", iata: "LGA", name: "New York LaGuardia",  city: "New York",     lat: 40.7769,  lon: -73.8740, elevation: 6,   runway: 2134,
+    theme: { terrain: ["#4f7a3a", "#2f4d24"], sky: ["#7aa7d6", "#b9d3ea"], landmark: "nyc" } },
   { icao: "KLAX", iata: "LAX", name: "Los Angeles Intl",    city: "Los Angeles",  lat: 33.9416,  lon: -118.4085, elevation: 38,  runway: 3939,
     theme: { terrain: ["#8a9a52", "#5f6f33"], sky: ["#6db4e6", "#ffd9a0"], landmark: "palms" } },
   { icao: "KORD", iata: "ORD", name: "Chicago O'Hare",      city: "Chicago",      lat: 41.9742,  lon: -87.9073,  elevation: 205, runway: 3962,
@@ -259,6 +262,8 @@ const AIRPORTS = [
     theme: { terrain: ["#b89a4e", "#7a6224"], sky: ["#8fb8d8", "#e6dcc0"], landmark: "africa" } },
   { icao: "HKJK", iata: "NBO", name: "Nairobi Jomo Kenyatta", city: "Nairobi",    lat: -1.3192,  lon: 36.9278,   elevation: 1624, runway: 4117,
     theme: { terrain: ["#a89a54", "#6f6228"], sky: ["#8fbad6", "#e3ddc4"], landmark: "africa" } },
+  { icao: "LTFJ", iata: "SAW", name: "Istanbul Sabiha Gökçen", city: "Istanbul", lat: 40.8986,  lon: 29.3092,   elevation: 95,  runway: 3000,
+    theme: { terrain: ["#6f8a44", "#4a6228"], sky: ["#7eb6d8", "#e4d6a8"], landmark: "mosque" } },
 ];
 
 /* Airlines commonly seen parked at each airport (id → count), used to
@@ -266,13 +271,15 @@ const AIRPORTS = [
 const AIRLINE_BY_ID = Object.fromEntries(AIRLINES.map((a) => [a.id, a]));
 const AIRPORT_FLEETS = {
   JFK: [["dal", 5], ["jbu", 4], ["aal", 3], ["ual", 1], ["baw", 1], ["afr", 1], ["dlh", 1], ["aca", 1]],
+  LGA: [["dal", 5], ["aal", 3], ["jbu", 3], ["swa", 2], ["ual", 1]],
+  SAW: [["pgt", 8], ["dlh", 1], ["afr", 1], ["baw", 1]],
   LAX: [["aal", 3], ["ual", 3], ["dal", 3], ["swa", 2], ["jbu", 1], ["qfa", 1], ["aca", 1]],
   ORD: [["ual", 6], ["aal", 4], ["swa", 2], ["dlh", 1], ["aca", 1]],
   SFO: [["ual", 6], ["aal", 1], ["dal", 1], ["sia", 1], ["uae", 1], ["aca", 1]],
   LHR: [["baw", 6], ["dlh", 2], ["klm", 1], ["afr", 2], ["aal", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["kqa", 1]],
   CDG: [["afr", 6], ["klm", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["aca", 1]],
   FRA: [["dlh", 6], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1]],
-  AMS: [["klm", 6], ["afr", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["kqa", 1]],
+  AMS: [["klm", 6], ["afr", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["kqa", 1], ["pgt", 1]],
   DXB: [["uae", 7], ["baw", 1], ["sia", 1], ["qfa", 1], ["eth", 1], ["kqa", 1]],
   ADD: [["eth", 7], ["dlh", 1], ["uae", 1], ["baw", 1], ["afr", 1], ["klm", 1]],
   NBO: [["kqa", 7], ["klm", 1], ["eth", 1], ["baw", 1], ["dlh", 1], ["uae", 1]],
@@ -310,8 +317,8 @@ function airportFleet(airport) {
 /* Coarse continent per airport — used to decide when a route flies over
  * open ocean (e.g., JFK→LHR crosses the Atlantic). */
 const AIRPORT_REGION = {
-  KJFK: "na", KLAX: "na", KORD: "na", KSFO: "na",
-  EGLL: "eu", LFPG: "eu", EDDF: "eu", EHAM: "eu", LEMD: "eu",
+  KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na",
+  EGLL: "eu", LFPG: "eu", EDDF: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu",
   OMDB: "me",
   RJTT: "asia", WSSS: "asia", VHHH: "asia",
   YSSY: "oceania",
@@ -319,6 +326,22 @@ const AIRPORT_REGION = {
   CYYZ: "na",
   HAAB: "af", HKJK: "af",
 };
+
+/* Nearby airports that overlap on the world map. A magnifying-glass
+ * control zooms that city so each field can be picked separately. */
+const MAP_CLUSTERS = [
+  {
+    id: "nyc",
+    label: "New York",
+    iatas: ["JFK", "LGA"],
+    lat: 40.71,
+    lon: -73.90,
+    lon0: -74.22,
+    lon1: -73.58,
+    lat0: 40.50,
+    lat1: 40.92,
+  },
+];
 
 /* Region pairs that are joined by land (no ocean band between them). */
 const LAND_CONNECTED = new Set(["eu|me", "asia|eu", "asia|me", "af|eu", "af|me", "af|asia"]);
@@ -340,4 +363,66 @@ function routeDistanceKm(a, b) {
   const la1 = rad(a.lat), la2 = rad(b.lat);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* Loading-screen tips. `tags` let the loader prefer advice that matches
+ * the upcoming flight (takeoff, landing, jet, training, etc.). */
+const LOADING_TIPS = [
+  { tags: ["pitch"], text: "Pitch is yoke-style: pull ↓ / S to raise the nose, push ↑ / W to lower it." },
+  { tags: ["takeoff"], text: "Set takeoff flaps (F), spool to full throttle (D), then rotate near V_R — not before." },
+  { tags: ["takeoff"], text: "Rotate too early and you'll stall on the runway. Wait for the airspeed tape to reach V_R." },
+  { tags: ["takeoff", "climb"], text: "After a positive climb, retract the gear (G). Gear drag costs you climb rate." },
+  { tags: ["landing"], text: "Aim for under ~3 m/s vertical speed at touchdown. Under 1.5 m/s is butter." },
+  { tags: ["landing"], text: "On short final: gear down (G), full flaps (F), and a gentle flare in the last few meters." },
+  { tags: ["landing"], text: "Gear-up landings always end the flight. Confirm GEAR DN before the threshold." },
+  { tags: ["landing"], text: "Start braking (Space) as soon as the wheels are on — overrunning the far end is a failed landing." },
+  { tags: ["landing"], text: "Reduce throttle before dumping full flaps on final, or you'll balloon above the glide path." },
+  { tags: ["stall"], text: "If STALL flashes, ease the nose down and add throttle. Angle of attack matters more than speed." },
+  { tags: ["jet", "climb"], text: "Jets climb best at a modest pitch (~8–12°). Hauling the nose up just bleeds energy." },
+  { tags: ["climb"], text: "Air density falls with altitude, so climb performance fades as you get higher." },
+  { tags: ["flaps"], text: "Flaps add lift for takeoff and landing, but also drag. Retract them once you're climbing cleanly." },
+  { tags: ["ga"], text: "The Cessna 172 has fixed gear — no need to toggle G." },
+  { tags: ["general"], text: "Hold Space for wheel brakes. They only work on the ground." },
+  { tags: ["general"], text: "Press P to pause, Esc to return to the menu." },
+  { tags: ["training"], text: "Training Mode lets you practice takeoffs and landings at a quiet field — no airline, no traffic." },
+  { tags: ["training", "landing"], text: "Landing practice starts you on a ~3.5° final. Manage the descent; don't chase the runway." },
+  { tags: ["general"], text: "On-screen touch controls (throttle slider + pitch stick) can be toggled from the main menu." },
+  { tags: ["route"], text: "Transoceanic routes show land near each coast and open water in between. Short hops stay over terrain." },
+  { tags: ["route"], text: "Great-circle distances are real; the flown distance is compressed so a leg lasts minutes, not hours." },
+  { tags: ["score"], text: "Landing score starts at 100 and drops as touchdown vertical speed goes past 1.5 m/s." },
+  { tags: ["general"], text: "After an off-airport landing you can throttle up and fly again — or roll to a stop and call it a day." },
+];
+
+let _lastLoadingTip = -1;
+
+/* Pick a tip, preferring ones whose tags match the upcoming flight. */
+function pickLoadingTip(config) {
+  const wanted = new Set(["general"]);
+  wanted.add("takeoff");
+  wanted.add("landing");
+  if (config.training) wanted.add("training");
+  const spec = config.aircraft;
+  if (spec) {
+    if (spec.engineType === "jet") wanted.add("jet");
+    if (spec.fixedGear) wanted.add("ga");
+    wanted.add("flaps");
+    wanted.add("stall");
+    wanted.add("climb");
+  }
+  if (!config.training) wanted.add("route");
+  wanted.add("score");
+  wanted.add("pitch");
+
+  const ranked = LOADING_TIPS.map((tip, i) => ({
+    i, tip,
+    hits: tip.tags.reduce((n, t) => n + (wanted.has(t) ? 1 : 0), 0),
+  })).sort((a, b) => b.hits - a.hits);
+
+  const top = ranked.filter((r) => r.hits >= ranked[0].hits - 1);
+  let pick = top[Math.floor(Math.random() * top.length)];
+  if (top.length > 1 && pick.i === _lastLoadingTip) {
+    pick = top.find((r) => r.i !== _lastLoadingTip) || pick;
+  }
+  _lastLoadingTip = pick.i;
+  return pick.tip.text;
 }

@@ -27,6 +27,7 @@
 
       <section class="route-section">
         <h2>3. Route — tap an airport on the map</h2>
+        <p class="map-hint">New York has two fields — tap the magnifying glass to zoom in.</p>
         <div id="map-wrap" class="map-wrap">
           <svg id="world-map" class="world-map" viewBox="0 0 360 180" preserveAspectRatio="none" aria-label="World map"></svg>
           <div id="map-dots" class="map-dots"></div>
@@ -92,6 +93,31 @@
     <div id="message" class="message hidden"></div>
   </div>
 
+  <!-- ===== Loading ===== -->
+  <div id="loading" class="screen hidden" aria-live="polite">
+    <div class="load-accent" id="load-accent"></div>
+    <div class="load-inner">
+      <p class="load-brand">FLIGHT SIMULATOR <span>2026</span></p>
+      <h2 id="load-title">Preparing flight</h2>
+      <p id="load-meta" class="load-meta"></p>
+      <p id="load-route" class="load-route"></p>
+
+      <div class="load-bar-wrap">
+        <div class="load-bar-track">
+          <div id="load-bar" class="load-bar-fill"></div>
+        </div>
+        <p id="load-status" class="load-status">Filing flight plan…</p>
+      </div>
+
+      <div class="load-tip-card">
+        <div class="load-tip-label">Tip</div>
+        <p id="load-tip" class="load-tip-text"></p>
+      </div>
+
+      <p class="load-skip">Click, tap, or press a key to skip · Esc for menu</p>
+    </div>
+  </div>
+
   <script src="js/data.js"></script>
   <script src="js/physics.js"></script>
   <script src="js/camera.js"></script>
@@ -99,6 +125,7 @@
   <script src="js/world.js"></script>
   <script src="js/input.js"></script>
   <script src="js/hud.js"></script>
+  <script src="js/loading.js"></script>
   <script src="js/game.js"></script>
   <script src="js/mobile.js"></script>
   <script src="js/menu.js"></script>

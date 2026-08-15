@@ -22,7 +22,12 @@ const CONTINENTS = [
   [[113,-22],[114,-30],[118,-34],[125,-33],[132,-32],[138,-35],[145,-38],[150,-37],[153,-30],[148,-24],[145,-16],[138,-12],[132,-11],[126,-14],[120,-19],[113,-22]],
 ];
 
-const SVG_NS = "http://www.w3.org/2000/svg";
+/* Close-up coastline used inside the New York magnifying-glass loupe. */
+const NYC_LAND = [
+  [[-74.22,40.50],[-74.22,40.92],[-73.93,40.92],[-73.78,40.87],[-73.70,40.86],[-73.58,40.80],[-73.58,40.58],[-73.78,40.54],[-73.95,40.50],[-74.22,40.50]],
+];
+
+const SVG_NS = "http://www.w3.org/1998/svg";
 
 class Menu {
   constructor(onStart) {
@@ -35,6 +40,8 @@ class Menu {
     this.dotEls = {};
 
     this.trainMode = "takeoff";
+    this.openCluster = null;
+    this.clusterEls = {};
 
     this._buildAirlines();
     this._buildAircraft();
@@ -128,6 +135,17 @@ class Menu {
     const p = this._project(ap);
     return { left: (p.x / 360) * 100, top: (p.y / 180) * 100 };
   }
+  _clusterPct(ap, cluster) {
+    return {
+      left: ((ap.lon - cluster.lon0) / (cluster.lon1 - cluster.lon0)) * 100,
+      top: ((cluster.lat1 - ap.lat) / (cluster.lat1 - cluster.lat0)) * 100,
+    };
+  }
+  _clusteredIatas() {
+    const set = new Set();
+    MAP_CLUSTERS.forEach((c) => c.iatas.forEach((i) => set.add(i)));
+    return set;
+  }
 
   _buildMap() {
     const svg = document.getElementById("world-map");
@@ -153,28 +171,123 @@ class Menu {
     this.routeLine = this._svgEl("line", { class: "route-line hidden" });
     svg.appendChild(this.routeLine);
 
-    // Airport dots.
+    // Airport dots — clustered cities are hidden on the world map and
+    // shown inside a magnifying-glass loupe instead.
     const dots = document.getElementById("map-dots");
     dots.innerHTML = "";
     this.dotEls = {};
+    const clustered = this._clusteredIatas();
     AIRPORTS.forEach((ap) => {
+      if (clustered.has(ap.iata)) return;
       const { left, top } = this._pct(ap);
-      const dot = document.createElement("button");
-      dot.className = "dot";
-      dot.style.left = left + "%";
-      dot.style.top = top + "%";
-      dot.title = `${ap.iata} — ${ap.name}`;
-      dot.innerHTML = `<span class="dot-core"></span><span class="dot-label">${ap.iata}</span>`;
-      dot.addEventListener("click", (e) => { e.stopPropagation(); this._openPopup(ap, dot); });
+      const dot = this._makeDot(ap, left, top);
       dots.appendChild(dot);
       this.dotEls[ap.iata] = dot;
     });
 
-    // Clicking empty map closes any open popup.
+    this._buildClusters(dots);
+
+    // Clicking empty map closes any open popup / loupe.
     const wrap = document.getElementById("map-wrap");
-    wrap.addEventListener("click", () => this._closePopup());
+    wrap.addEventListener("click", () => {
+      this._closePopup();
+      this._closeCluster();
+    });
     const popup = document.getElementById("map-popup");
     popup.addEventListener("click", (e) => e.stopPropagation());
+  }
+
+  _makeDot(ap, left, top) {
+    const dot = document.createElement("button");
+    dot.className = "dot";
+    dot.style.left = left + "%";
+    dot.style.top = top + "%";
+    dot.title = `${ap.iata} — ${ap.name}`;
+    dot.innerHTML = `<span class="dot-core"></span><span class="dot-label">${ap.iata}</span>`;
+    dot.addEventListener("click", (e) => { e.stopPropagation(); this._openPopup(ap, dot); });
+    return dot;
+  }
+
+  _buildClusters(host) {
+    this.clusterEls = {};
+    MAP_CLUSTERS.forEach((cluster) => {
+      const { left, top } = this._pct(cluster);
+      const btn = document.createElement("button");
+      btn.className = "mag-btn";
+      btn.style.left = left + "%";
+      btn.style.top = top + "%";
+      btn.title = `Zoom ${cluster.label}`;
+      btn.innerHTML = `
+        <span class="mag-lens"></span>
+        <span class="mag-handle"></span>
+        <span class="mag-label">${cluster.label === "New York" ? "NYC" : cluster.label}</span>`;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._toggleCluster(cluster);
+      });
+      host.appendChild(btn);
+
+      const loupe = document.createElement("div");
+      loupe.className = "loupe hidden";
+      loupe.style.left = left + "%";
+      loupe.style.top = `calc(${top}% + 42px)`;
+      loupe.innerHTML = `
+        <span class="loupe-handle"></span>
+        <div class="loupe-glass">
+          <svg class="loupe-map" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="loupe-dots"></div>
+          <div class="loupe-caption">${cluster.label.toUpperCase()}</div>
+        </div>`;
+      loupe.addEventListener("click", (e) => e.stopPropagation());
+      host.appendChild(loupe);
+
+      const lsvg = loupe.querySelector(".loupe-map");
+      const land = cluster.id === "nyc" ? NYC_LAND : [];
+      land.forEach((poly) => {
+        const pts = poly.map(([lon, lat]) => {
+          const x = ((lon - cluster.lon0) / (cluster.lon1 - cluster.lon0)) * 100;
+          const y = ((cluster.lat1 - lat) / (cluster.lat1 - cluster.lat0)) * 100;
+          return `${x},${y}`;
+        }).join(" ");
+        lsvg.appendChild(this._svgEl("polygon", { points: pts, class: "map-continent" }));
+      });
+
+      const ldots = loupe.querySelector(".loupe-dots");
+      cluster.iatas.forEach((iata) => {
+        const ap = AIRPORTS.find((a) => a.iata === iata);
+        if (!ap) return;
+        const p = this._clusterPct(ap, cluster);
+        const dot = this._makeDot(ap, p.left, p.top);
+        ldots.appendChild(dot);
+        this.dotEls[ap.iata] = dot;
+      });
+
+      this.clusterEls[cluster.id] = { cluster, btn, loupe };
+    });
+  }
+
+  _toggleCluster(cluster) {
+    if (this.openCluster && this.openCluster.id === cluster.id) {
+      this._closeCluster();
+      return;
+    }
+    this._closePopup();
+    this.openCluster = cluster;
+    for (const id in this.clusterEls) {
+      const el = this.clusterEls[id];
+      const on = el.cluster.id === cluster.id;
+      el.btn.classList.toggle("hidden", on);
+      el.loupe.classList.toggle("hidden", !on);
+    }
+  }
+
+  _closeCluster() {
+    this.openCluster = null;
+    for (const id in this.clusterEls) {
+      const el = this.clusterEls[id];
+      el.btn.classList.remove("hidden");
+      el.loupe.classList.add("hidden");
+    }
   }
 
   _svgEl(tag, attrs) {
@@ -198,8 +311,11 @@ class Menu {
         <button class="pop-btn cancel" data-act="cancel">Cancel</button>
       </div>`;
 
-    const left = parseFloat(dot.style.left);
-    const top = parseFloat(dot.style.top);
+    const wrap = document.getElementById("map-wrap");
+    const wr = wrap.getBoundingClientRect();
+    const dr = dot.getBoundingClientRect();
+    const left = ((dr.left + dr.width / 2 - wr.left) / wr.width) * 100;
+    const top = ((dr.top + dr.height / 2 - wr.top) / wr.height) * 100;
     popup.style.left = Math.min(86, Math.max(14, left)) + "%";
     popup.style.top = top + "%";
     popup.classList.toggle("below", top < 34);
@@ -235,6 +351,14 @@ class Menu {
       const el = this.dotEls[iata];
       el.classList.toggle("from", !!this.from && this.from.iata === iata);
       el.classList.toggle("to", !!this.to && this.to.iata === iata);
+    }
+
+    for (const id in this.clusterEls) {
+      const { cluster, btn } = this.clusterEls[id];
+      const hasFrom = !!this.from && cluster.iatas.includes(this.from.iata);
+      const hasTo = !!this.to && cluster.iatas.includes(this.to.iata);
+      btn.classList.toggle("has-from", hasFrom);
+      btn.classList.toggle("has-to", hasTo);
     }
 
     const line = this.routeLine;

@@ -36,6 +36,14 @@ class Input {
   /* Call once per frame AFTER reading, to clear edge triggers. */
   endFrame() { this._pressed = {}; }
 
+  /* Drop held keys / touch so a loading-screen skip doesn't leak into flight. */
+  clear() {
+    this.keys = {};
+    this._pressed = {};
+    this.pitch = 0;
+    this.touch = { pitch: 0, throttle: null, brakes: false };
+  }
+
   pressed(code) { return !!this._pressed[code]; }
   down(code) { return !!this.keys[code]; }
 

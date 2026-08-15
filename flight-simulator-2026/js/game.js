@@ -11,7 +11,7 @@ class Game {
     this.hud = new HUD(document.getElementById("hud"));
     this.messageEl = document.getElementById("message");
 
-    this.state = "idle"; // idle | flying | paused | ended
+    this.state = "idle"; // idle | loading | flying | paused | ended
     this.lastT = 0;
     this.prevOnGround = true;
     this.touchdownVs = 0;
@@ -19,6 +19,7 @@ class Game {
 
     this.training = false;
     this.trainingConfig = null;
+    this.loading = new LoadingScreen();
     this.resetBtn = document.getElementById("reset-btn");
     this.resetBtn.addEventListener("click", () => this._resetTraining());
 
@@ -51,6 +52,15 @@ class Game {
   }
 
   start(config) {
+    this.state = "loading";
+    this._hideMessage();
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("game").classList.add("hidden");
+    this.resetBtn.classList.add("hidden");
+    this.loading.show(config, () => this._beginFlight(config), () => this.toMenu());
+  }
+
+  _beginFlight(config) {
     const { airline, aircraft, from, to } = config;
     this.training = !!config.training;
     this.trainingMode = config.trainingMode || "takeoff";
@@ -79,6 +89,7 @@ class Game {
 
     this.prevOnGround = this.ac.onGround;
     this.smoke = [];
+    this.input.clear();
     this.state = "flying";
     this._hideMessage();
 
@@ -112,6 +123,7 @@ class Game {
 
   toMenu() {
     this.state = "idle";
+    this.loading.hide();
     this.resetBtn.classList.add("hidden");
     document.getElementById("game").classList.add("hidden");
     document.getElementById("menu").classList.remove("hidden");
