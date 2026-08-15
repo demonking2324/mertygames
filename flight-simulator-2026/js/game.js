@@ -406,7 +406,7 @@ class Game {
       const x = holdShort - (i + 1) * gap;
       const t = new TrafficPlane(pick.spec, pick.airline, x, w.groundElevation);
       t.goalX = x;
-      t.wait = i === 0 ? 1.1 : 0.7;
+      t.wait = i === 0 ? 0.6 : 0.4;
       this.traffic.push(t);
     }
     this.ac.x = holdShort - (n + 1) * gap;
@@ -553,7 +553,7 @@ class Game {
       t.facing = -1;
       t.gateSlot = i;
       t.goalX = slots[i];
-      t.wait = 1.4 + (nParked - 1 - i) * 1.6 + Math.random() * 1.2;
+      t.wait = 0.8 + (nParked - 1 - i) * 0.9 + Math.random() * 0.6;
       this.traffic.push(t);
       this._gateOcc[i] = t;
     }
@@ -572,8 +572,8 @@ class Game {
   }
 
   _canStartArrival() {
-    return !this._runwayBusy() && this._freeGate() >= 0 &&
-      !this.traffic.some((t) => t.phase === "approach" || t.phase === "rollout");
+    const block = new Set(["turn", "taxiOut", "hold", "taxi", "lineup", "spool", "roll", "climb", "approach", "rollout"]);
+    return this._freeGate() >= 0 && !this.traffic.some((t) => block.has(t.phase) || t.active);
   }
 
   _updateFreeCamTraffic(dt) {
@@ -1477,7 +1477,7 @@ class TrafficPlane {
 
   update(dt, groundY, thresh) {
     const vr = (this.spec.vRotate || 145) / MS_TO_KT;
-    const taxiSpeed = 38;
+    const taxiSpeed = 52;
 
     if (this.phase === "gate" || this.phase === "appear") {
       this.throttle = 0;
@@ -1511,7 +1511,7 @@ class TrafficPlane {
     if (this.phase === "taxiOut") {
       this.facing = 1;
       this.throttle = 0.2;
-      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 3));
+      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 5));
       this.x += this.vx * dt;
       this.airspeed = this.vx;
       this.y = groundY;
@@ -1523,7 +1523,7 @@ class TrafficPlane {
         this.throttle = 0;
         this.airspeed = 0;
         this.phase = "hold";
-        this.wait = 0.35 + Math.random() * 0.25;
+        this.wait = 0.2;
       }
       return;
     }
@@ -1608,7 +1608,7 @@ class TrafficPlane {
       this.wait -= dt;
       if (this.wait > 0) return;
       this.throttle = 0.18;
-      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 3));
+      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 5));
       this.x += this.vx * dt;
       this.airspeed = this.vx;
       this.y = groundY;
@@ -1624,64 +1624,63 @@ class TrafficPlane {
     }
 
     if (this.phase === "taxi") {
-      this.throttle = 0.22;
-      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 2.4));
-      this.x += this.vx * dt;
-      this.airspeed = this.vx;
+      this.facing = 1;
       this.y = groundY;
       this.onGround = true;
       this.pitch = 0;
-      if (this.x >= thresh + 50) {
-        this.vx *= Math.exp(-dt * 8);
-        if (this.vx < 2.4) {
-          this.vx = 0;
-          this.airspeed = 0;
-          this.phase = "lineup";
-          this.wait = 0.4;
-        }
+      // Once on the runway, spool and roll — do not brake-to-a-stop
+      // (lerping toward taxi speed while damping never actually stops).
+      if (this.x >= thresh + 40) {
+        this.phase = "spool";
+        this.throttle = Math.max(this.throttle, 0.4);
+        this.airspeed = this.vx;
+        return;
       }
+      this.throttle = 0.45;
+      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 5));
+      this.x += this.vx * dt;
+      this.airspeed = this.vx;
       return;
     }
 
     if (this.phase === "lineup") {
-      this.throttle = 0.12;
-      this.vx = 0;
-      this.y = groundY;
-      this.onGround = true;
-      this.wait -= dt;
-      if (this.wait <= 0) this.phase = "spool";
+      this.phase = "spool";
       return;
     }
 
     if (this.phase === "spool") {
-      this.throttle = Math.min(1, this.throttle + dt * 1.15);
+      this.y = groundY;
+      this.onGround = true;
+      this.throttle = Math.min(1, this.throttle + dt * 2.4);
+      this.x += this.vx * dt;
+      this.airspeed = this.vx;
       if (this.throttle >= 0.95) this.phase = "roll";
       return;
     }
 
     if (this.phase === "roll") {
       this.throttle = 1;
-      this.vx += 22 * dt;
+      this.vx += 36 * dt;
       this.x += this.vx * dt;
       this.airspeed = this.vx;
       this.pitch = 0;
       this.onGround = true;
       this.y = groundY;
-      if (this.vx >= vr * 0.92) this.phase = "climb";
+      if (this.vx >= vr * 0.88) this.phase = "climb";
       return;
     }
 
     if (this.phase === "climb") {
       this.throttle = 1;
       this.onGround = false;
-      this.pitch = lerp(this.pitch, rad(12), 1 - Math.exp(-dt * 3.2));
-      this.vx = Math.max(this.vx, vr * 1.12);
-      this.vy = 28;
+      this.pitch = lerp(this.pitch, rad(13), 1 - Math.exp(-dt * 4));
+      this.vx = Math.max(this.vx, vr * 1.15);
+      this.vy = 36;
       this.x += this.vx * dt;
       this.y += this.vy * dt;
       this.airspeed = Math.hypot(this.vx, this.vy);
-      if (this.y - groundY > 25) this.gearDown = false;
-      if (this.y - groundY > 160) {
+      if (this.y - groundY > 18) this.gearDown = false;
+      if (this.y - groundY > 140) {
         this.active = false;
         this.phase = "fade";
       }
