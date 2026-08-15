@@ -578,7 +578,7 @@ function routeDistanceKm(a, b) {
  * the upcoming flight (takeoff, landing, jet, training, etc.). */
 const LOADING_TIPS = [
   { tags: ["pitch"], text: "Pitch is yoke-style: pull ↓ / S to raise the nose, push ↑ / W to lower it." },
-  { tags: ["takeoff"], text: "Set takeoff flaps (F), spool to full throttle (D), then rotate near V_R — not before." },
+  { tags: ["takeoff", "route"], text: "You're in a departure queue. Hold until the traffic ahead rolls — you'll be cleared once the runway is yours." },
   { tags: ["takeoff"], text: "Rotate too early and you'll stall on the runway. Wait for the airspeed tape to reach V_R." },
   { tags: ["takeoff", "climb"], text: "After a positive climb, retract the gear (G). Gear drag costs you climb rate." },
   { tags: ["landing"], text: "Aim for under ~3 m/s vertical speed at touchdown. Under 1.5 m/s is butter." },
