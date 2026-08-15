@@ -188,7 +188,8 @@ class Game {
     this._checkTransitions();
     this._updateStatus();
 
-    this.cam.follow(ac.x, ac.y, dt);
+    const extraLook = (!this._depCleared && ac.onGround) ? 260 : 0;
+    this.cam.follow(ac.x + extraLook, ac.y, dt);
     this.hud.update(ac, this.world);
     if (this.mobile) this.mobile.sync(ac);
   }
@@ -289,20 +290,24 @@ class Game {
     });
   }
 
-  /* Line up 2–3 jets ahead on the departure runway. They take off
-   * one at a time; the player holds until the last one is airborne. */
+  /* Line up 2–3 jets on the taxiway before the threshold. Only one
+   * aircraft is released onto the runway at a time. */
   _spawnDepartureQueue() {
     const w = this.world;
+    const thresh = w.depRunwayStart;
+    const holdShort = thresh - 80;
+    const gap = 320;
     const n = 2 + Math.floor(Math.random() * 2); // 2 or 3
-    const gap = 380;
-    this.ac.x = w.depRunwayStart + 90;
     this.traffic = [];
     for (let i = 0; i < n; i++) {
       const pick = this._pickTraffic();
-      const t = new TrafficPlane(pick.spec, pick.airline, this.ac.x + (i + 1) * gap, w.groundElevation);
-      t.wait = i === n - 1 ? 2.4 : 1.5;
+      const x = holdShort - (i + 1) * gap;
+      const t = new TrafficPlane(pick.spec, pick.airline, x, w.groundElevation);
+      t.goalX = x;
+      t.wait = i === 0 ? 2.2 : 1.4;
       this.traffic.push(t);
     }
+    this.ac.x = holdShort - (n + 1) * gap;
     this._depCleared = false;
     this._queueHint();
   }
@@ -318,8 +323,24 @@ class Game {
   }
 
   _holdingTraffic() {
-    return (this.traffic || []).filter((t) => t.phase !== "gone" && t.phase !== "fade" &&
-      (t.phase === "hold" || t.phase === "spool" || t.onGround));
+    return (this.traffic || []).filter((t) =>
+      t.phase === "hold" || t.phase === "advance" || t.phase === "taxi" ||
+      t.phase === "lineup" || t.phase === "spool" || t.phase === "roll" ||
+      (t.onGround && t.phase !== "gone" && t.phase !== "fade"));
+  }
+
+  _runwayBusy() {
+    const thresh = this.world.depRunwayStart;
+    const gy = this.world.groundElevation;
+    return (this.traffic || []).some((t) => {
+      if (t.phase === "gone" || t.phase === "fade" || t.phase === "hold" || t.phase === "advance") {
+        return false;
+      }
+      if (t.phase === "taxi" || t.phase === "lineup" || t.phase === "spool" || t.phase === "roll") {
+        return true;
+      }
+      return t.x >= thresh && t.y - gy < 22;
+    });
   }
 
   _queueHint() {
@@ -330,8 +351,8 @@ class Game {
         Math.round(this.ac.spec.vRotate) + " kt.");
       return;
     }
-    const rolling = holding.some((t) => t.phase === "spool" || t.phase === "roll" || t.phase === "climb");
-    const ahead = holding.length;
+    const rolling = this._runwayBusy();
+    const ahead = this.traffic.filter((t) => t.phase !== "gone" && t.phase !== "fade" && t.phase !== "climb").length;
     if (rolling) this.hud.setStatus("Traffic rolling — hold position.");
     else this.hud.setStatus("Hold position — number " + (ahead + 1) + " for departure.");
   }
@@ -340,11 +361,9 @@ class Game {
     const list = this.traffic;
     if (!list || !list.length) return;
     const gy = this.world.groundElevation;
+    const thresh = this.world.depRunwayStart;
 
-    const busy = list.some((t) => t.phase === "spool" || t.phase === "roll" ||
-      (t.phase === "climb" && t.y - gy < 80));
-    if (!busy) {
-      // Next in line is the one furthest down the runway still holding.
+    if (!this._runwayBusy()) {
       let next = null;
       for (const t of list) {
         if (t.phase !== "hold") continue;
@@ -352,23 +371,48 @@ class Game {
       }
       if (next) {
         next.wait -= dt;
-        if (next.wait <= 0) next.phase = "spool";
+        if (next.wait <= 0) {
+          next.phase = "taxi";
+          this._refreshQueueSlots();
+        }
       }
     }
 
     for (const t of list) {
       if (t.phase === "gone") continue;
-      t.update(dt, gy);
+      t.update(dt, gy, thresh);
     }
 
     if (!this._depCleared && !this._holdingTraffic().length) this._queueHint();
     else if (!this._depCleared && this.ac.onGround) this._queueHint();
   }
 
-  /* Don't let the player roll into (or through) the jet ahead. */
+  _refreshQueueSlots() {
+    const thresh = this.world.depRunwayStart;
+    const holdShort = thresh - 80;
+    const gap = 320;
+    const waiting = this.traffic
+      .filter((t) => t.phase === "hold" || t.phase === "advance")
+      .sort((a, b) => b.x - a.x);
+    waiting.forEach((t, i) => {
+      t.goalX = holdShort - (i + 1) * gap;
+      if (t.phase === "hold" && t.x < t.goalX - 20) {
+        t.phase = "advance";
+        t.wait = 0.4;
+      }
+    });
+  }
+
+  /* Hold short of the runway until traffic is gone, and don't nose into the jet ahead. */
   _holdForQueue() {
     const ac = this.ac;
     if (this._depCleared || !ac.onGround) return;
+    const thresh = this.world.depRunwayStart;
+    const holdShort = thresh - 40;
+    if (ac.x > holdShort) {
+      ac.x = holdShort;
+      ac.vx = 0;
+    }
     let nearest = null;
     for (const t of this.traffic) {
       if (t.phase === "gone" || t.phase === "fade") continue;
@@ -1143,14 +1187,68 @@ class TrafficPlane {
     this.phase = "hold";
     this.alpha = 1;
     this.wait = 0;
+    this.goalX = x;
   }
 
-  update(dt, groundY) {
+  update(dt, groundY, thresh) {
     const vr = (this.spec.vRotate || 145) / MS_TO_KT;
+    const taxiSpeed = 17;
 
     if (this.phase === "hold") {
       this.throttle = 0;
+      this.vx = 0;
       this.pitch = 0;
+      this.y = groundY;
+      this.onGround = true;
+      return;
+    }
+
+    if (this.phase === "advance") {
+      this.wait -= dt;
+      if (this.wait > 0) return;
+      this.throttle = 0.18;
+      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 3));
+      this.x += this.vx * dt;
+      this.airspeed = this.vx;
+      this.y = groundY;
+      this.onGround = true;
+      if (this.x >= this.goalX) {
+        this.x = this.goalX;
+        this.vx = 0;
+        this.throttle = 0;
+        this.airspeed = 0;
+        this.phase = "hold";
+      }
+      return;
+    }
+
+    if (this.phase === "taxi") {
+      this.throttle = 0.22;
+      this.vx = lerp(this.vx, taxiSpeed, 1 - Math.exp(-dt * 2.4));
+      this.x += this.vx * dt;
+      this.airspeed = this.vx;
+      this.y = groundY;
+      this.onGround = true;
+      this.pitch = 0;
+      if (this.x >= thresh + 50) {
+        this.vx *= Math.exp(-dt * 5);
+        if (this.vx < 1.8) {
+          this.vx = 0;
+          this.airspeed = 0;
+          this.phase = "lineup";
+          this.wait = 1.15;
+        }
+      }
+      return;
+    }
+
+    if (this.phase === "lineup") {
+      this.throttle = 0.12;
+      this.vx = 0;
+      this.y = groundY;
+      this.onGround = true;
+      this.wait -= dt;
+      if (this.wait <= 0) this.phase = "spool";
       return;
     }
 

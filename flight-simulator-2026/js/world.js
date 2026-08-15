@@ -1336,12 +1336,33 @@ class World {
 
     const sx0 = cam.worldToScreenX(startX);
     const sx1 = cam.worldToScreenX(endX);
-    if (sx1 < -50 || sx0 > cam.w + 50) return;
+    if (sx1 < -50 || sx0 > cam.w + 50) {
+      if (!isDeparture) return;
+    }
 
-    // Thin asphalt strip whose surface sits at ground level (where the
-    // wheels touch), extending down into the terrain.
     const rwHeight = Math.max(4, cam.toScreenLen(10));
     const top = gy;
+
+    // Taxiway leading up to the departure threshold so the queue sits
+    // off the runway.
+    if (isDeparture) {
+      const tax0 = cam.worldToScreenX(startX - 1800);
+      const tax1 = sx0;
+      if (tax1 > -40 && tax0 < cam.w + 40) {
+        ctx.fillStyle = "#32363c";
+        ctx.fillRect(tax0, top, tax1 - tax0, rwHeight);
+        ctx.strokeStyle = "#eab308";
+        ctx.lineWidth = Math.max(1, rwHeight * 0.1);
+        ctx.setLineDash([Math.max(5, cam.toScreenLen(18)), Math.max(5, cam.toScreenLen(14))]);
+        ctx.beginPath();
+        ctx.moveTo(tax0, gy + rwHeight / 2);
+        ctx.lineTo(tax1, gy + rwHeight / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    if (sx1 < -50 || sx0 > cam.w + 50) return;
 
     // Asphalt.
     ctx.fillStyle = "#3a3f47";
