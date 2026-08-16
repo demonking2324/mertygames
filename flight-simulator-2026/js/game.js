@@ -169,17 +169,15 @@ class Game {
     this.world.liveApron = true;
     const w = this.world;
     this.apron = w.apronLayout(ap, w.depRunwayStart, -1);
-    this.arrApron = w.dualRunways ? w.apronLayout(ap, w.arrRunwayEnd, 1) : this.apron;
+    this.arrApron = this.apron;
     this._gateOcc = new Array(this.apron.n).fill(null);
-    this._arrGateOcc = w.dualRunways ? new Array(this.arrApron.n).fill(null) : this._gateOcc;
+    this._arrGateOcc = this._gateOcc;
     this._nextAppear = 7 + Math.random() * 5;
     this._spawnAirportTheater();
     this._spawnArrival(w.dualRunways ? 1600 : 1300);
 
     this.cam.scale = 0.55;
-    this.cam.x = w.dualRunways
-      ? (w.depRunwayEnd + w.arrRunwayStart) / 2
-      : w.depRunwayStart + 80;
+    this.cam.x = w.dualRunways ? -200 : w.depRunwayStart + 80;
     this.cam.y = Math.max(w.groundElevation + 110, 110);
     this.smoke = [];
     this.input.clear();
@@ -188,7 +186,7 @@ class Game {
     this.resetBtn.classList.add("hidden");
     this.hud.setSpectator(true, ap);
     this.hud.setStatus(w.dualRunways
-      ? "Departures on the left · Arrivals on the right · WASD / drag to pan · scroll up for sky · Q/E to zoom · Esc menu"
+      ? "Arrivals left of the terminal · Departures on the right · WASD / drag to pan · scroll up for sky · Q/E to zoom · Esc menu"
       : "Arrivals come from the left · WASD / drag to pan · scroll up for sky · Q/E to zoom · Esc menu");
 
     document.getElementById("menu").classList.add("hidden");
@@ -199,8 +197,8 @@ class Game {
   _clampFreeCam() {
     if (!this.world) return;
     const w = this.world;
-    const left = w.dualRunways ? w.depRunwayStart - 2300 : w.depRunwayStart - 2300;
-    const right = w.dualRunways ? w.arrRunwayEnd + 5000 : w.depRunwayEnd + 8000;
+    const left = w.dualRunways ? w.arrRunwayStart - 1800 : w.depRunwayStart - 2300;
+    const right = w.depRunwayEnd + 8000;
     this.cam.x = clamp(this.cam.x, left, right);
     const gy = w.groundElevation;
     this.cam.y = clamp(this.cam.y, gy + 40, gy + 14000);
@@ -650,7 +648,7 @@ class Game {
 
   _findRecyclableCruiser() {
     const w = this.world;
-    const far = (w.dualRunways ? w.arrRunwayEnd : w.depRunwayEnd) + 1800;
+    const far = w.depRunwayEnd + 1800;
     return this.traffic.find((p) => {
       if (p.phase !== "cruise" || p.x < far) return false;
       return this.cam.worldToScreenX(p.x) > this.cam.w + 160;
@@ -714,7 +712,8 @@ class Game {
       // After a dual-field landing, skip the long down-runway taxi once
       // the jet has rolled off the right of the screen.
       if (dual && t.phase === "taxiIn" && (t.taxiInDir || -1) > 0 && t.x < w.arrRunwayEnd - 200) {
-        if (this.cam.worldToScreenX(t.x) > this.cam.w + 80) {
+        const sx = this.cam.worldToScreenX(t.x);
+        if (sx < -80 || sx > this.cam.w + 80) {
           t.x = w.arrRunwayEnd - 40;
           t.vx = 16;
           t.active = false;
@@ -756,7 +755,6 @@ class Game {
     let next = null;
     for (const t of list) {
       if (t.phase !== "gate" || t.wait > 0) continue;
-      if (t.apron === "arr") continue;
       if (!next || t.x > next.x) next = t;
     }
     if (!next) return false;
@@ -1815,9 +1813,11 @@ class TrafficPlane {
           this.wait = 0.4;
           this.turnTo = -1;
           this.afterTurn = "gate";
+          this.apron = "dep";
         } else {
           this.phase = "gate";
           this.wait = 4 + Math.random() * 6;
+          this.apron = "dep";
         }
       }
       return;

@@ -54,10 +54,14 @@ class World {
     if (this.singleField) {
       this.realDistanceKm = 0;
       if (this.dualRunways) {
-        const gap = 2000;
-        this.arrRunwayStart = this.depRunwayEnd + gap;
-        this.arrRunwayEnd = this.arrRunwayStart + this.depRunwayEnd;
-        this.distance = this.arrRunwayEnd + 2800;
+        // Terminal in the middle: arrivals to the left, departures to the right.
+        const taxLen = 2200;
+        const rwLen = this.depRunwayEnd;
+        this.depRunwayStart = 0;
+        this.depRunwayEnd = rwLen;
+        this.arrRunwayEnd = -taxLen;
+        this.arrRunwayStart = this.arrRunwayEnd - rwLen;
+        this.distance = this.depRunwayEnd + 3200;
       } else {
         this.arrRunwayStart = this.depRunwayStart;
         this.arrRunwayEnd = this.depRunwayEnd;
@@ -150,18 +154,19 @@ class World {
     this._drawClouds(ctx, cam);
     this._drawGround(ctx, cam);
     // Scenery/landmarks sit behind the runways.
-    const depSceneryX = this.originArrStart != null
-      ? this.originArrStart - 900
-      : this.depRunwayStart - 900;
-    this._drawScenery(ctx, cam, this.depTheme, depSceneryX);
-    if (!this.singleField || this.dualRunways) {
-      const arrSceneryX = this.destDepEnd != null
-        ? this.destDepEnd + 900
-        : this.arrRunwayEnd + 900;
-      this._drawScenery(ctx, cam, this.arrTheme, arrSceneryX);
+    const leftEdge = this.dualRunways
+      ? this.arrRunwayStart
+      : (this.originArrStart != null ? this.originArrStart : this.depRunwayStart);
+    this._drawScenery(ctx, cam, this.depTheme, leftEdge - 900);
+    if (!this.singleField) {
+      const rightEdge = this.destDepEnd != null ? this.destDepEnd : this.arrRunwayEnd;
+      this._drawScenery(ctx, cam, this.arrTheme, rightEdge + 900);
+    } else if (this.dualRunways) {
+      this._drawScenery(ctx, cam, this.depTheme, this.depRunwayEnd + 900);
     }
+    // One terminal in the middle (left of the departure threshold).
     this._drawGates(ctx, cam, this.dep, this.depRunwayStart, -1);
-    if (!this.singleField || this.dualRunways) {
+    if (!this.singleField) {
       this._drawGates(ctx, cam, this.arr, this.arrRunwayEnd, 1);
     }
     const depKind = (this.dualRunways || this.depDual) ? "dep" : null;
@@ -169,15 +174,19 @@ class World {
     this._drawRunway(ctx, cam, this.depRunwayStart, this.depRunwayEnd, this.dep, true, {
       kind: depKind,
     });
+    if (this.dualRunways) {
+      this._drawRunway(ctx, cam, this.arrRunwayStart, this.arrRunwayEnd, this.dep, false, {
+        kind: "arr",
+      });
+    }
     if (this.originArrStart != null) {
       this._drawRunway(ctx, cam, this.originArrStart, this.originArrEnd, this.dep, false, {
         kind: "arr",
       });
     }
-    if (!this.singleField || this.dualRunways) {
+    if (!this.singleField) {
       this._drawRunway(ctx, cam, this.arrRunwayStart, this.arrRunwayEnd, this.arr, false, {
         kind: arrKind,
-        taxiAfter: this.dualRunways,
       });
     }
     if (this.destDepStart != null) {
@@ -1536,8 +1545,8 @@ class World {
     const label = `${airport.iata} · ${airport.name}${role}`;
     ctx.font = "600 14px system-ui, sans-serif";
     const tw = ctx.measureText(label).width + 16;
-    const rawLx = opts.kind === "dep" ? sx1 - tw - 20
-      : opts.kind === "arr" ? sx0 + 16
+    const rawLx = opts.kind === "dep" ? sx0 + 16
+      : opts.kind === "arr" ? sx1 - tw - 20
       : (sx0 + sx1) / 2 - tw / 2;
     if (rawLx < cam.w && rawLx + tw > 0) {
       const lx = rawLx;

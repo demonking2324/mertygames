@@ -431,8 +431,8 @@ const AIRPORTS = [
 
 /* How many runways the field has. Most hubs in this set have 2+; only
  * explicitly-marked single-strip airports (SAW, training) stay at 1.
- * In the 2D view, 2+ draws a departure runway on the left and an
- * arrival runway on the right. */
+ * In the 2D view, 2+ draws an arrival runway left of the terminal
+ * and a departure runway to the right. */
 function airportRunwayCount(ap) {
   if (!ap) return 1;
   if (ap.runways != null) return ap.runways;
