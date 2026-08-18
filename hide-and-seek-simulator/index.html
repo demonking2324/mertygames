@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hide &amp; Seek Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="background-overlay"></div>
+    <main class="app">
+      <header class="app-header">
+        <h1 class="title">Hide &amp; Seek Simulator</h1>
+        <p class="subtitle">Choose how you want to play</p>
+      </header>
+
+      <section class="card screen" data-screen="menu">
+        <div class="card-content">
+          <button class="menu-button primary" data-target="offline">
+            Offline
+          </button>
+          <button class="menu-button primary" data-target="online">
+            Online
+          </button>
+          <button class="menu-button" data-target="settings">
+            Settings
+          </button>
+        </div>
+      </section>
+
+      <section class="card screen hidden" data-screen="offline">
+        <div class="card-content">
+          <h2>Offline Setup</h2>
+          <p>Enter your name and choose your role.</p>
+          <form class="offline-form">
+            <label class="field">
+              <span>Player name</span>
+              <input
+                id="player-name"
+                type="text"
+                maxlength="16"
+                placeholder="Type your name"
+              />
+            </label>
+            <div class="role-group">
+              <span class="role-label">Role</span>
+              <label class="role-option">
+                <input type="radio" name="role" value="hider" checked />
+                <span>Hider</span>
+              </label>
+              <label class="role-option">
+                <input type="radio" name="role" value="seeker" />
+                <span>Seeker</span>
+              </label>
+            </div>
+            <p class="role-hint">
+              Hider mode drops you into a giant maze with 14 AI hiders.
+            </p>
+            <div class="offline-actions">
+              <button type="button" class="menu-button primary" id="offline-confirm">
+                Continue
+              </button>
+              <button type="button" class="menu-button" data-target="menu">
+                Back to Menu
+              </button>
+            </div>
+            <p class="error-text" id="offline-error"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen hidden fullscreen-screen" data-screen="offline-game">
+        <div class="fullscreen-hud">
+          <div class="hud-left">
+            <h2 id="game-title">Maze Run</h2>
+            <p id="game-player-label"></p>
+          </div>
+          <div class="hud-center">
+            <span id="game-timer-label"></span>
+            <span id="game-alive-label"></span>
+          </div>
+          <div class="hud-right">
+            <button class="menu-button" id="game-exit">
+              Exit
+            </button>
+          </div>
+        </div>
+        <canvas id="game-canvas" width="960" height="540"></canvas>
+      </section>
+
+      <section class="card screen hidden" data-screen="online">
+        <div class="card-content">
+          <h2>Online Mode</h2>
+          <p>Host a round and share the join code, or enter a code to join friends.</p>
+          <button class="menu-button primary" data-target="online-host">
+            Host a Round
+          </button>
+          <button class="menu-button primary" data-target="online-join">
+            Join a Round
+          </button>
+          <button class="menu-button" data-target="menu">
+            Back to Menu
+          </button>
+        </div>
+      </section>
+
+      <section class="card screen hidden" data-screen="online-host">
+        <div class="card-content">
+          <h2>Host a Round</h2>
+          <p>Pick your name and role. You’ll get a join code to share.</p>
+          <form class="offline-form">
+            <label class="field">
+              <span>Player name</span>
+              <input
+                id="host-name"
+                type="text"
+                maxlength="16"
+                placeholder="Type your name"
+              />
+            </label>
+            <div class="role-group">
+              <span class="role-label">Role</span>
+              <label class="role-option">
+                <input type="radio" name="host-role" value="hider" checked />
+                <span>Hider</span>
+              </label>
+              <label class="role-option">
+                <input type="radio" name="host-role" value="seeker" />
+                <span>Seeker</span>
+              </label>
+            </div>
+            <div class="offline-actions">
+              <button type="button" class="menu-button primary" id="host-confirm">
+                Create Round
+              </button>
+              <button type="button" class="menu-button" data-target="online">
+                Back
+              </button>
+            </div>
+            <p class="error-text" id="host-error"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="card screen hidden" data-screen="online-join">
+        <div class="card-content">
+          <h2>Join a Round</h2>
+          <p>Enter the host’s join code to drop into their lobby.</p>
+          <form class="offline-form">
+            <label class="field">
+              <span>Player name</span>
+              <input
+                id="join-name"
+                type="text"
+                maxlength="16"
+                placeholder="Type your name"
+              />
+            </label>
+            <label class="field">
+              <span>Join code</span>
+              <input
+                id="join-code"
+                type="text"
+                maxlength="6"
+                placeholder="e.g. 7K2Q9"
+                autocapitalize="characters"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </label>
+            <div class="role-group">
+              <span class="role-label">Role</span>
+              <label class="role-option">
+                <input type="radio" name="join-role" value="hider" checked />
+                <span>Hider</span>
+              </label>
+              <label class="role-option">
+                <input type="radio" name="join-role" value="seeker" />
+                <span>Seeker</span>
+              </label>
+            </div>
+            <p class="role-hint">Only one seeker per round. If that seat is taken, you’ll join as a hider.</p>
+            <div class="offline-actions">
+              <button type="button" class="menu-button primary" id="join-confirm">
+                Join Round
+              </button>
+              <button type="button" class="menu-button" data-target="online">
+                Back
+              </button>
+            </div>
+            <p class="error-text" id="join-error"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="card screen hidden lobby-card" data-screen="online-lobby">
+        <div class="card-content">
+          <h2 id="lobby-title">Round Lobby</h2>
+          <p id="lobby-subtitle">Share this code so others can join.</p>
+          <div class="join-code-panel">
+            <span class="join-code-label">Join code</span>
+            <div class="join-code-row">
+              <span id="lobby-code">-----</span>
+              <button type="button" class="menu-button copy-button" id="lobby-copy">
+                Copy
+              </button>
+            </div>
+            <p class="join-code-link" id="lobby-link"></p>
+          </div>
+          <div class="lobby-players">
+            <span class="role-label">Players</span>
+            <ul id="lobby-player-list"></ul>
+          </div>
+          <p class="role-hint" id="lobby-status">Waiting for players…</p>
+          <div class="offline-actions">
+            <button type="button" class="menu-button primary" id="lobby-start">
+              Start Round
+            </button>
+            <button type="button" class="menu-button" id="lobby-leave">
+              Leave
+            </button>
+          </div>
+          <p class="error-text" id="lobby-error"></p>
+        </div>
+      </section>
+
+      <section class="card screen hidden" data-screen="settings">
+        <div class="card-content">
+          <h2>Settings</h2>
+          <div class="settings-group">
+            <label class="setting-row">
+              <span>Master Volume</span>
+              <input type="range" min="0" max="100" value="70" />
+            </label>
+            <label class="setting-row">
+              <span>Graphics Quality</span>
+              <select>
+                <option>Low</option>
+                <option selected>Medium</option>
+                <option>High</option>
+              </select>
+            </label>
+            <label class="setting-row">
+              <span>Fullscreen</span>
+              <input type="checkbox" checked />
+            </label>
+          </div>
+          <button class="menu-button primary" data-target="menu">
+            Back to Menu
+          </button>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <span class="hint">Tip: You can always return to the menu from any screen.</span>
+      </footer>
+    </main>
+
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="online.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>
+

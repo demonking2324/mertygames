@@ -1,0 +1,15 @@
+{
+  "name": "hide-and-seek-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hide & Seek Simulator with offline maze play and online host/join rounds.",
+  "scripts": {
+    "start": "node server.js",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "game",
+    "prototype",
+    "menu"
+  ]
+}
