@@ -134,13 +134,14 @@ class Game {
       this.traffic = [];
       this._depCleared = true;
       this.ac.x = this.world.depRunwayStart + 150;
+      if (!this.training) this._spawnTaxiwayBehind();
       const vr = Math.round(this.ac.spec.vRotate);
       this.hud.setStatus((this.training ? "Training: " : "Cleared for takeoff — ") +
         "flaps (F), throttle up (D), and rotate (pull ↓) near " + vr + " kt.");
     }
 
     // Position camera immediately on the aircraft.
-    this.cam.x = this.ac.x;
+    this.cam.x = this.ac.x + ((this.ac.onGround && !this.training) ? -220 : 0);
     this.cam.y = Math.max(this.ac.y, 60);
 
     this.prevOnGround = this.ac.onGround;
@@ -296,7 +297,7 @@ class Game {
     this._checkTransitions();
     this._updateStatus();
 
-    const extraLook = (!this._depCleared && ac.onGround) ? 260 : 0;
+    const extraLook = (ac.onGround && ac.airspeed < 12 && !this._landedAtArrival && !this.training) ? -220 : 0;
     this.cam.follow(ac.x + extraLook, ac.y, dt);
     this.hud.update(ac, this.world);
     if (this.mobile) this.mobile.sync(ac);
@@ -402,6 +403,25 @@ class Game {
     });
   }
 
+  /* A few jets waiting on the taxiway behind the player. They stay put —
+   * the runway is already yours. */
+  _spawnTaxiwayBehind() {
+    const w = this.world;
+    const start = w.depRunwayStart - 200;
+    const gap = 300;
+    const n = 2 + Math.floor(Math.random() * 2);
+    this.traffic = [];
+    for (let i = 0; i < n; i++) {
+      const pick = this._pickTraffic();
+      const x = start - (i + 1) * gap;
+      const t = new TrafficPlane(pick.spec, pick.airline, x, w.groundElevation);
+      t.goalX = x;
+      t.phase = "hold";
+      t.wait = 1e9;
+      this.traffic.push(t);
+    }
+  }
+
   _pickTraffic() {
     if (this.freeCam) return this._pickFreshTraffic();
     const exclude = this.ac && this.ac.airline && this.ac.airline.id;
@@ -458,7 +478,7 @@ class Game {
     const gy = this.world.groundElevation;
     const thresh = this.world.depRunwayStart;
 
-    if (!this._runwayBusy()) {
+    if (!this._depCleared && !this._runwayBusy()) {
       let next = null;
       for (const t of list) {
         if (t.phase !== "hold") continue;

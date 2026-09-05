@@ -1303,8 +1303,7 @@ class World {
     const leftSx = centerSx - totalW / 2;
     if (leftSx > cam.w + 200 || leftSx + totalW < -200) return;
 
-    // Terminal building. Parked jets stay off player flights — they read as a
-    // taxi queue. Free Cam uses liveApron + AI traffic instead.
+    // Terminal building behind the aircraft.
     const bx = leftSx - L * 0.7;
     const bw = totalW + L * 1.4;
     const bh = 46;
@@ -1317,6 +1316,13 @@ class World {
     for (let wx = bx + 8; wx < bx + bw - 8; wx += 12) {
       ctx.fillRect(wx, gy - bh + 16, 6, 10);
       ctx.fillRect(wx, gy - bh + 30, 6, 8);
+    }
+
+    // Parked aircraft at the stands (behind the player on takeoff).
+    for (let i = 0; i < n; i++) {
+      const sx = leftSx + i * gap;
+      if (sx < -L || sx > cam.w + L) continue;
+      this._drawParkedPlane(ctx, sx, gy, L, fleet[i]);
     }
   }
 
