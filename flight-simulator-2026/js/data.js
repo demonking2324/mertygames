@@ -396,7 +396,7 @@ const AIRPORTS = [
     theme: { terrain: ["#b89a4e", "#7a6224"], sky: ["#8fb8d8", "#e6dcc0"], landmark: "africa" } },
   { icao: "HKJK", iata: "NBO", name: "Nairobi Jomo Kenyatta", city: "Nairobi",    lat: -1.3192,  lon: 36.9278,   elevation: 1624, runway: 4117,
     theme: { terrain: ["#a89a54", "#6f6228"], sky: ["#8fbad6", "#e3ddc4"], landmark: "africa" } },
-  { icao: "LTFJ", iata: "SAW", name: "Istanbul Sabiha Gökçen", city: "Istanbul", lat: 40.8986,  lon: 29.3092,   elevation: 95,  runway: 3000, runways: 1,
+  { icao: "LTFM", iata: "IST", name: "Istanbul Airport",     city: "Istanbul",    lat: 41.2753,  lon: 28.7519,   elevation: 99,  runway: 4100,
     theme: { terrain: ["#6f8a44", "#4a6228"], sky: ["#7eb6d8", "#e4d6a8"], landmark: "mosque" } },
   { icao: "OTHH", iata: "DOH", name: "Doha Hamad",          city: "Doha",         lat: 25.2731,  lon: 51.6080,   elevation: 4,   runway: 4850,
     theme: { terrain: ["#d2b176", "#a3843c"], sky: ["#7ec2e8", "#f3e2b4"], landmark: "dhow" } },
@@ -441,7 +441,7 @@ const AIRPORTS = [
 ];
 
 /* How many runways the field has. Most hubs in this set have 2+; only
- * explicitly-marked single-strip airports (SAW, training) stay at 1.
+ * explicitly-marked single-strip airports (training) stay at 1.
  * In the 2D view, 2+ draws an arrival runway left of the terminal
  * and a departure runway to the right. */
 function airportRunwayCount(ap) {
@@ -478,14 +478,14 @@ function liveriesForAircraft(spec) {
 }
 
 const AIRPORT_FLEETS = {
-  JFK: [["dal", 4], ["jbu", 3], ["aal", 3], ["ual", 1], ["vir", 1], ["baw", 1], ["ita", 1], ["afr", 1], ["dlh", 1], ["aca", 1], ["qtr", 1]],
+  JFK: [["dal", 4], ["jbu", 3], ["aal", 3], ["ual", 1], ["vir", 1], ["baw", 1], ["ita", 1], ["afr", 1], ["dlh", 1], ["aca", 1], ["qtr", 1], ["thy", 1]],
   LGA: [["dal", 5], ["aal", 3], ["jbu", 3], ["swa", 2], ["ual", 1]],
-  MIA: [["aal", 4], ["jbu", 3], ["lan", 3], ["dal", 2], ["ual", 1], ["swa", 1]],
-  SAW: [["pgt", 6], ["thy", 2], ["ryr", 2], ["dlh", 1]],
-  LAX: [["aal", 3], ["ual", 3], ["dal", 2], ["asa", 2], ["swa", 1], ["jbu", 1], ["qfa", 1], ["aca", 1], ["lan", 1]],
-  ORD: [["ual", 6], ["aal", 4], ["swa", 2], ["dlh", 1], ["aca", 1]],
-  SFO: [["ual", 6], ["aal", 1], ["dal", 1], ["sia", 1], ["uae", 1], ["aca", 1]],
-  YVR: [["aca", 7], ["ual", 2], ["aal", 1], ["dal", 1], ["jal", 1], ["qfa", 1]],
+  MIA: [["aal", 4], ["jbu", 3], ["lan", 3], ["dal", 2], ["ual", 1], ["swa", 1], ["thy", 1]],
+  IST: [["thy", 8], ["pgt", 2], ["dlh", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["uae", 1], ["qtr", 1], ["sia", 1], ["ita", 1]],
+  LAX: [["aal", 3], ["ual", 3], ["dal", 2], ["asa", 2], ["swa", 1], ["jbu", 1], ["qfa", 1], ["aca", 1], ["lan", 1], ["thy", 1]],
+  ORD: [["ual", 6], ["aal", 4], ["swa", 2], ["dlh", 1], ["aca", 1], ["thy", 1]],
+  SFO: [["ual", 6], ["aal", 1], ["dal", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["thy", 1]],
+  YVR: [["aca", 7], ["ual", 2], ["aal", 1], ["dal", 1], ["jal", 1], ["qfa", 1], ["thy", 1]],
   FRA: [["dlh", 6], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["thy", 1], ["qtr", 1]],
   MUC: [["dlh", 7], ["ual", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["aca", 1], ["eth", 1], ["thy", 1], ["ryr", 1]],
   LHR: [["baw", 5], ["vir", 2], ["dlh", 2], ["klm", 1], ["afr", 1], ["aal", 1], ["ita", 1], ["uae", 1], ["aca", 1], ["aic", 1], ["thy", 1], ["qtr", 1]],
@@ -495,33 +495,33 @@ const AIRPORT_FLEETS = {
   AMS: [["klm", 6], ["afr", 2], ["dlh", 1], ["baw", 1], ["dal", 1], ["uae", 1], ["kqa", 1], ["pgt", 1], ["thy", 1]],
   DXB: [["uae", 7], ["baw", 1], ["sia", 1], ["qfa", 1], ["eth", 1], ["kqa", 1], ["thy", 1], ["qtr", 1]],
   DOH: [["qtr", 8], ["baw", 1], ["thy", 1], ["sia", 1], ["uae", 1]],
-  FCO: [["ita", 5], ["ibe", 2], ["ezy", 2], ["ryr", 2], ["afr", 1], ["dlh", 1], ["pgt", 1]],
-  CPT: [["baw", 2], ["qtr", 2], ["eth", 1], ["kqa", 1], ["dlh", 1], ["afr", 1]],
-  ADD: [["eth", 7], ["dlh", 1], ["uae", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["qtr", 1]],
-  NBO: [["kqa", 7], ["klm", 1], ["eth", 1], ["baw", 1], ["dlh", 1], ["uae", 1]],
-  HND: [["jal", 4], ["ana", 4], ["sia", 1], ["ual", 1], ["qtr", 1], ["cpa", 1]],
-  SIN: [["sia", 6], ["uae", 1], ["baw", 1], ["qfa", 1], ["dlh", 1], ["jal", 1], ["qtr", 1]],
-  SYD: [["qfa", 6], ["uae", 1], ["sia", 1], ["ual", 1], ["qtr", 1]],
+  FCO: [["ita", 5], ["ibe", 2], ["ezy", 2], ["ryr", 2], ["afr", 1], ["dlh", 1], ["pgt", 1], ["thy", 1]],
+  CPT: [["baw", 2], ["qtr", 2], ["eth", 1], ["kqa", 1], ["dlh", 1], ["afr", 1], ["thy", 1]],
+  ADD: [["eth", 7], ["dlh", 1], ["uae", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["qtr", 1], ["thy", 1]],
+  NBO: [["kqa", 7], ["klm", 1], ["eth", 1], ["baw", 1], ["dlh", 1], ["uae", 1], ["thy", 1]],
+  HND: [["jal", 4], ["ana", 4], ["sia", 1], ["ual", 1], ["qtr", 1], ["cpa", 1], ["thy", 1]],
+  SIN: [["sia", 6], ["uae", 1], ["baw", 1], ["qfa", 1], ["dlh", 1], ["jal", 1], ["qtr", 1], ["thy", 1]],
+  SYD: [["qfa", 6], ["uae", 1], ["sia", 1], ["ual", 1], ["qtr", 1], ["thy", 1]],
   AKL: [["anz", 6], ["qfa", 2], ["sia", 1], ["ual", 1]],
-  ICN: [["kal", 7], ["jal", 2], ["sia", 1], ["dlh", 1], ["ual", 1], ["qtr", 1]],
-  MEX: [["amx", 6], ["aal", 2], ["ual", 1], ["lan", 1], ["dal", 1]],
+  ICN: [["kal", 7], ["jal", 2], ["sia", 1], ["dlh", 1], ["ual", 1], ["qtr", 1], ["thy", 1]],
+  MEX: [["amx", 6], ["aal", 2], ["ual", 1], ["lan", 1], ["dal", 1], ["thy", 1]],
   CPH: [["sas", 7], ["dlh", 1], ["baw", 1], ["klm", 1], ["afr", 1], ["thy", 1]],
-  BKK: [["tha", 6], ["sia", 1], ["qtr", 1], ["kal", 1], ["qfa", 1], ["aic", 1]],
-  SEA: [["asa", 6], ["ual", 2], ["aal", 1], ["dal", 1], ["aca", 1]],
-  JNB: [["eth", 3], ["baw", 2], ["qtr", 2], ["kqa", 2], ["dlh", 1], ["afr", 1]],
-  DEL: [["aic", 7], ["qtr", 2], ["uae", 1], ["baw", 1], ["sia", 1]],
-  BOM: [["aic", 6], ["qtr", 2], ["uae", 1], ["sia", 1], ["baw", 1]],
-  DUB: [["ryr", 4], ["ezy", 3], ["baw", 2], ["aal", 1], ["sas", 1]],
-  BOS: [["jbu", 3], ["dal", 3], ["aal", 2], ["ual", 1], ["ita", 1], ["asa", 1], ["vir", 1]],
-  CAI: [["msr", 6], ["uae", 1], ["qtr", 1], ["dlh", 1], ["afr", 1]],
-  MEL: [["qfa", 5], ["anz", 2], ["sia", 1], ["uae", 1], ["tha", 1]],
-  PVG: [["kal", 3], ["cpa", 2], ["jal", 1], ["sia", 1], ["ana", 1], ["qtr", 1]],
-  SCL: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["dal", 1]],
-  GRU: [["lan", 5], ["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["ibe", 1]],
-  EZE: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["qtr", 1]],
-  YYZ: [["aca", 7], ["ual", 1], ["aal", 1], ["baw", 1], ["dlh", 1], ["afr", 1]],
-  MAD: [["ibe", 5], ["ezy", 2], ["ryr", 2], ["afr", 1], ["baw", 1], ["lan", 1]],
-  HKG: [["cpa", 6], ["sia", 1], ["uae", 1], ["qfa", 1], ["jal", 1], ["ana", 1]],
+  BKK: [["tha", 6], ["sia", 1], ["qtr", 1], ["kal", 1], ["qfa", 1], ["aic", 1], ["thy", 1]],
+  SEA: [["asa", 6], ["ual", 2], ["aal", 1], ["dal", 1], ["aca", 1], ["thy", 1]],
+  JNB: [["eth", 3], ["baw", 2], ["qtr", 2], ["kqa", 2], ["dlh", 1], ["afr", 1], ["thy", 1]],
+  DEL: [["aic", 7], ["qtr", 2], ["uae", 1], ["baw", 1], ["sia", 1], ["thy", 1]],
+  BOM: [["aic", 6], ["qtr", 2], ["uae", 1], ["sia", 1], ["baw", 1], ["thy", 1]],
+  DUB: [["ryr", 4], ["ezy", 3], ["baw", 2], ["aal", 1], ["sas", 1], ["thy", 1]],
+  BOS: [["jbu", 3], ["dal", 3], ["aal", 2], ["ual", 1], ["ita", 1], ["asa", 1], ["vir", 1], ["thy", 1]],
+  CAI: [["msr", 6], ["uae", 1], ["qtr", 1], ["dlh", 1], ["afr", 1], ["thy", 1]],
+  MEL: [["qfa", 5], ["anz", 2], ["sia", 1], ["uae", 1], ["tha", 1], ["thy", 1]],
+  PVG: [["kal", 3], ["cpa", 2], ["jal", 1], ["sia", 1], ["ana", 1], ["qtr", 1], ["thy", 1]],
+  SCL: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["dal", 1], ["thy", 1]],
+  GRU: [["lan", 5], ["aal", 2], ["ual", 1], ["dlh", 1], ["afr", 1], ["klm", 1], ["ibe", 1], ["thy", 1]],
+  EZE: [["lan", 6], ["ibe", 2], ["aal", 1], ["afr", 1], ["qtr", 1], ["thy", 1]],
+  YYZ: [["aca", 7], ["ual", 1], ["aal", 1], ["baw", 1], ["dlh", 1], ["afr", 1], ["thy", 1]],
+  MAD: [["ibe", 5], ["ezy", 2], ["ryr", 2], ["afr", 1], ["baw", 1], ["lan", 1], ["thy", 1]],
+  HKG: [["cpa", 6], ["sia", 1], ["uae", 1], ["qfa", 1], ["jal", 1], ["ana", 1], ["thy", 1]],
 };
 
 /* Types that actually operate at each field (subset of AIRCRAFT_TYPES). */
@@ -529,7 +529,7 @@ const AIRPORT_TYPES = {
   JFK: ["a320", "b738", "e175", "b789", "a359", "b77w"],
   LGA: ["a320", "b738", "e175"],
   MIA: ["a320", "b738", "b789", "b77w"],
-  SAW: ["a320", "b738"],
+  IST: ["a320", "b738", "b789", "a359", "b77w"],
   LAX: ["a320", "b738", "b789", "a359", "b77w"],
   ORD: ["a320", "b738", "e175", "b77w", "b789"],
   SFO: ["a320", "b738", "b789", "b77w", "a359"],
@@ -583,7 +583,7 @@ const AIRLINE_HUBS = {
   baw: ["LHR", "MAN"],
   vir: ["LHR"],
   ezy: ["MAN", "DUB", "FCO", "MAD"],
-  ryr: ["DUB", "MAN", "WAW", "FCO", "MAD", "SAW", "MUC"],
+  ryr: ["DUB", "MAN", "WAW", "FCO", "MAD", "MUC"],
   dlh: ["FRA", "MUC"],
   afr: ["CDG"],
   klm: ["AMS"],
@@ -595,10 +595,10 @@ const AIRLINE_HUBS = {
   aca: ["YVR", "YYZ"],
   eth: ["ADD"],
   kqa: ["NBO"],
-  pgt: ["SAW"],
-  thy: ["SAW"],
+  pgt: ["IST"],
+  thy: ["IST"],
   qtr: ["DOH"],
-  ibe: ["MAD", "FCO"],
+  ibe: ["MAD"],
   lan: ["SCL", "GRU", "EZE", "MIA"],
   kal: ["ICN"],
   sas: ["CPH"],
@@ -612,24 +612,26 @@ const AIRLINE_HUBS = {
   ita: ["FCO"],
 };
 
-/* Real nonstop hops among airports in this sim. Bidirectional.
- * A city pair is offered only if it appears here — not just because
- * both airports happen to have that airline parked. */
+/* Real nonstop hops among airports in this sim.
+ * Hub → dest only. Two outstations of the same hub are not a route
+ * (Qatar JFK and LHR does not mean Qatar flies JFK–LHR).
+ * Pegasus is based at SAW in real life; this sim’s Istanbul field is IST,
+ * so their European network is attached there. Ryanair stays off IST. */
 const AIRLINE_SPOKES = {
   aal: {
     JFK: ["LGA", "BOS", "MIA", "ORD", "LAX", "SFO", "LHR", "CDG", "MAD", "FCO", "DUB", "MEX", "GRU"],
     LGA: ["JFK", "BOS", "MIA", "ORD", "MEX", "YYZ"],
-    LAX: ["JFK", "ORD", "SFO", "MIA", "LHR", "HND", "SYD", "MEX"],
-    ORD: ["JFK", "LGA", "LAX", "SFO", "MIA", "LHR", "CDG", "FRA", "MEX"],
-    MIA: ["JFK", "LGA", "LAX", "ORD", "MAD", "GRU", "EZE", "MEX", "LHR"],
+    LAX: ["JFK", "ORD", "SFO", "MIA", "LHR", "HND", "SYD", "MEX", "BOS"],
+    ORD: ["JFK", "LGA", "LAX", "SFO", "MIA", "LHR", "CDG", "FRA", "MEX", "DUB"],
+    MIA: ["JFK", "LGA", "LAX", "ORD", "MAD", "GRU", "EZE", "MEX", "LHR", "BOS"],
     BOS: ["JFK", "LGA", "LHR", "MIA", "LAX", "ORD", "DUB"],
   },
   dal: {
-    JFK: ["LGA", "BOS", "MIA", "LAX", "LHR", "CDG", "AMS", "FCO", "FRA", "DUB", "MEX"],
+    JFK: ["LGA", "BOS", "MIA", "LAX", "SFO", "LHR", "CDG", "AMS", "FCO", "FRA", "DUB", "MEX"],
     LGA: ["JFK", "BOS", "MIA", "ORD", "MEX", "YYZ"],
     LAX: ["JFK", "SEA", "SFO", "HND", "SYD", "MEX"],
     BOS: ["JFK", "LGA", "AMS", "LHR", "DUB", "MIA"],
-    SEA: ["LAX", "HND", "ICN", "AMS", "LHR", "JFK"],
+    SEA: ["LAX", "HND", "ICN", "AMS", "LHR", "JFK", "SFO"],
     MIA: ["JFK", "LGA", "LAX", "BOS"],
   },
   ual: {
@@ -642,12 +644,13 @@ const AIRLINE_SPOKES = {
     BOS: ["ORD", "LHR", "SFO", "LAX"],
   },
   swa: {
-    LAX: ["LGA", "MIA", "BOS", "SEA", "SFO"],
-    LGA: ["LAX", "MIA", "BOS"],
-    MIA: ["LAX", "LGA", "BOS"],
-    BOS: ["LAX", "LGA", "MIA", "SEA"],
+    LAX: ["LGA", "MIA", "BOS", "SEA", "SFO", "ORD"],
+    LGA: ["LAX", "MIA", "BOS", "ORD"],
+    MIA: ["LAX", "LGA", "BOS", "ORD"],
+    BOS: ["LAX", "LGA", "MIA", "SEA", "ORD"],
     SEA: ["LAX", "BOS", "SFO"],
     SFO: ["LAX", "SEA"],
+    ORD: ["LAX", "LGA", "MIA", "BOS"],
   },
   jbu: {
     JFK: ["LGA", "BOS", "MIA", "LAX", "SFO", "LHR", "CDG", "AMS", "DUB", "FCO", "MAD"],
@@ -657,57 +660,56 @@ const AIRLINE_SPOKES = {
   },
   baw: {
     LHR: ["JFK", "BOS", "MIA", "LAX", "SFO", "ORD", "SEA", "YVR", "YYZ", "MEX", "MAD", "FCO",
-      "AMS", "CDG", "FRA", "MUC", "DUB", "CPH", "WAW", "DXB", "DOH", "HND", "SIN", "SYD",
-      "HKG", "DEL", "BOM", "JNB", "CPT", "CAI", "GRU", "EZE", "ICN", "BKK", "PVG", "ADD", "NBO", "MAN"],
+      "AMS", "CDG", "FRA", "MUC", "DUB", "CPH", "WAW", "IST", "DXB", "DOH", "HND", "SIN", "SYD",
+      "HKG", "DEL", "BOM", "JNB", "CPT", "CAI", "GRU", "EZE", "BKK", "NBO", "MAN"],
     MAN: ["JFK", "DXB", "DUB", "AMS", "CDG", "MUC", "JNB", "LHR"],
   },
   vir: {
-    LHR: ["JFK", "BOS", "LAX", "SFO", "MIA", "SEA", "DEL", "JNB"],
+    LHR: ["JFK", "BOS", "LAX", "SFO", "MIA", "SEA", "DEL", "JNB", "CPT"],
   },
   ezy: {
-    MAN: ["AMS", "CDG", "MUC", "FCO", "MAD", "DUB", "CPH", "WAW"],
-    DUB: ["AMS", "CDG", "MAN", "FCO", "MAD", "MUC"],
+    MAN: ["AMS", "CDG", "MUC", "FCO", "MAD", "DUB", "CPH", "WAW", "IST"],
+    DUB: ["AMS", "CDG", "MAN", "FCO", "MAD", "MUC", "IST"],
     FCO: ["AMS", "CDG", "MAN", "DUB", "MAD", "MUC", "CPH"],
     MAD: ["AMS", "CDG", "FCO", "MAN", "DUB", "MUC"],
   },
   ryr: {
-    SAW: ["DUB", "MAN", "MAD", "WAW", "MUC"],
     FCO: ["DUB", "MAN", "MAD", "WAW", "MUC", "CPH"],
-    DUB: ["MAN", "MAD", "WAW", "FCO", "MUC", "SAW"],
-    MAN: ["DUB", "MAD", "WAW", "FCO", "MUC", "SAW"],
-    MAD: ["DUB", "MAN", "WAW", "FCO", "MUC", "SAW"],
-    WAW: ["DUB", "MAN", "MAD", "FCO", "MUC", "SAW"],
-    MUC: ["DUB", "MAN", "MAD", "FCO", "WAW", "SAW"],
+    DUB: ["MAN", "MAD", "WAW", "FCO", "MUC"],
+    MAN: ["DUB", "MAD", "WAW", "FCO", "MUC"],
+    MAD: ["DUB", "MAN", "WAW", "FCO", "MUC"],
+    WAW: ["DUB", "MAN", "MAD", "FCO", "MUC"],
+    MUC: ["DUB", "MAN", "MAD", "FCO", "WAW"],
   },
   dlh: {
     FRA: ["JFK", "BOS", "MIA", "LAX", "SFO", "ORD", "YYZ", "YVR", "LHR", "AMS", "CDG", "FCO",
-      "MAD", "MUC", "DUB", "CPH", "WAW", "DXB", "DOH", "HND", "SIN", "ICN", "DEL", "BOM",
+      "MAD", "MUC", "DUB", "CPH", "WAW", "IST", "DXB", "DOH", "HND", "SIN", "ICN", "DEL", "BOM",
       "JNB", "CPT", "CAI", "GRU", "EZE", "BKK", "PVG", "ADD", "HKG", "MEX"],
     MUC: ["JFK", "BOS", "LAX", "SFO", "LHR", "AMS", "CDG", "FCO", "MAD", "FRA", "DUB", "CPH",
-      "WAW", "DXB", "HND", "DEL", "CAI"],
+      "WAW", "IST", "DXB", "HND", "DEL", "CAI"],
   },
   afr: {
     CDG: ["JFK", "BOS", "MIA", "LAX", "SFO", "ORD", "YYZ", "LHR", "AMS", "FRA", "MUC", "FCO",
-      "MAD", "DUB", "CPH", "WAW", "DXB", "DOH", "HND", "SIN", "DEL", "BOM", "JNB", "CPT",
+      "MAD", "DUB", "CPH", "WAW", "IST", "DXB", "DOH", "HND", "SIN", "DEL", "BOM", "JNB", "CPT",
       "CAI", "GRU", "EZE", "MEX", "ADD", "NBO", "BKK", "HKG"],
   },
   klm: {
     AMS: ["JFK", "BOS", "MIA", "LAX", "SFO", "ORD", "YYZ", "LHR", "CDG", "FRA", "MUC", "FCO",
-      "MAD", "DUB", "CPH", "WAW", "DXB", "HND", "SIN", "DEL", "BOM", "JNB", "CPT", "CAI",
+      "MAD", "DUB", "CPH", "WAW", "IST", "DXB", "HND", "SIN", "DEL", "BOM", "JNB", "CPT", "CAI",
       "GRU", "MEX", "ADD", "NBO", "BKK", "HKG"],
   },
   uae: {
     DXB: ["JFK", "BOS", "LAX", "SFO", "ORD", "YYZ", "LHR", "MAN", "CDG", "AMS", "FRA", "MUC",
-      "FCO", "MAD", "DUB", "CPH", "HND", "SIN", "SYD", "MEL", "AKL", "ICN", "HKG", "PVG",
-      "BKK", "DEL", "BOM", "JNB", "CPT", "CAI", "ADD", "NBO", "GRU", "MEX", "DOH"],
+      "FCO", "MAD", "DUB", "CPH", "IST", "HND", "SIN", "SYD", "MEL", "AKL", "ICN", "HKG", "PVG",
+      "BKK", "DEL", "BOM", "JNB", "CPT", "CAI", "ADD", "NBO", "GRU", "MEX"],
   },
   sia: {
-    SIN: ["LHR", "CDG", "FRA", "AMS", "FCO", "JFK", "SFO", "LAX", "HND", "ICN", "HKG", "PVG",
+    SIN: ["LHR", "CDG", "FRA", "AMS", "FCO", "IST", "JFK", "SFO", "LAX", "HND", "ICN", "HKG", "PVG",
       "BKK", "DEL", "BOM", "SYD", "MEL", "AKL", "DXB", "DOH", "JNB", "CPT"],
   },
   qfa: {
-    SYD: ["MEL", "AKL", "SIN", "HKG", "HND", "LAX", "SFO", "JFK", "LHR", "DXB", "DOH", "BKK", "YVR"],
-    MEL: ["SYD", "AKL", "SIN", "HKG", "DXB", "LAX", "SIN"],
+    SYD: ["MEL", "AKL", "SIN", "HKG", "HND", "LAX", "SFO", "YVR", "DXB", "BKK"],
+    MEL: ["SYD", "AKL", "SIN", "HKG", "DXB", "LAX"],
   },
   jal: {
     HND: ["JFK", "BOS", "LAX", "SFO", "ORD", "YVR", "LHR", "CDG", "FRA", "SIN", "HKG",
@@ -722,27 +724,30 @@ const AIRLINE_SPOKES = {
     YYZ: ["YVR", "JFK", "LGA", "BOS", "ORD", "LAX", "MIA", "LHR", "CDG", "FRA", "FCO"],
   },
   eth: {
-    ADD: ["JFK", "ORD", "LHR", "CDG", "FRA", "FCO", "AMS", "MAD", "DXB", "DOH", "NBO", "JNB",
+    ADD: ["JFK", "ORD", "LHR", "CDG", "FRA", "FCO", "AMS", "MAD", "IST", "DXB", "DOH", "NBO", "JNB",
       "CPT", "CAI", "BOM", "DEL", "BKK", "HKG", "GRU"],
   },
   kqa: {
-    NBO: ["AMS", "LHR", "CDG", "FRA", "DXB", "DOH", "ADD", "JNB", "CPT", "CAI", "BOM"],
+    NBO: ["AMS", "LHR", "CDG", "FRA", "IST", "DXB", "DOH", "ADD", "JNB", "CPT", "CAI", "BOM"],
   },
   pgt: {
-    SAW: ["AMS", "FCO", "MUC", "MAD", "DUB", "CPH", "WAW", "MAN", "FRA"],
+    IST: ["AMS", "FCO", "MUC", "MAD", "DUB", "CPH", "WAW", "MAN", "FRA", "CDG"],
   },
   thy: {
-    SAW: ["AMS", "CDG", "FRA", "MUC", "DUB", "CPH", "WAW", "MAN"],
+    IST: ["JFK", "BOS", "MIA", "LAX", "SFO", "ORD", "SEA", "YYZ", "YVR", "MEX",
+      "LHR", "MAN", "AMS", "CDG", "FRA", "MUC", "WAW", "MAD", "FCO", "DUB", "CPH",
+      "DXB", "DOH", "CAI", "ADD", "NBO", "JNB", "CPT",
+      "HND", "SIN", "ICN", "HKG", "PVG", "BKK", "DEL", "BOM",
+      "SYD", "MEL", "GRU", "EZE", "SCL"],
   },
   qtr: {
     DOH: ["JFK", "BOS", "MIA", "LAX", "SFO", "ORD", "YYZ", "LHR", "CDG", "AMS", "FRA", "MUC",
-      "FCO", "MAD", "DUB", "CPH", "HND", "SIN", "SYD", "MEL", "AKL", "ICN", "HKG", "PVG",
+      "FCO", "MAD", "DUB", "CPH", "IST", "HND", "SIN", "SYD", "MEL", "AKL", "ICN", "HKG", "PVG",
       "BKK", "DEL", "BOM", "JNB", "CPT", "CAI", "ADD", "NBO", "GRU", "EZE", "MEX", "DXB"],
   },
   ibe: {
     MAD: ["JFK", "BOS", "MIA", "LAX", "MEX", "GRU", "EZE", "SCL", "LHR", "CDG", "AMS", "FRA",
-      "FCO", "DUB", "CPH"],
-    FCO: ["MAD", "JFK"],
+      "FCO", "DUB", "CPH", "IST"],
   },
   lan: {
     SCL: ["GRU", "EZE", "MIA", "MAD", "JFK", "LAX", "MEX"],
@@ -751,15 +756,15 @@ const AIRLINE_SPOKES = {
     MIA: ["SCL", "GRU", "EZE", "JFK", "MAD"],
   },
   kal: {
-    ICN: ["JFK", "LAX", "SFO", "SEA", "YVR", "LHR", "CDG", "FRA", "AMS", "FCO", "HND", "SIN",
+    ICN: ["JFK", "LAX", "SFO", "SEA", "YVR", "LHR", "CDG", "FRA", "AMS", "FCO", "IST", "HND", "SIN",
       "HKG", "PVG", "BKK", "SYD", "DXB", "DOH"],
   },
   sas: {
     CPH: ["JFK", "BOS", "SFO", "LHR", "MAN", "AMS", "CDG", "FRA", "MUC", "FCO", "MAD",
-      "DUB", "WAW"],
+      "DUB", "WAW", "IST"],
   },
   aic: {
-    DEL: ["JFK", "SFO", "LHR", "CDG", "FRA", "AMS", "FCO", "DXB", "DOH", "SIN", "HKG", "BKK",
+    DEL: ["JFK", "SFO", "LHR", "CDG", "FRA", "AMS", "FCO", "IST", "DXB", "DOH", "SIN", "HKG", "BKK",
       "BOM", "SYD"],
     BOM: ["JFK", "LHR", "CDG", "FRA", "DXB", "DOH", "SIN", "HKG", "DEL"],
   },
@@ -767,7 +772,7 @@ const AIRLINE_SPOKES = {
     MEX: ["JFK", "LGA", "LAX", "ORD", "MIA", "MAD", "CDG", "GRU", "SCL"],
   },
   cpa: {
-    HKG: ["JFK", "BOS", "LAX", "SFO", "YVR", "LHR", "CDG", "FRA", "AMS", "FCO", "HND", "ICN",
+    HKG: ["JFK", "BOS", "LAX", "SFO", "YVR", "LHR", "CDG", "FRA", "AMS", "FCO", "IST", "HND", "ICN",
       "SIN", "BKK", "DEL", "BOM", "SYD", "MEL", "AKL", "DXB", "PVG"],
   },
   asa: {
@@ -778,15 +783,15 @@ const AIRLINE_SPOKES = {
     AKL: ["SYD", "MEL", "SIN", "HKG", "HND", "LAX", "SFO", "YVR", "LHR", "PVG"],
   },
   tha: {
-    BKK: ["LHR", "CDG", "FRA", "FCO", "AMS", "HND", "ICN", "HKG", "SIN", "SYD", "MEL", "DEL",
+    BKK: ["LHR", "CDG", "FRA", "FCO", "AMS", "IST", "HND", "ICN", "HKG", "SIN", "SYD", "MEL", "DEL",
       "BOM", "DXB", "JFK"],
   },
   msr: {
-    CAI: ["JFK", "LHR", "CDG", "FRA", "FCO", "AMS", "MAD", "DXB", "DOH", "JNB", "ADD", "NBO"],
+    CAI: ["JFK", "LHR", "CDG", "FRA", "FCO", "AMS", "MAD", "IST", "DXB", "DOH", "JNB", "ADD", "NBO"],
   },
   ita: {
-    FCO: ["LHR", "CDG", "AMS", "FRA", "MUC", "MAD", "MAN", "DUB", "CPH", "WAW", "CAI",
-      "JFK", "BOS", "MIA", "LAX", "SFO", "ORD", "YYZ", "EZE", "GRU", "HND", "DEL", "BKK", "DXB"],
+    FCO: ["LHR", "CDG", "AMS", "FRA", "MUC", "MAD", "MAN", "DUB", "CPH", "WAW", "CAI", "IST",
+      "JFK", "BOS", "MIA", "LAX", "EZE", "GRU", "HND", "DEL", "DXB"],
   },
 };
 
@@ -869,7 +874,7 @@ function airportFleet(airport) {
  * open ocean (e.g., JFK→LHR crosses the Atlantic). */
 const AIRPORT_REGION = {
   KJFK: "na", KLGA: "na", KLAX: "na", KORD: "na", KSFO: "na", CYVR: "na", CYYZ: "na", KMIA: "na", MMMX: "na", KSEA: "na", KBOS: "na",
-  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFJ: "eu", EPWA: "eu", LIRF: "eu", EKCH: "eu", EIDW: "eu",
+  EGLL: "eu", EGCC: "eu", LFPG: "eu", EDDF: "eu", EDDM: "eu", EHAM: "eu", LEMD: "eu", LTFM: "eu", EPWA: "eu", LIRF: "eu", EKCH: "eu", EIDW: "eu",
   OMDB: "me", OTHH: "me",
   RJTT: "asia", WSSS: "asia", VHHH: "asia", RKSI: "asia", VTBS: "asia", VIDP: "asia", ZSPD: "asia", VABB: "asia",
   YSSY: "oceania", NZAA: "oceania", YMML: "oceania",
@@ -909,7 +914,7 @@ function routeDistanceKm(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-/* Real nonstop hops among airports in this sim. Bidirectional. */
+/* Hub → dest only. Two outstations of the same hub are not a route. */
 function airlineServesHop(id, a, b) {
   const net = AIRLINE_SPOKES[id];
   if (!net) return false;
@@ -937,6 +942,9 @@ function operatorsOnRoute(fromAp, toAp) {
       const spec = specById[tid];
       if (!spec) continue;
       if (km > (spec.rangeKm || 8000) * 1.06) continue;
+      /* Transatlantic A320ceo is not a thing in this set; JetBlue's A321LR
+       * is the A320 stand-in that actually does JFK–LHR. */
+      if (km > 4500 && !WIDEBODY_IDS.has(tid) && id !== "jbu") continue;
       const key = id + "|" + tid;
       if (seen.has(key)) continue;
       seen.add(key);
