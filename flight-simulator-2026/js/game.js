@@ -1572,10 +1572,14 @@ class Game {
       ctx.arc(cx + s * 0.18, cy - s * 0.12, s * 0.1, 0, Math.PI * 2);
       ctx.fill();
     } else if (mark === "ita") {
-      const x = -L * 0.48;
-      ctx.fillStyle = "#009246"; ctx.fillRect(x, -H * 3, L * 0.07, H * 2.6);
-      ctx.fillStyle = "#f4f7fa"; ctx.fillRect(x + L * 0.07, -H * 3, L * 0.06, H * 2.6);
-      ctx.fillStyle = "#ce2b37"; ctx.fillRect(x + L * 0.13, -H * 3, L * 0.07, H * 2.6);
+      /* White butterfly / wing mark on the all-blue ITA tail. */
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(cx - s * 0.18, cy, s * 0.32, s * 0.5, -0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + s * 0.18, cy, s * 0.32, s * 0.5, 0.45, 0, Math.PI * 2);
+      ctx.fill();
     }
     ctx.restore();
   }
