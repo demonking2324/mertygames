@@ -160,7 +160,7 @@ class Menu {
     document.getElementById("airline-heading").textContent = this.realistic ? "4. Airline" : "2. Livery";
     const hint = document.getElementById("livery-hint");
     hint.textContent = this.realistic
-      ? "Airlines that operate this type on your route"
+      ? "Airlines with a real nonstop of this type on your route"
       : "Only airlines that fly this type";
     this._syncFleetLock();
     this._updateRouteHeadings();
@@ -188,7 +188,7 @@ class Menu {
       hint.textContent = "Takeoff is " + this.from.iata + " " + this.from.city + ". Now pick where you land.";
     } else {
       heading.textContent = "Route";
-      hint.textContent = "Tap a field to change takeoff or landing. Aircraft and airlines below only include real operators of this city pair.";
+      hint.textContent = "Tap a field to change takeoff or landing. Aircraft and airlines below are real nonstops only.";
     }
   }
 
