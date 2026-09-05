@@ -133,13 +133,10 @@ class Game {
     } else {
       this.traffic = [];
       this._depCleared = true;
-      if (this.training) {
-        this.ac.x = this.world.depRunwayStart + 150;
-        this.hud.setStatus("Training: flaps (F), throttle up (D), and rotate (pull ↓) near " +
-          Math.round(this.ac.spec.vRotate) + " kt.");
-      } else {
-        this._spawnDepartureQueue();
-      }
+      this.ac.x = this.world.depRunwayStart + 150;
+      const vr = Math.round(this.ac.spec.vRotate);
+      this.hud.setStatus((this.training ? "Training: " : "Cleared for takeoff — ") +
+        "flaps (F), throttle up (D), and rotate (pull ↓) near " + vr + " kt.");
     }
 
     // Position camera immediately on the aircraft.
@@ -403,28 +400,6 @@ class Game {
       from: this.world.dep,
       to: this.world.arr,
     });
-  }
-
-  /* Line up 2–3 jets on the taxiway before the threshold. Only one
-   * aircraft is released onto the runway at a time. */
-  _spawnDepartureQueue() {
-    const w = this.world;
-    const thresh = w.depRunwayStart;
-    const holdShort = thresh - 80;
-    const gap = 320;
-    const n = 2 + Math.floor(Math.random() * 2); // 2 or 3
-    this.traffic = [];
-    for (let i = 0; i < n; i++) {
-      const pick = this._pickTraffic();
-      const x = holdShort - (i + 1) * gap;
-      const t = new TrafficPlane(pick.spec, pick.airline, x, w.groundElevation);
-      t.goalX = x;
-      t.wait = i === 0 ? 0.6 : 0.4;
-      this.traffic.push(t);
-    }
-    this.ac.x = holdShort - (n + 1) * gap;
-    this._depCleared = false;
-    this._queueHint();
   }
 
   _pickTraffic() {
