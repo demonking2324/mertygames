@@ -45,12 +45,49 @@ html, body {
   /* auto margins center it when it fits, but keep the top reachable
      (scrollable) when the panel is taller than the viewport. */
   margin: auto;
+  display: flex;
+  flex-direction: column;
   background: rgba(18, 27, 46, 0.85);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 28px 32px 32px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   backdrop-filter: blur(6px);
+}
+
+.menu-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.menu-head .tagline { margin: 4px 0 22px; }
+.settings-btn {
+  flex: 0 0 auto;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.settings-btn:hover { border-color: var(--accent); background: #17314a; }
+.settings-opt { margin: 0 0 22px; justify-content: flex-start; }
+
+.menu-panel.realistic .route-section { order: 1; margin-top: 0; }
+.menu-panel.realistic #fleet-section { order: 2; margin-top: 24px; }
+.menu-panel.realistic #start-btn { order: 3; }
+.menu-panel.realistic #training-btn { order: 4; }
+.menu-panel.realistic .opt-toggle:not(.settings-opt) { order: 5; }
+.menu-panel.realistic .hint { order: 6; }
+#fleet-section.locked {
+  opacity: 0.42;
+  pointer-events: none;
+  filter: grayscale(0.35);
 }
 
 .menu-panel h1 {
@@ -496,6 +533,8 @@ body.freecam.touch #mc-gear { display: none !important; }
   .menu-grid.two { grid-template-columns: 1fr; }
   .menu-panel { padding: 20px 18px 24px; }
   .menu-panel h1 { font-size: 30px; letter-spacing: 2px; }
+  .menu-head { flex-direction: column; align-items: stretch; }
+  .settings-btn { width: 100%; }
   .zoom-btn { font-size: 11px; padding: 5px 8px; }
 }
 

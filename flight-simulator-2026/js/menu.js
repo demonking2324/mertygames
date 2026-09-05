@@ -55,11 +55,14 @@ class Menu {
 
     this.trainMode = "takeoff";
     this.zoom = null;
+    this.realistic = false;
+    this.realisticPick = "from";
 
     this._buildAircraft();
     this._buildAirlines();
     this._buildMap();
     this._buildTraining();
+    this._buildSettings();
 
     document.getElementById("start-btn").addEventListener("click", () => this._start());
     this._refreshMap();
@@ -103,15 +106,106 @@ class Menu {
     });
   }
 
+  /* ---- Settings / realistic mode ---- */
+  _buildSettings() {
+    let saved = null;
+    try { saved = localStorage.getItem("realisticMode"); } catch (e) {}
+    this.realistic = saved === "on";
+    const box = document.getElementById("realistic-toggle");
+    if (box) box.checked = this.realistic;
+
+    document.getElementById("settings-btn").addEventListener("click", () => this._openSettings());
+    document.getElementById("settings-done").addEventListener("click", () => this._closeSettings());
+    document.getElementById("settings-modal").addEventListener("click", (e) => {
+      if (e.target.id === "settings-modal") this._closeSettings();
+    });
+    if (box) {
+      box.addEventListener("change", () => {
+        this._setRealistic(box.checked);
+      });
+    }
+    if (this.realistic) {
+      this.to = null;
+      this.realisticPick = this.from ? "to" : "from";
+    }
+    this._applyRealisticUi();
+    if (this.realistic) {
+      this._buildAircraft();
+      this._buildAirlines();
+    }
+  }
+
+  _openSettings() { document.getElementById("settings-modal").classList.remove("hidden"); }
+  _closeSettings() { document.getElementById("settings-modal").classList.add("hidden"); }
+
+  _setRealistic(on) {
+    this.realistic = !!on;
+    try { localStorage.setItem("realisticMode", this.realistic ? "on" : "off"); } catch (e) {}
+    if (this.realistic) {
+      this.to = null;
+      this.realisticPick = this.from ? "to" : "from";
+    } else if (!this.to) {
+      this.to = AIRPORTS.find((a) => a !== this.from) || AIRPORTS[1];
+    }
+    this._applyRealisticUi();
+    this._buildAircraft();
+    this._buildAirlines();
+    this._refreshMap();
+  }
+
+  _applyRealisticUi() {
+    const panel = document.getElementById("menu-panel");
+    panel.classList.toggle("realistic", this.realistic);
+    document.getElementById("aircraft-heading").textContent = this.realistic ? "3. Aircraft" : "1. Aircraft";
+    document.getElementById("airline-heading").textContent = this.realistic ? "4. Airline" : "2. Livery";
+    const hint = document.getElementById("livery-hint");
+    hint.textContent = this.realistic
+      ? "Airlines that operate this type on your route"
+      : "Only airlines that fly this type";
+    this._syncFleetLock();
+    this._updateRouteHeadings();
+  }
+
+  _syncFleetLock() {
+    const fleet = document.getElementById("fleet-section");
+    const locked = this.realistic && !(this.from && this.to);
+    fleet.classList.toggle("locked", locked);
+  }
+
+  _updateRouteHeadings() {
+    const heading = document.getElementById("route-heading");
+    const hint = document.getElementById("map-hint");
+    if (!this.realistic) {
+      heading.textContent = "3. Route — tap an airport on the map";
+      hint.textContent = "Tap a continent to zoom in, then pick an airport. World zooms back out. Free Cam watches the field with no aircraft.";
+      return;
+    }
+    if (!this.from) {
+      heading.textContent = "1. Takeoff airport — tap a field";
+      hint.textContent = "Pick where you depart. Then you’ll choose the landing airport.";
+    } else if (!this.to) {
+      heading.textContent = "2. Landing airport — tap a field";
+      hint.textContent = "Takeoff is " + this.from.iata + " " + this.from.city + ". Now pick where you land.";
+    } else {
+      heading.textContent = "Route";
+      hint.textContent = "Tap a field to change takeoff or landing. Aircraft and airlines below only include real operators of this city pair.";
+    }
+  }
+
   _buildAirlines() {
     const box = document.getElementById("airline-list");
     box.innerHTML = "";
-    const liveries = liveriesForAircraft(this.selectedAircraft);
+    const liveries = this.realistic
+      ? liveriesOnRoute(this.from, this.to, this.selectedAircraft)
+      : liveriesForAircraft(this.selectedAircraft);
     if (!liveries.includes(this.selectedAirline)) {
       this.selectedAirline = liveries[0] || null;
     }
     if (!liveries.length) {
-      box.innerHTML = `<div class="card"><span class="card-main"><span class="card-sub">No liveries for this type.</span></span></div>`;
+      const msg = this.realistic && this.from && this.to
+        ? "No airline flies this type on that route."
+        : "No liveries for this type.";
+      box.innerHTML = `<div class="card"><span class="card-main"><span class="card-sub">${msg}</span></span></div>`;
       return;
     }
     liveries.forEach((a) => {
@@ -134,14 +228,25 @@ class Menu {
   _buildAircraft() {
     const box = document.getElementById("aircraft-list");
     box.innerHTML = "";
-    AIRCRAFT_TYPES.forEach((t) => {
-      const n = liveriesForAircraft(t).length;
+    const types = this.realistic ? typesOnRoute(this.from, this.to) : AIRCRAFT_TYPES;
+    if (this.realistic && !types.includes(this.selectedAircraft)) {
+      this.selectedAircraft = types[0] || AIRCRAFT_TYPES[2];
+    }
+    if (!types.length) {
+      box.innerHTML = `<div class="card"><span class="card-main"><span class="card-sub">No aircraft in the sim fly this city pair. Try another route.</span></span></div>`;
+      this.selectedAirline = null;
+      return;
+    }
+    types.forEach((t) => {
+      const n = (this.realistic
+        ? liveriesOnRoute(this.from, this.to, t)
+        : liveriesForAircraft(t)).length;
       const el = document.createElement("div");
       el.className = "card" + (t === this.selectedAircraft ? " selected" : "");
       el.innerHTML = `
         <span class="card-main">
           <span class="card-title">${t.name}</span>
-          <span class="card-sub">${t.class} · V<sub>R</sub> ${t.vRotate} kt · ${n} ${n === 1 ? "livery" : "liveries"}</span>
+          <span class="card-sub">${t.class} · V<sub>R</sub> ${t.vRotate} kt · ${n} ${n === 1 ? "airline" : "airlines"}</span>
         </span>`;
       el.addEventListener("click", () => {
         this.selectedAircraft = t;
@@ -345,15 +450,30 @@ class Menu {
   _openPopup(ap, dot) {
     const popup = document.getElementById("map-popup");
     const isFrom = this.from === ap, isTo = this.to === ap;
-    popup.innerHTML = `
-      <div class="popup-title">${ap.iata} · ${ap.city}</div>
-      <div class="popup-sub">${ap.name}${isFrom ? " · current takeoff" : isTo ? " · current landing" : ""}</div>
-      <div class="popup-actions">
+    const pickFrom = !this.realistic || this.realisticPick === "from" || !this.from;
+    let actions;
+    if (this.realistic && pickFrom) {
+      actions = `
+        <button class="pop-btn dep" data-act="dep">Set as Takeoff</button>
+        <button class="pop-btn cam" data-act="freecam">Free Cam</button>
+        <button class="pop-btn cancel" data-act="cancel">Cancel</button>`;
+    } else if (this.realistic) {
+      actions = `
+        <button class="pop-btn arr" data-act="arr">Set as Landing</button>
+        <button class="pop-btn dep" data-act="dep">Change takeoff</button>
+        <button class="pop-btn cam" data-act="freecam">Free Cam</button>
+        <button class="pop-btn cancel" data-act="cancel">Cancel</button>`;
+    } else {
+      actions = `
         <button class="pop-btn dep" data-act="dep">Set as Takeoff</button>
         <button class="pop-btn arr" data-act="arr">Set as Landing</button>
         <button class="pop-btn cam" data-act="freecam">Free Cam</button>
-        <button class="pop-btn cancel" data-act="cancel">Cancel</button>
-      </div>`;
+        <button class="pop-btn cancel" data-act="cancel">Cancel</button>`;
+    }
+    popup.innerHTML = `
+      <div class="popup-title">${ap.iata} · ${ap.city}</div>
+      <div class="popup-sub">${ap.name}${isFrom ? " · current takeoff" : isTo ? " · current landing" : ""}</div>
+      <div class="popup-actions">${actions}</div>`;
 
     const wrap = document.getElementById("map-wrap");
     const wr = wrap.getBoundingClientRect();
@@ -380,14 +500,26 @@ class Menu {
   _closePopup() { document.getElementById("map-popup").classList.add("hidden"); }
 
   _setFrom(ap) {
-    if (this.to === ap) this.to = null; // can't depart and arrive at the same field
+    if (this.to === ap) this.to = null;
     this.from = ap;
-    this._refreshMap();
+    if (this.realistic) this.realisticPick = "to";
+    this._onRouteChanged();
   }
 
   _setTo(ap) {
     if (this.from === ap) this.from = null;
     this.to = ap;
+    if (this.realistic) this.realisticPick = this.from ? "to" : "from";
+    this._onRouteChanged();
+  }
+
+  _onRouteChanged() {
+    this._syncFleetLock();
+    this._updateRouteHeadings();
+    if (this.realistic) {
+      this._buildAircraft();
+      this._buildAirlines();
+    }
     this._refreshMap();
   }
 
@@ -426,16 +558,35 @@ class Menu {
       return;
     }
 
-    btn.disabled = false;
     const km = Math.round(routeDistanceKm(this.from, this.to));
+    let extra = "";
+    if (this.realistic) {
+      const n = operatorsOnRoute(this.from, this.to).length;
+      if (!n) {
+        extra = `<br><span style="color:#f59e0b">No simulated airline flies this city pair. Pick another landing field.</span>`;
+        btn.disabled = true;
+        info.innerHTML = `
+          <b>${this.from.city}</b> (${this.from.iata}) → <b>${this.to.city}</b> (${this.to.iata})<br>
+          Great-circle distance: <b>${km.toLocaleString()} km</b>${extra}`;
+        return;
+      }
+      extra = `<br>${n} real ${n === 1 ? "operator" : "operators"} for this route`;
+    }
+
+    btn.disabled = false;
     info.innerHTML = `
       <b>${this.from.city}</b> (${this.from.iata}) → <b>${this.to.city}</b> (${this.to.iata})<br>
       Great-circle distance: <b>${km.toLocaleString()} km</b> ·
-      Runways: ${this.from.runway} m / ${this.to.runway} m`;
+      Runways: ${this.from.runway} m / ${this.to.runway} m${extra}`;
   }
 
   _start() {
-    if (!this.from || !this.to || this.from === this.to || !this.selectedAirline) return;
+    if (!this.from || !this.to || this.from === this.to || !this.selectedAirline || !this.selectedAircraft) return;
+    if (this.realistic) {
+      const ok = operatorsOnRoute(this.from, this.to).some((p) =>
+        p.airline === this.selectedAirline && p.spec === this.selectedAircraft);
+      if (!ok) return;
+    }
     this.onStart({
       airline: this.selectedAirline,
       aircraft: this.selectedAircraft,

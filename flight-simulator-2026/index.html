@@ -4,31 +4,36 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Flight Simulator 2026</title>
-  <link rel="stylesheet" href="css/style.css?v=term32" />
+  <link rel="stylesheet" href="css/style.css?v=real33" />
 </head>
 <body>
   <!-- ===== Start Menu ===== -->
   <div id="menu" class="screen">
-    <div class="menu-panel">
-      <h1>FLIGHT SIMULATOR <span>2026</span></h1>
-      <p class="tagline">A realistic 2D side-view flight simulator</p>
+    <div class="menu-panel" id="menu-panel">
+      <div class="menu-head">
+        <div>
+          <h1>FLIGHT SIMULATOR <span>2026</span></h1>
+          <p class="tagline">A realistic 2D side-view flight simulator</p>
+        </div>
+        <button id="settings-btn" class="settings-btn" type="button">⚙ Settings</button>
+      </div>
 
-      <div class="menu-grid two">
+      <div class="menu-grid two" id="fleet-section">
         <section>
-          <h2>1. Aircraft</h2>
+          <h2 id="aircraft-heading">1. Aircraft</h2>
           <div id="aircraft-list" class="card-list"></div>
         </section>
 
         <section>
-          <h2>2. Livery</h2>
-          <p class="livery-hint">Only airlines that fly this type</p>
+          <h2 id="airline-heading">2. Livery</h2>
+          <p class="livery-hint" id="livery-hint">Only airlines that fly this type</p>
           <div id="airline-list" class="card-list"></div>
         </section>
       </div>
 
-      <section class="route-section">
-        <h2>3. Route — tap an airport on the map</h2>
-        <p class="map-hint">Tap a continent to zoom in, then pick an airport. World zooms back out. Free Cam watches the field with no aircraft.</p>
+      <section class="route-section" id="route-section">
+        <h2 id="route-heading">3. Route — tap an airport on the map</h2>
+        <p class="map-hint" id="map-hint">Tap a continent to zoom in, then pick an airport. World zooms back out. Free Cam watches the field with no aircraft.</p>
         <div id="map-zooms" class="map-zooms"></div>
         <div id="map-wrap" class="map-wrap">
           <svg id="world-map" class="world-map" viewBox="0 0 360 180" preserveAspectRatio="xMidYMid meet" aria-label="World map"></svg>
@@ -48,6 +53,24 @@
       </label>
 
       <p class="hint">Tip: aim for a smooth touchdown — under ~3 m/s vertical speed on the runway.</p>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-card">
+        <h2>Settings</h2>
+        <p class="modal-sub">Realistic mode picks the route first, then only offers aircraft and airlines that actually fly that city pair.</p>
+
+        <label class="opt-toggle settings-opt" for="realistic-toggle">
+          <input type="checkbox" id="realistic-toggle" />
+          <span class="opt-track"><span class="opt-thumb"></span></span>
+          <span class="opt-text">Realistic mode</span>
+        </label>
+
+        <div class="modal-actions">
+          <button id="settings-done" class="start-btn" type="button">Done</button>
+        </div>
+      </div>
     </div>
 
     <!-- Training setup dialog -->
@@ -120,17 +143,17 @@
     </div>
   </div>
 
-  <script src="js/data.js?v=term32"></script>
+  <script src="js/data.js?v=real33"></script>
   <script src="js/physics.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/aircraft.js"></script>
-  <script src="js/world.js?v=term32"></script>
-  <script src="js/input.js?v=term32"></script>
-  <script src="js/hud.js?v=term32"></script>
-  <script src="js/loading.js?v=term32"></script>
-  <script src="js/game.js?v=term32"></script>
-  <script src="js/mobile.js?v=term32"></script>
-  <script src="js/menu.js?v=term32"></script>
+  <script src="js/world.js?v=real33"></script>
+  <script src="js/input.js?v=real33"></script>
+  <script src="js/hud.js?v=real33"></script>
+  <script src="js/loading.js?v=real33"></script>
+  <script src="js/game.js?v=real33"></script>
+  <script src="js/mobile.js?v=real33"></script>
+  <script src="js/menu.js?v=real33"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -148,6 +148,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 55,
     vApproach: 65,
     cruiseAlt: 3000,
+    rangeKm: 1200,
     engineType: "prop",
     engineCount: 1,
     highWing: true,
@@ -173,6 +174,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 120,
     vApproach: 125,
     cruiseAlt: 7600,
+    rangeKm: 2500,
     engineType: "turboprop",
     engineCount: 2,
     highWing: true,
@@ -198,6 +200,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 145,
     vApproach: 138,
     cruiseAlt: 11000,
+    rangeKm: 6200,
     engineType: "jet",
     engineCount: 2,
     highWing: false,
@@ -223,6 +226,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 150,
     vApproach: 142,
     cruiseAlt: 11500,
+    rangeKm: 5400,
     engineType: "jet",
     engineCount: 2,
     highWing: false,
@@ -248,6 +252,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 165,
     vApproach: 150,
     cruiseAlt: 11800,
+    rangeKm: 13600,
     engineType: "jet",
     engineCount: 2,
     highWing: false,
@@ -274,6 +279,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 135,
     vApproach: 130,
     cruiseAlt: 11000,
+    rangeKm: 4000,
     engineType: "jet",
     engineCount: 2,
     highWing: false,
@@ -299,6 +305,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 160,
     vApproach: 150,
     cruiseAlt: 12000,
+    rangeKm: 14100,
     engineType: "jet",
     engineCount: 2,
     highWing: false,
@@ -325,6 +332,7 @@ const AIRCRAFT_TYPES = [
     vRotate: 160,
     vApproach: 145,
     cruiseAlt: 12000,
+    rangeKm: 15000,
     engineType: "jet",
     engineCount: 2,
     highWing: false,
@@ -717,6 +725,70 @@ function routeDistanceKm(a, b) {
   const la1 = rad(a.lat), la2 = rad(b.lat);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* Airline + type pairs that can actually fly from → to in this sim:
+ * present at both fields, type seen at both ends for that carrier, and
+ * the hop is within the aircraft's range. */
+function operatorsOnRoute(fromAp, toAp) {
+  if (!fromAp || !toAp || fromAp.iata === toAp.iata) return [];
+  const fromIata = fromAp.iata, toIata = toAp.iata;
+  const km = routeDistanceKm(fromAp, toAp);
+  const specById = Object.fromEntries(AIRCRAFT_TYPES.map((t) => [t.id, t]));
+  const fromCarriers = new Set((AIRPORT_FLEETS[fromIata] || []).map(([id]) => id));
+  const toCarriers = new Set((AIRPORT_FLEETS[toIata] || []).map(([id]) => id));
+  const ids = new Set([...fromCarriers, ...toCarriers]);
+  const pairs = [];
+  const seen = new Set();
+
+  for (const id of ids) {
+    if (id === "pvt") continue;
+    const al = AIRLINE_BY_ID[id];
+    if (!al) continue;
+    const atFrom = fromCarriers.has(id);
+    const atTo = toCarriers.has(id);
+    const homeFrom = (AIRLINE_HUBS[id] || []).includes(fromIata);
+    const homeTo = (AIRLINE_HUBS[id] || []).includes(toIata);
+    const fromTypes = typesAtAirportForAirline(fromIata, id);
+    const toTypes = new Set(typesAtAirportForAirline(toIata, id));
+
+    for (const tid of fromTypes) {
+      if (!toTypes.has(tid)) continue;
+      const spec = specById[tid];
+      if (!spec) continue;
+      if (km > (spec.rangeKm || 8000) * 1.06) continue;
+      const wide = WIDEBODY_IDS.has(tid);
+      // Narrowbodies need a footprint at both cities. Widebodies may
+      // visit from / into a hub even if they aren't parked in the dest list.
+      const both = atFrom && atTo;
+      const outbound = homeFrom && (atTo || wide);
+      const inbound = homeTo && (atFrom || wide);
+      if (!(both || outbound || inbound)) continue;
+      const key = id + "|" + tid;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pairs.push({ airline: al, spec });
+    }
+  }
+  return pairs;
+}
+
+function typesOnRoute(fromAp, toAp) {
+  const types = [];
+  const seen = new Set();
+  for (const p of operatorsOnRoute(fromAp, toAp)) {
+    if (seen.has(p.spec.id)) continue;
+    seen.add(p.spec.id);
+    types.push(p.spec);
+  }
+  return types;
+}
+
+function liveriesOnRoute(fromAp, toAp, spec) {
+  if (!spec) return [];
+  return operatorsOnRoute(fromAp, toAp)
+    .filter((p) => p.spec.id === spec.id)
+    .map((p) => p.airline);
 }
 
 /* Loading-screen tips. `tags` let the loader prefer advice that matches
