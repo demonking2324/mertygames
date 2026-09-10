@@ -49,8 +49,8 @@ class Menu {
     this.selectedAircraft = AIRCRAFT_TYPES[2]; // A320 default
     this.selectedAirline = liveriesForAircraft(this.selectedAircraft)[0] || AIRLINES[0];
 
-    this.from = AIRPORTS.find((a) => a.iata === "JFK") || AIRPORTS[0];
-    this.to = AIRPORTS.find((a) => a.iata === "LHR") || AIRPORTS[1];
+    this.from = AIRPORTS.find((a) => a.iata === "MAN") || AIRPORTS[0];
+    this.to = AIRPORTS.find((a) => a.iata === "FCO") || AIRPORTS[1];
     this.dotEls = {};
 
     this.trainMode = "takeoff";
@@ -58,24 +58,38 @@ class Menu {
     this.realistic = false;
     this.realisticPick = "from";
 
+    this._ensureFreeSelection();
     this._buildAircraft();
     this._buildAirlines();
     this._buildMap();
     this._buildTraining();
     this._buildSettings();
+    this._buildShop();
+    this._buildSignIn();
+    this._refreshAccountUi();
 
     document.getElementById("start-btn").addEventListener("click", () => this._start());
     this._refreshMap();
   }
 
   /* ---- Training mode ---- */
-  _buildTraining() {
+  _fillTrainingAircraft() {
     const select = document.getElementById("train-aircraft");
+    const prev = select.value;
     select.innerHTML = "";
     AIRCRAFT_TYPES.forEach((t, i) => {
-      select.appendChild(new Option(`${t.name} — ${t.class}`, i));
+      const locked = !hasPremium() && !isFreeAircraft(t);
+      const opt = new Option(locked ? `${t.name} — Premium` : `${t.name} — ${t.class}`, i);
+      opt.disabled = locked;
+      select.appendChild(opt);
     });
-    select.value = 2; // A320
+    const keep = AIRCRAFT_TYPES[prev];
+    if (keep && (hasPremium() || isFreeAircraft(keep))) select.value = prev;
+    else select.value = String(AIRCRAFT_TYPES.findIndex((t) => t.id === "a320"));
+  }
+
+  _buildTraining() {
+    this._fillTrainingAircraft();
 
     document.getElementById("training-btn").addEventListener("click", () => this._openTraining());
     document.getElementById("train-cancel").addEventListener("click", () => this._closeTraining());
@@ -95,10 +109,16 @@ class Menu {
 
   _startTraining() {
     const idx = +document.getElementById("train-aircraft").value;
+    const spec = AIRCRAFT_TYPES[idx];
+    if (!hasPremium() && !isFreeAircraft(spec)) {
+      this._closeTraining();
+      this._openShop();
+      return;
+    }
     this._closeTraining();
     this.onStart({
       airline: TRAINING_AIRLINE,
-      aircraft: AIRCRAFT_TYPES[idx],
+      aircraft: spec,
       from: TRAINING_AIRPORT,
       to: TRAINING_AIRPORT,
       training: true,
@@ -177,7 +197,7 @@ class Menu {
     const hint = document.getElementById("map-hint");
     if (!this.realistic) {
       heading.textContent = "3. Route — tap an airport on the map";
-      hint.textContent = "Tap a continent to zoom in, then pick an airport. World zooms back out. Free Cam watches the field with no aircraft.";
+      hint.textContent = "Tap a continent to zoom in, then pick an airport. Gold dots are Premium. Free Cam watches the field with no aircraft.";
       return;
     }
     if (!this.from) {
@@ -241,14 +261,17 @@ class Menu {
       const n = (this.realistic
         ? liveriesOnRoute(this.from, this.to, t)
         : liveriesForAircraft(t)).length;
+      const locked = !hasPremium() && !isFreeAircraft(t);
       const el = document.createElement("div");
-      el.className = "card" + (t === this.selectedAircraft ? " selected" : "");
+      el.className = "card" + (t === this.selectedAircraft ? " selected" : "") + (locked ? " locked" : "");
       el.innerHTML = `
         <span class="card-main">
           <span class="card-title">${t.name}</span>
           <span class="card-sub">${t.class} · V<sub>R</sub> ${t.vRotate} kt · ${n} ${n === 1 ? "airline" : "airlines"}</span>
-        </span>`;
+        </span>
+        ${locked ? `<span class="prem-badge">Premium</span>` : ""}`;
       el.addEventListener("click", () => {
+        if (locked) { this._openShop(); return; }
         this.selectedAircraft = t;
         this._buildAircraft();
         this._buildAirlines();
@@ -291,6 +314,9 @@ class Menu {
       ".ap-mark .ap-core { stroke: #0a1728; }",
       ".ap-mark.from .ap-core { fill: #22c55e; }",
       ".ap-mark.to .ap-core { fill: #ef4444; }",
+      ".ap-mark.locked .ap-core { fill: #c9a227; }",
+      ".ap-mark.locked.from .ap-core { fill: #22c55e; }",
+      ".ap-mark.locked.to .ap-core { fill: #ef4444; }",
       ".ap-mark:hover .ap-core { fill: #ffffff; }",
       ".ap-label { pointer-events: none; }",
     ].join(" ");
@@ -362,7 +388,7 @@ class Menu {
       }
     }
     pts.forEach(({ ap, x, y }) => {
-      const g = this._svgEl("g", { class: "ap-mark" });
+      const g = this._svgEl("g", { class: "ap-mark" + (!hasPremium() && !isFreeAirport(ap) ? " locked" : "") });
       const hit = this._svgEl("circle", { cx: x, cy: y, r: r * 2.6, fill: "transparent" });
       const core = this._svgEl("circle", {
         cx: x, cy: y, r, class: "ap-core",
@@ -450,9 +476,14 @@ class Menu {
   _openPopup(ap, dot) {
     const popup = document.getElementById("map-popup");
     const isFrom = this.from === ap, isTo = this.to === ap;
+    const locked = !hasPremium() && !isFreeAirport(ap);
     const pickFrom = !this.realistic || this.realisticPick === "from" || !this.from;
     let actions;
-    if (this.realistic && pickFrom) {
+    if (locked) {
+      actions = `
+        <button class="pop-btn shop" data-act="shop">Unlock with Premium · £2.99</button>
+        <button class="pop-btn cancel" data-act="cancel">Cancel</button>`;
+    } else if (this.realistic && pickFrom) {
       actions = `
         <button class="pop-btn dep" data-act="dep">Set as Takeoff</button>
         <button class="pop-btn cam" data-act="freecam">Free Cam</button>
@@ -471,8 +502,8 @@ class Menu {
         <button class="pop-btn cancel" data-act="cancel">Cancel</button>`;
     }
     popup.innerHTML = `
-      <div class="popup-title">${ap.iata} · ${ap.city}</div>
-      <div class="popup-sub">${ap.name}${isFrom ? " · current takeoff" : isTo ? " · current landing" : ""}</div>
+      <div class="popup-title">${ap.iata} · ${ap.city}${locked ? " · Premium" : ""}</div>
+      <div class="popup-sub">${ap.name}${isFrom ? " · current takeoff" : isTo ? " · current landing" : ""}${locked ? " — unlock in the Shop" : ""}</div>
       <div class="popup-actions">${actions}</div>`;
 
     const wrap = document.getElementById("map-wrap");
@@ -492,6 +523,7 @@ class Menu {
         if (act === "dep") this._setFrom(ap);
         else if (act === "arr") this._setTo(ap);
         else if (act === "freecam") this._startFreeCam(ap);
+        else if (act === "shop") this._openShop();
         this._closePopup();
       });
     });
@@ -500,6 +532,7 @@ class Menu {
   _closePopup() { document.getElementById("map-popup").classList.add("hidden"); }
 
   _setFrom(ap) {
+    if (!hasPremium() && !isFreeAirport(ap)) { this._openShop(); return; }
     if (this.to === ap) this.to = null;
     this.from = ap;
     if (this.realistic) this.realisticPick = "to";
@@ -507,6 +540,7 @@ class Menu {
   }
 
   _setTo(ap) {
+    if (!hasPremium() && !isFreeAirport(ap)) { this._openShop(); return; }
     if (this.from === ap) this.from = null;
     this.to = ap;
     if (this.realistic) this.realisticPick = this.from ? "to" : "from";
@@ -530,7 +564,9 @@ class Menu {
       const isTo = !!this.to && this.to.iata === iata;
       g.classList.toggle("from", isFrom);
       g.classList.toggle("to", isTo);
-      core.setAttribute("fill", isFrom ? "#22c55e" : isTo ? "#ef4444" : "#d7e6f5");
+      const ap = AIRPORTS.find((a) => a.iata === iata);
+      g.classList.toggle("locked", !hasPremium() && !isFreeAirport(ap));
+      core.setAttribute("fill", isFrom ? "#22c55e" : isTo ? "#ef4444" : (!hasPremium() && !isFreeAirport(ap) ? "#c9a227" : "#d7e6f5"));
     }
 
     const line = this.routeLine;
@@ -560,6 +596,14 @@ class Menu {
 
     const km = Math.round(routeDistanceKm(this.from, this.to));
     let extra = "";
+    if (!hasPremium() && (!isFreeAirport(this.from) || !isFreeAirport(this.to))) {
+      extra = `<br><span style="color:#f59e0b">Premium airport — unlock in the Shop for £2.99.</span>`;
+      btn.disabled = true;
+      info.innerHTML = `
+        <b>${this.from.city}</b> (${this.from.iata}) → <b>${this.to.city}</b> (${this.to.iata})<br>
+        Great-circle distance: <b>${km.toLocaleString()} km</b>${extra}`;
+      return;
+    }
     if (this.realistic) {
       const n = operatorsOnRoute(this.from, this.to).length;
       if (!n) {
@@ -573,6 +617,15 @@ class Menu {
       extra = `<br>${n} real ${n === 1 ? "operator" : "operators"} for this route`;
     }
 
+    if (!hasPremium() && !isFreeAircraft(this.selectedAircraft)) {
+      extra += `<br><span style="color:#f59e0b">This aircraft is Premium — unlock in the Shop for £2.99.</span>`;
+      btn.disabled = true;
+      info.innerHTML = `
+        <b>${this.from.city}</b> (${this.from.iata}) → <b>${this.to.city}</b> (${this.to.iata})<br>
+        Great-circle distance: <b>${km.toLocaleString()} km</b>${extra}`;
+      return;
+    }
+
     btn.disabled = false;
     info.innerHTML = `
       <b>${this.from.city}</b> (${this.from.iata}) → <b>${this.to.city}</b> (${this.to.iata})<br>
@@ -582,6 +635,15 @@ class Menu {
 
   _start() {
     if (!this.from || !this.to || this.from === this.to || !this.selectedAirline || !this.selectedAircraft) return;
+    if (configNeedsPremium({
+      airline: this.selectedAirline,
+      aircraft: this.selectedAircraft,
+      from: this.from,
+      to: this.to,
+    })) {
+      this._openShop();
+      return;
+    }
     if (this.realistic) {
       const ok = operatorsOnRoute(this.from, this.to).some((p) =>
         p.airline === this.selectedAirline && p.spec === this.selectedAircraft);
@@ -597,10 +659,192 @@ class Menu {
 
   /* Spectator at a single field — no aircraft, pan the 2D camera, watch AI. */
   _startFreeCam(ap) {
+    if (!hasPremium() && !isFreeAirport(ap)) {
+      this._openShop();
+      return;
+    }
     this.onStart({
       freeCam: true,
       from: ap,
       to: ap,
+    });
+  }
+
+  _ensureFreeSelection() {
+    if (hasPremium()) return;
+    if (!isFreeAircraft(this.selectedAircraft)) {
+      this.selectedAircraft = AIRCRAFT_TYPES.find((t) => t.id === "a320") || AIRCRAFT_TYPES[0];
+    }
+    if (this.from && !isFreeAirport(this.from)) {
+      this.from = AIRPORTS.find((a) => a.iata === "MAN") || AIRPORTS[0];
+    }
+    if (this.to && !isFreeAirport(this.to)) {
+      this.to = AIRPORTS.find((a) => a.iata === "FCO") || AIRPORTS[1];
+    }
+    if (this.from && this.to && this.from === this.to) {
+      this.to = AIRPORTS.find((a) => a.iata === "FCO" && a !== this.from) || this.to;
+    }
+  }
+
+  _refreshAccountUi() {
+    const btn = document.getElementById("signin-btn");
+    if (hasPremium()) {
+      btn.textContent = "Premium";
+      btn.classList.add("premium");
+    } else {
+      btn.textContent = "Sign in";
+      btn.classList.remove("premium");
+    }
+    this._ensureFreeSelection();
+    this._buildAircraft();
+    this._buildAirlines();
+    this._fillTrainingAircraft();
+    this._refreshMap();
+  }
+
+  _copyPin(pin) {
+    const text = String(pin || "");
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+  }
+
+  _shopView(id) {
+    ["shop-browse", "shop-pay", "shop-receipt"].forEach((name) => {
+      document.getElementById(name).classList.toggle("hidden", name !== id);
+    });
+  }
+
+  _openShop() {
+    this._closeSignIn();
+    this._shopView(hasPremium() ? "shop-receipt" : "shop-browse");
+    if (hasPremium()) {
+      document.getElementById("shop-code-display").textContent = currentPremiumPin();
+    }
+    document.getElementById("shop-pay-status").classList.add("hidden");
+    document.getElementById("shop-pay-btn").disabled = false;
+    document.getElementById("shop-modal").classList.remove("hidden");
+  }
+
+  _closeShop() {
+    document.getElementById("shop-modal").classList.add("hidden");
+  }
+
+  _buildShop() {
+    document.getElementById("shop-btn").addEventListener("click", () => this._openShop());
+    document.getElementById("shop-close").addEventListener("click", () => this._closeShop());
+    document.getElementById("shop-buy").addEventListener("click", () => this._shopView("shop-pay"));
+    document.getElementById("shop-pay-cancel").addEventListener("click", () => this._shopView("shop-browse"));
+    document.getElementById("shop-receipt-done").addEventListener("click", () => this._closeShop());
+    document.getElementById("shop-copy").addEventListener("click", () => {
+      this._copyPin(document.getElementById("shop-code-display").textContent);
+    });
+    document.getElementById("shop-modal").addEventListener("click", (e) => {
+      if (e.target.id === "shop-modal") this._closeShop();
+    });
+    document.getElementById("shop-pay-btn").addEventListener("click", () => this._payPremium());
+  }
+
+  _payPremium() {
+    const btn = document.getElementById("shop-pay-btn");
+    const status = document.getElementById("shop-pay-status");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    status.textContent = "Processing payment…";
+    status.classList.remove("hidden");
+    setTimeout(() => {
+      const pin = purchasePremium();
+      document.getElementById("shop-code-display").textContent = pin;
+      this._shopView("shop-receipt");
+      this._refreshAccountUi();
+      btn.disabled = false;
+    }, 700);
+  }
+
+  _readPin() {
+    return Array.from(document.querySelectorAll("#signin-pin .pin-digit"))
+      .map((el) => el.value.replace(/\D/g, "").slice(0, 1))
+      .join("");
+  }
+
+  _clearPin() {
+    document.querySelectorAll("#signin-pin .pin-digit").forEach((el) => { el.value = ""; });
+    document.getElementById("signin-error").classList.add("hidden");
+  }
+
+  _openSignIn() {
+    this._closeShop();
+    const guest = document.getElementById("signin-guest");
+    const signed = document.getElementById("signin-signed");
+    if (hasPremium()) {
+      guest.classList.add("hidden");
+      signed.classList.remove("hidden");
+      document.getElementById("signin-code-display").textContent = currentPremiumPin();
+    } else {
+      signed.classList.add("hidden");
+      guest.classList.remove("hidden");
+      this._clearPin();
+    }
+    document.getElementById("signin-modal").classList.remove("hidden");
+    const first = document.querySelector("#signin-pin .pin-digit");
+    if (first && !hasPremium()) first.focus();
+  }
+
+  _closeSignIn() {
+    document.getElementById("signin-modal").classList.add("hidden");
+  }
+
+  _submitSignIn() {
+    const err = document.getElementById("signin-error");
+    if (!signInPremium(this._readPin())) {
+      err.classList.remove("hidden");
+      return;
+    }
+    this._refreshAccountUi();
+    this._closeSignIn();
+  }
+
+  _buildSignIn() {
+    document.getElementById("signin-btn").addEventListener("click", () => this._openSignIn());
+    document.getElementById("signin-cancel").addEventListener("click", () => this._closeSignIn());
+    document.getElementById("signin-done").addEventListener("click", () => this._closeSignIn());
+    document.getElementById("signin-submit").addEventListener("click", () => this._submitSignIn());
+    document.getElementById("signout-btn").addEventListener("click", () => {
+      signOutPremium();
+      this._refreshAccountUi();
+      this._openSignIn();
+    });
+    document.getElementById("signin-copy").addEventListener("click", () => {
+      this._copyPin(document.getElementById("signin-code-display").textContent);
+    });
+    document.getElementById("signin-modal").addEventListener("click", (e) => {
+      if (e.target.id === "signin-modal") this._closeSignIn();
+    });
+
+    const digits = Array.from(document.querySelectorAll("#signin-pin .pin-digit"));
+    digits.forEach((el, i) => {
+      el.addEventListener("input", () => {
+        el.value = el.value.replace(/\D/g, "").slice(0, 1);
+        document.getElementById("signin-error").classList.add("hidden");
+        if (el.value && digits[i + 1]) digits[i + 1].focus();
+        if (this._readPin().length === 4) this._submitSignIn();
+      });
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && !el.value && digits[i - 1]) {
+          digits[i - 1].focus();
+          digits[i - 1].value = "";
+          e.preventDefault();
+        }
+      });
+      el.addEventListener("paste", (e) => {
+        const text = normalizePremiumPin((e.clipboardData || window.clipboardData).getData("text"));
+        if (text.length < 2) return;
+        e.preventDefault();
+        digits.forEach((d, j) => { d.value = text[j] || ""; });
+        if (text.length === 4) this._submitSignIn();
+        else digits[Math.min(text.length, 3)].focus();
+      });
     });
   }
 }

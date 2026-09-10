@@ -92,6 +92,7 @@ class Game {
   }
 
   start(config) {
+    if (configNeedsPremium(config) && !hasPremium()) return;
     this._lastConfig = config;
     this.state = "loading";
     this._hideMessage();

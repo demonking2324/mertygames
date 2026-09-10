@@ -895,6 +895,26 @@ const TRAINING_AIRPORT = {
   theme: { terrain: ["#5c8a3c", "#33501e"], sky: ["#8fb6d8", "#cfe0ee"], landmark: "city" },
 };
 
+/* Free roster. Everything else is Premium (£2.99). Training Field stays free. */
+const FREE_AIRCRAFT_IDS = new Set(["c172", "dash8", "a320", "b738"]);
+const FREE_AIRPORT_IATA = new Set(["MAN", "FCO", "GRU", "ORD", "LGA", "ICN", "ADD", "SIN"]);
+
+function isFreeAircraft(spec) {
+  return !!(spec && FREE_AIRCRAFT_IDS.has(spec.id));
+}
+function isFreeAirport(ap) {
+  if (!ap) return false;
+  if (ap.iata === "TRN" || ap.icao === "TRNG") return true;
+  return FREE_AIRPORT_IATA.has(ap.iata);
+}
+function configNeedsPremium(config) {
+  if (!config) return false;
+  if (config.freeCam) return !isFreeAirport(config.from);
+  if (config.aircraft && !isFreeAircraft(config.aircraft)) return true;
+  if (config.training) return false;
+  return (config.from && !isFreeAirport(config.from)) || (config.to && !isFreeAirport(config.to));
+}
+
 /* Expand an airport's fleet spec into a flat list of airline objects (cached). */
 function airportFleet(airport) {
   if (airport._fleet) return airport._fleet;
