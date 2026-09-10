@@ -1089,9 +1089,9 @@ class Game {
     ctx.fillStyle = "#0f2233";
     if (spec.hump) {
       ctx.beginPath();
-      ctx.moveTo(L * 0.40, -H * 0.92);
-      ctx.lineTo(L * 0.34, -H * 1.40);
-      ctx.lineTo(L * 0.28, -H * 1.02);
+      ctx.moveTo(L * 0.38, -H * 0.78);
+      ctx.lineTo(L * 0.33, -H * 1.14);
+      ctx.lineTo(L * 0.27, -H * 0.88);
       ctx.closePath();
       ctx.fill();
     } else {
@@ -1114,13 +1114,13 @@ class Game {
       ctx.fillRect(wx - wsz / 2, winY, wsz, wsz * 1.3);
     }
     if (spec.hump) {
-      const uCount = 10;
-      const uStart = L * 0.24, uEnd = -L * 0.06;
-      const uY = -H * 1.22;
-      const uw = Math.max(1.0, H * 0.16);
+      const uCount = 6;
+      const uStart = L * 0.22, uEnd = L * 0.04;
+      const uY = -H * 0.98;
+      const uw = Math.max(1.0, H * 0.14);
       for (let i = 0; i < uCount; i++) {
         const wx = lerp(uStart, uEnd, i / (uCount - 1));
-        ctx.fillRect(wx - uw / 2, uY, uw, uw * 1.15);
+        ctx.fillRect(wx - uw / 2, uY, uw, uw * 1.1);
       }
     }
 
@@ -1132,9 +1132,11 @@ class Game {
       const legLen = H * (spec.fixedGear ? 0.7 : 0.45);
       ctx.strokeStyle = strutColor;
       ctx.lineWidth = Math.max(1.6, H * 0.22);
-      const legs = (spec.engineCount || 2) >= 4 || spec.hump
-        ? [L * 0.34, L * 0.02, -L * 0.22]
-        : [L * 0.30, -L * 0.12];
+      const legs = spec.hump
+        ? [L * 0.32, -L * 0.02, -L * 0.08]
+        : (spec.engineCount || 2) >= 4
+          ? [L * 0.32, L * 0.02, -L * 0.16]
+          : [L * 0.30, -L * 0.12];
       for (const lx of legs) {
         ctx.beginPath();
         ctx.moveTo(lx, gy);
@@ -1151,13 +1153,13 @@ class Game {
   _fuselagePath(ctx, L, H, spec) {
     ctx.beginPath();
     if (spec && spec.hump) {
-      // 747-8: long slim tube with a modest, stretched upper deck.
+      // 747-8: modest forward upper deck, then a short fairing onto the main roof.
       ctx.moveTo(L * 0.5, 0);
       ctx.quadraticCurveTo(L * 0.48, -H * 0.5, L * 0.42, -H * 0.82);
-      ctx.lineTo(L * 0.37, -H * 1.42);
-      ctx.quadraticCurveTo(L * 0.32, -H * 1.58, L * 0.24, -H * 1.54);
-      ctx.lineTo(-L * 0.08, -H * 1.44);
-      ctx.quadraticCurveTo(-L * 0.14, -H * 1.32, -L * 0.17, -H * 0.94);
+      ctx.lineTo(L * 0.35, -H * 1.16);
+      ctx.quadraticCurveTo(L * 0.31, -H * 1.28, L * 0.24, -H * 1.26);
+      ctx.lineTo(L * 0.05, -H * 1.20);
+      ctx.quadraticCurveTo(-L * 0.01, -H * 1.10, -L * 0.06, -H * 0.92);
       ctx.lineTo(-L * 0.34, -H * 0.90);
       ctx.quadraticCurveTo(-L * 0.5, -H * 0.48, -L * 0.5, 0);
       ctx.quadraticCurveTo(-L * 0.5, H * 0.52, -L * 0.34, H * 0.90);
@@ -1293,7 +1295,7 @@ class Game {
     const tx = (facing || 1) < 0 ? L * 0.18 : L * 0.04;
     ctx.fillText("100", tx, H * 0.48);
     ctx.font = `700 ${Math.max(6, H * 0.32)}px system-ui, sans-serif`;
-    ctx.fillText("Lufthansa", tx, -H * 1.12);
+    ctx.fillText("Lufthansa", tx, -H * 0.92);
     ctx.restore();
   }
 
