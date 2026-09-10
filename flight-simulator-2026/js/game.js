@@ -123,13 +123,13 @@ class Game {
     this.hud.setSpectator(false);
     this.cam.scale = 0.55;
 
-    this.world = new World(from, to);
+    this.world = new World(from, to, { singleField: !!this.training });
     this.ac = new Aircraft(aircraft, airline, this.world.groundElevation);
 
     if (this.training && this.trainingMode === "landing") {
       this._setupLandingApproach();
       this._announcedClimb = true; // already airborne — skip the climb hint
-      this.hud.setStatus("Training: on final. Manage descent — gear down, full flaps, aim for the runway.");
+      this.hud.setStatus("Training: 500 ft on a 3° final — gear down, full flaps, hold the slope to the numbers.");
     } else {
       this.traffic = [];
       this._depCleared = true;
@@ -202,21 +202,22 @@ class Game {
     this.cam.y = clamp(this.cam.y, gy + 40, gy + 14000);
   }
 
-  /* Place the aircraft airborne on a ~3.5° final approach to the runway. */
+  /* Place the aircraft on a 3° final at ~500 ft AGL, already configured to land. */
   _setupLandingApproach() {
     const ac = this.ac, w = this.world, spec = ac.spec;
     const spd = spec.vApproach / MS_TO_KT;   // m/s
-    const approach = 6500;                    // meters before the threshold
-    const alt = 400;                          // meters above the field
+    const alt = 500 * 0.3048;                // 500 ft → meters
+    const glide = rad(3);
+    const approach = alt / Math.tan(glide);
     ac.x = w.arrRunwayStart - approach;
     ac.y = w.groundElevation + alt;
     ac.vx = spd;
-    ac.vy = -spd * (alt / approach);          // aim the vector at the numbers
-    ac.pitch = rad(2);
+    ac.vy = -spd * Math.tan(glide);
+    ac.pitch = rad(2.2);                     // slight nose-up, descending on the slope
     ac.onGround = false;
     ac.gearDown = true;
     ac.flaps = spec.flapNotches;
-    ac.throttle = 0.4;
+    ac.throttle = spec.engineType === "jet" ? 0.38 : 0.45;
   }
 
   _resetTraining() {
@@ -956,12 +957,12 @@ class Game {
     const sx = cam.worldToScreenX(ac.x);
     const sy = cam.worldToScreenY(ac.y);
 
-    // Fixed on-screen size (scaled a little by aircraft length), so it stays visible.
-    const px = clamp(ac.spec.length * 3.9, 64, 200);
+    // 747s are long tubes; don't cap them at the same 200px as a 777.
+    const px = clamp(ac.spec.length * (ac.spec.hump ? 4.8 : 3.9), 64, ac.spec.hump ? 310 : 200);
 
     // Offset so the wheels (or belly, gear up) rest on ac.y — the ground
     // contact height — instead of the fuselage centerline floating above it.
-    const H = px * (ac.spec.wide ? 0.14 : 0.115);
+    const H = px * (ac.spec.hump ? 0.086 : ac.spec.wide ? 0.14 : 0.115);
     const gearLen = H * (ac.spec.fixedGear ? 0.7 : 0.45);
     const showGear = ac.gearDown || ac.spec.fixedGear;
     const contactY = showGear ? H * 0.92 + gearLen + H * 0.58 : H;
@@ -983,14 +984,14 @@ class Game {
     ctx.font = "700 12px system-ui, sans-serif";
     const tag = `${ac.airline.code} · ${ac.spec.name}`;
     const tw = ctx.measureText(tag).width;
-    ctx.fillText(tag, sx - tw / 2, sy - px * (ac.spec.hump ? 0.95 : 0.72));
+    ctx.fillText(tag, sx - tw / 2, sy - px * (ac.spec.hump ? 0.62 : 0.72));
     ctx.restore();
   }
 
   /* Detailed side-view airliner/GA drawing in local (nose-right) coordinates. */
   _drawPlaneBody(ctx, ac, L) {
     const spec = ac.spec;
-    const H = L * (spec.wide ? 0.14 : 0.115);
+    const H = L * (spec.hump ? 0.086 : spec.wide ? 0.14 : 0.115);
     const al = ac.airline;
     const body = al.fuselage;
     const belly = al.belly || shade(body, -14);
@@ -1031,10 +1032,10 @@ class Game {
     ctx.fill();
 
     // ---- Vertical tail fin + airline artwork ----
-    this._tailFinPath(ctx, L, H);
+    this._tailFinPath(ctx, L, H, spec);
     ctx.fillStyle = tail;
     ctx.fill();
-    this._drawTailMark(ctx, al, L, H);
+    this._drawTailMark(ctx, al, L, H, spec);
 
     // ---- Wing (behind fuselage), swept for jets ----
     const wingY = highWing ? -H * 0.7 : H * 0.55;
@@ -1088,9 +1089,9 @@ class Game {
     ctx.fillStyle = "#0f2233";
     if (spec.hump) {
       ctx.beginPath();
-      ctx.moveTo(L * 0.40, -H * 1.05);
-      ctx.lineTo(L * 0.32, -H * 1.62);
-      ctx.lineTo(L * 0.26, -H * 1.15);
+      ctx.moveTo(L * 0.40, -H * 0.92);
+      ctx.lineTo(L * 0.34, -H * 1.40);
+      ctx.lineTo(L * 0.28, -H * 1.02);
       ctx.closePath();
       ctx.fill();
     } else {
@@ -1104,8 +1105,8 @@ class Game {
 
     // ---- Cabin windows ----
     ctx.fillStyle = "rgba(150,200,235,0.95)";
-    const count = spec.engineType === "prop" ? 4 : (spec.wide ? 14 : 9);
-    const startX = L * 0.28, endX = -L * 0.28;
+    const count = spec.engineType === "prop" ? 4 : (spec.hump ? 22 : (spec.wide ? 14 : 9));
+    const startX = L * 0.28, endX = spec.hump ? -L * 0.34 : -L * 0.28;
     const winY = -H * 0.18;
     const wsz = Math.max(1.2, H * 0.22);
     for (let i = 0; i < count; i++) {
@@ -1113,9 +1114,9 @@ class Game {
       ctx.fillRect(wx - wsz / 2, winY, wsz, wsz * 1.3);
     }
     if (spec.hump) {
-      const uCount = 8;
-      const uStart = L * 0.22, uEnd = -L * 0.02;
-      const uY = -H * 1.42;
+      const uCount = 10;
+      const uStart = L * 0.24, uEnd = -L * 0.06;
+      const uY = -H * 1.22;
       const uw = Math.max(1.0, H * 0.16);
       for (let i = 0; i < uCount; i++) {
         const wx = lerp(uStart, uEnd, i / (uCount - 1));
@@ -1132,7 +1133,7 @@ class Game {
       ctx.strokeStyle = strutColor;
       ctx.lineWidth = Math.max(1.6, H * 0.22);
       const legs = (spec.engineCount || 2) >= 4 || spec.hump
-        ? [L * 0.32, L * 0.04, -L * 0.16]
+        ? [L * 0.34, L * 0.02, -L * 0.22]
         : [L * 0.30, -L * 0.12];
       for (const lx of legs) {
         ctx.beginPath();
@@ -1150,18 +1151,18 @@ class Game {
   _fuselagePath(ctx, L, H, spec) {
     ctx.beginPath();
     if (spec && spec.hump) {
-      // 747-8: long upper deck, then a step down onto the main-deck roof.
+      // 747-8: long slim tube with a modest, stretched upper deck.
       ctx.moveTo(L * 0.5, 0);
-      ctx.quadraticCurveTo(L * 0.47, -H * 0.55, L * 0.40, -H * 0.85);
-      ctx.lineTo(L * 0.34, -H * 1.58);
-      ctx.quadraticCurveTo(L * 0.28, -H * 1.82, L * 0.16, -H * 1.80);
-      ctx.lineTo(-L * 0.04, -H * 1.70);
-      ctx.quadraticCurveTo(-L * 0.12, -H * 1.55, -L * 0.14, -H * 0.95);
-      ctx.lineTo(-L * 0.30, -H * 0.92);
-      ctx.quadraticCurveTo(-L * 0.5, -H * 0.55, -L * 0.5, 0);
-      ctx.quadraticCurveTo(-L * 0.5, H * 0.55, -L * 0.30, H * 0.92);
-      ctx.lineTo(L * 0.18, H);
-      ctx.quadraticCurveTo(L * 0.44, H, L * 0.5, 0);
+      ctx.quadraticCurveTo(L * 0.48, -H * 0.5, L * 0.42, -H * 0.82);
+      ctx.lineTo(L * 0.37, -H * 1.42);
+      ctx.quadraticCurveTo(L * 0.32, -H * 1.58, L * 0.24, -H * 1.54);
+      ctx.lineTo(-L * 0.08, -H * 1.44);
+      ctx.quadraticCurveTo(-L * 0.14, -H * 1.32, -L * 0.17, -H * 0.94);
+      ctx.lineTo(-L * 0.34, -H * 0.90);
+      ctx.quadraticCurveTo(-L * 0.5, -H * 0.48, -L * 0.5, 0);
+      ctx.quadraticCurveTo(-L * 0.5, H * 0.52, -L * 0.34, H * 0.90);
+      ctx.lineTo(L * 0.22, H);
+      ctx.quadraticCurveTo(L * 0.46, H * 0.95, L * 0.5, 0);
       ctx.closePath();
       return;
     }
@@ -1175,10 +1176,11 @@ class Game {
     ctx.closePath();
   }
 
-  _tailFinPath(ctx, L, H) {
+  _tailFinPath(ctx, L, H, spec) {
+    const th = spec && spec.hump ? H * 1.25 : H;
     ctx.beginPath();
     ctx.moveTo(-L * 0.42, -H * 0.7);
-    ctx.quadraticCurveTo(-L * 0.50, -H * 2.9, -L * 0.40, -H * 2.9);
+    ctx.quadraticCurveTo(-L * 0.50, -th * 2.9, -L * 0.40, -th * 2.9);
     ctx.lineTo(-L * 0.26, -H * 0.7);
     ctx.closePath();
   }
@@ -1313,13 +1315,13 @@ class Game {
     ctx.restore();
   }
 
-  _drawTailMark(ctx, al, L, H) {
+  _drawTailMark(ctx, al, L, H, spec) {
     const mark = al.tailMark || "none";
     if (mark === "none") return;
     ctx.save();
-    this._tailFinPath(ctx, L, H);
+    this._tailFinPath(ctx, L, H, spec);
     ctx.clip();
-    const cx = -L * 0.38, cy = -H * 1.7;
+    const cx = -L * 0.38, cy = spec && spec.hump ? -H * 2.0 : -H * 1.7;
     const s = H;
 
     if (mark === "aa-flag") {

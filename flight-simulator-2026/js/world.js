@@ -153,6 +153,7 @@ class World {
     this._drawSky(ctx, cam);
     this._drawClouds(ctx, cam);
     this._drawGround(ctx, cam);
+    this._drawDistantCities(ctx, cam);
     // Scenery/landmarks sit behind the runways.
     const leftEdge = this.dualRunways
       ? this.arrRunwayStart
@@ -161,8 +162,8 @@ class World {
     if (!this.singleField) {
       const rightEdge = this.destDepEnd != null ? this.destDepEnd : this.arrRunwayEnd;
       this._drawScenery(ctx, cam, this.arrTheme, rightEdge + 900);
-    } else if (this.dualRunways) {
-      this._drawScenery(ctx, cam, this.depTheme, this.depRunwayEnd + 900);
+    } else {
+      this._drawScenery(ctx, cam, this.depTheme, this.depRunwayEnd + 1100);
     }
     // One terminal in the middle (left of the departure threshold).
     this._drawGates(ctx, cam, this.dep, this.depRunwayStart, -1);
@@ -479,6 +480,49 @@ class World {
     }
   }
 
+  /* Distant town/city silhouettes along land — sits behind airport landmarks. */
+  _drawDistantCities(ctx, cam) {
+    const gy = cam.worldToScreenY(this.groundElevation);
+    if (gy < -40 || gy > cam.h + 80) return;
+    const wv0 = this._screenToWorldX(cam, -80);
+    const wv1 = this._screenToWorldX(cam, cam.w + 80);
+    const spacing = 3800;
+    const start = Math.floor(wv0 / spacing) * spacing;
+    ctx.save();
+    for (let wx = start; wx <= wv1; wx += spacing) {
+      if (this._biomeAt(wx) === "ocean" || this._biomeAt(wx) === "mountains") continue;
+      const jitter = Math.sin(wx * 0.0013) * 520;
+      this._drawCityCluster(ctx, cam, gy, wx + jitter, 0.55 + 0.28 * (Math.sin(wx * 0.0007) * 0.5 + 0.5));
+    }
+    ctx.restore();
+  }
+
+  _drawCityCluster(ctx, cam, gy, worldX, scale) {
+    const sx = cam.worldToScreenX(worldX);
+    if (sx < -700 || sx > cam.w + 700) return;
+    const m = (meters) => cam.toScreenLen(meters * scale);
+    const n = 11;
+    const haze = ["#6a7c92", "#55667a", "#73849a"];
+    ctx.globalAlpha = 0.55;
+    for (let i = 0; i < n; i++) {
+      const seed = Math.sin(worldX * 0.002 + i * 1.7);
+      const h = 50 + (seed * 0.5 + 0.5) * 160;
+      const w = 28 + (i % 3) * 12;
+      const off = (i - (n - 1) / 2) * 52;
+      const x = cam.worldToScreenX(worldX + off);
+      const bw = m(w), bh = m(h);
+      ctx.fillStyle = haze[i % haze.length];
+      ctx.fillRect(x - bw / 2, gy - bh, bw, bh);
+      ctx.fillStyle = "rgba(255,236,180,0.22)";
+      const cols = Math.max(1, Math.floor(bw / 7));
+      const rows = Math.max(1, Math.floor(bh / 10));
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          if ((r + c + i) % 3 === 0) ctx.fillRect(x - bw / 2 + 2 + c * 7, gy - bh + 4 + r * 10, 3, 4);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   /* Draw a recognizable landmark/skyline for an airport, centered at worldX. */
   _drawScenery(ctx, cam, theme, worldX) {
     if (theme.landmark === "none") return; // clean field (e.g., training)
@@ -525,6 +569,18 @@ class World {
       case "skyline": {
         const hts = [140, 220, 300, 190, 260, 340, 200, 150, 240];
         hts.forEach((h, i) => { const off = -340 + i * 85; box(off, 62, h, i % 2 ? haze : hazeDark); windows(off, 62, h); });
+        break;
+      }
+      case "city": {
+        const hts = [90, 150, 210, 130, 280, 190, 240, 160, 320, 170, 120, 200, 110];
+        hts.forEach((h, i) => {
+          const off = -480 + i * 78;
+          box(off, 48 + (i % 3) * 10, h, i % 2 ? haze : hazeDark);
+          windows(off, 48 + (i % 3) * 10, h);
+        });
+        box(40, 56, 360, hazeDark); windows(40, 56, 360);
+        ctx.strokeStyle = hazeDark; ctx.lineWidth = m(3);
+        ctx.beginPath(); ctx.moveTo(at(40), gy - m(360)); ctx.lineTo(at(40), gy - m(420)); ctx.stroke();
         break;
       }
       case "bridge": {

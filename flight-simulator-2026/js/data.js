@@ -892,7 +892,7 @@ const TRAINING_AIRLINE = {
 const TRAINING_AIRPORT = {
   icao: "TRNG", iata: "TRN", name: "Training Field", city: "Training",
   lat: 0, lon: 0, elevation: 0, runway: 4000, runways: 1,
-  theme: { terrain: ["#5c8a3c", "#33501e"], sky: ["#8fb6d8", "#cfe0ee"], landmark: "none" },
+  theme: { terrain: ["#5c8a3c", "#33501e"], sky: ["#8fb6d8", "#cfe0ee"], landmark: "city" },
 };
 
 /* Expand an airport's fleet spec into a flat list of airline objects (cached). */
@@ -1036,7 +1036,7 @@ const LOADING_TIPS = [
   { tags: ["general"], text: "Press P to pause, Esc to return to the menu." },
   { tags: ["freecam"], text: "Free Cam has no aircraft. Pan with WASD or arrows, drag the view, scroll to look up at the sky, and zoom with Q/E." },
   { tags: ["freecam"], text: "Watch airliners appear at the gates, taxi out and take off, or land and taxi back to a stand." },
-  { tags: ["training", "landing"], text: "Landing practice starts you on a ~3.5° final. Manage the descent; don't chase the runway." },
+  { tags: ["training", "landing"], text: "Landing practice starts you on a 3° final at about 500 ft. Hold the slope — don't chase the runway." },
   { tags: ["general"], text: "On-screen touch controls (throttle slider + pitch stick) can be toggled from the main menu." },
   { tags: ["route"], text: "Transoceanic routes show land near each coast and open water in between. Short hops stay over terrain." },
   { tags: ["route"], text: "Great-circle distances are real; the flown distance is compressed so a leg lasts minutes, not hours." },
