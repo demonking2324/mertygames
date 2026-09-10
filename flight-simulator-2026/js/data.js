@@ -35,6 +35,10 @@ const AIRLINES = [
   { id: "dlh", name: "Lufthansa",          code: "LH", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#05164d",
     accent: "#f7c600", cheat: "none", titles: "Lufthansa", titleColor: "#05164d",
     tailMark: "crane", engine: "#f4f7fa" },
+  /* D-ABYN “Niedersachsen” — 747-8 only. Dark blue XXL crane, 100 / 1926|2026. */
+  { id: "dlh100", name: "Lufthansa 100 Years", code: "LH", fuselage: "#0a2156", belly: "#07183f", tail: "#06163f",
+    accent: "#ffffff", cheat: "xxlcrane", titles: "", titleColor: "#ffffff",
+    tailMark: "crane100", engine: "#d8dee8", networkOf: "dlh" },
   { id: "afr", name: "Air France",         code: "AF", fuselage: "#f4f7fa", belly: "#e8edf2", tail: "#002157",
     accent: "#ef3340", accent2: "#ffffff", cheat: "none", titles: "AIRFRANCE", titleColor: "#002157",
     tailMark: "tricolor", engine: "#002157" },
@@ -264,6 +268,34 @@ const AIRCRAFT_TYPES = [
     wide: true,
   },
   {
+    id: "b748",
+    name: "Boeing 747-8",
+    class: "Wide-body Jet",
+    length: 76.3,
+    mass: 350000,
+    wingArea: 554.0,
+    maxThrust: 1184000,
+    clSlope: 6.1,
+    clMax: 1.4,
+    alphaStall: rad(14),
+    flapCl: 0.55,
+    flapNotches: 5,
+    cd0: 0.021,
+    induced: 0.040,
+    pitchAuthority: 0.55,
+    vRotate: 175,
+    vApproach: 155,
+    cruiseAlt: 12000,
+    rangeKm: 14300,
+    engineType: "jet",
+    engineCount: 4,
+    highWing: false,
+    fixedGear: false,
+    winglets: true,
+    wide: true,
+    hump: true,
+  },
+  {
     id: "e175",
     name: "Embraer E175",
     class: "Regional Jet",
@@ -454,6 +486,11 @@ function airportRunwayCount(ap) {
  * populate the background gates. Rough real-world hub presence. */
 const AIRLINE_BY_ID = Object.fromEntries(AIRLINES.map((a) => [a.id, a]));
 
+function airlineNetworkId(id) {
+  const al = AIRLINE_BY_ID[id];
+  return (al && al.networkOf) || id;
+}
+
 /* Which of our airlines actually operate each type (mainline / regional
  * affiliate). Used so the livery picker only offers realistic paint. */
 const AIRCRAFT_OPERATORS = {
@@ -462,6 +499,7 @@ const AIRCRAFT_OPERATORS = {
   a320:  ["aal", "dal", "ual", "jbu", "baw", "dlh", "afr", "aca", "pgt", "thy", "ibe", "qtr", "lan", "sas", "aic", "cpa", "ana", "ezy", "anz", "tha", "msr", "ita"],
   b738:  ["aal", "dal", "ual", "swa", "klm", "qfa", "jal", "aca", "eth", "kqa", "ryr", "amx", "asa", "msr"],
   b77w:  ["aal", "ual", "baw", "afr", "klm", "uae", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "kal", "aic", "cpa", "ana", "tha"],
+  b748:  ["dlh", "dlh100", "kal"],
   e175:  ["aal", "dal", "ual", "aca", "klm"],
   b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "ibe", "lan", "kal", "aic", "amx", "ana", "vir", "anz", "tha", "msr"],
   a359:  ["dal", "afr", "dlh", "sia", "qtr", "jal", "ibe", "thy", "aca", "qfa", "lan", "sas", "kal", "cpa", "ana", "vir", "tha", "ita"],
@@ -486,7 +524,7 @@ const AIRPORT_FLEETS = {
   ORD: [["ual", 6], ["aal", 4], ["swa", 2], ["dlh", 1], ["aca", 1], ["thy", 1]],
   SFO: [["ual", 6], ["aal", 1], ["dal", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["thy", 1]],
   YVR: [["aca", 7], ["ual", 2], ["aal", 1], ["dal", 1], ["jal", 1], ["qfa", 1], ["thy", 1]],
-  FRA: [["dlh", 6], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["thy", 1], ["qtr", 1]],
+  FRA: [["dlh", 6], ["dlh100", 1], ["ual", 1], ["baw", 1], ["sia", 1], ["uae", 1], ["aca", 1], ["eth", 1], ["thy", 1], ["qtr", 1]],
   MUC: [["dlh", 7], ["ual", 1], ["baw", 1], ["afr", 1], ["klm", 1], ["aca", 1], ["eth", 1], ["thy", 1], ["ryr", 1]],
   LHR: [["baw", 5], ["vir", 2], ["dlh", 2], ["klm", 1], ["afr", 1], ["aal", 1], ["ita", 1], ["uae", 1], ["aca", 1], ["aic", 1], ["thy", 1], ["qtr", 1]],
   MAN: [["baw", 3], ["ezy", 3], ["ryr", 2], ["uae", 1], ["thy", 1], ["dlh", 1]],
@@ -526,15 +564,15 @@ const AIRPORT_FLEETS = {
 
 /* Types that actually operate at each field (subset of AIRCRAFT_TYPES). */
 const AIRPORT_TYPES = {
-  JFK: ["a320", "b738", "e175", "b789", "a359", "b77w"],
+  JFK: ["a320", "b738", "e175", "b789", "a359", "b77w", "b748"],
   LGA: ["a320", "b738", "e175"],
-  MIA: ["a320", "b738", "b789", "b77w"],
+  MIA: ["a320", "b738", "b789", "b77w", "b748"],
   IST: ["a320", "b738", "b789", "a359", "b77w"],
-  LAX: ["a320", "b738", "b789", "a359", "b77w"],
-  ORD: ["a320", "b738", "e175", "b77w", "b789"],
-  SFO: ["a320", "b738", "b789", "b77w", "a359"],
+  LAX: ["a320", "b738", "b789", "a359", "b77w", "b748"],
+  ORD: ["a320", "b738", "e175", "b77w", "b789", "b748"],
+  SFO: ["a320", "b738", "b789", "b77w", "a359", "b748"],
   YVR: ["a320", "b738", "dash8", "b789", "b77w"],
-  FRA: ["a320", "b789", "a359", "b77w"],
+  FRA: ["a320", "b789", "a359", "b77w", "b748"],
   MUC: ["a320", "b738", "b789", "a359"],
   LHR: ["a320", "b789", "a359", "b77w"],
   MAN: ["a320", "b738", "b77w", "b789"],
@@ -547,28 +585,28 @@ const AIRPORT_TYPES = {
   CPT: ["b789", "a359", "b77w", "a320"],
   ADD: ["b789", "b77w", "a359", "b738", "dash8"],
   NBO: ["b738", "b789", "b77w"],
-  HND: ["a320", "b77w", "b789", "a359"],
-  SIN: ["a359", "b77w", "b789"],
+  HND: ["a320", "b77w", "b789", "a359", "b748"],
+  SIN: ["a359", "b77w", "b789", "b748"],
   SYD: ["b738", "b789", "a359", "b77w"],
   AKL: ["a320", "b789"],
-  ICN: ["b77w", "b789", "a359", "a320"],
-  MEX: ["b738", "b789", "a320"],
+  ICN: ["b77w", "b789", "a359", "a320", "b748"],
+  MEX: ["b738", "b789", "a320", "b748"],
   CPH: ["a320", "a359", "b738"],
-  BKK: ["a320", "b77w", "b789", "a359"],
+  BKK: ["a320", "b77w", "b789", "a359", "b748"],
   SEA: ["b738", "a320", "b77w", "b789"],
   JNB: ["b789", "a359", "b77w", "a320"],
-  DEL: ["a320", "b789", "b77w"],
-  BOM: ["a320", "b789", "b77w"],
+  DEL: ["a320", "b789", "b77w", "b748"],
+  BOM: ["a320", "b789", "b77w", "b748"],
   DUB: ["b738", "a320"],
   BOS: ["a320", "b738", "e175", "b789", "a359"],
   CAI: ["a320", "b738", "b77w", "b789"],
   MEL: ["b738", "b789", "a359"],
-  GRU: ["a320", "b789", "a359"],
+  GRU: ["a320", "b789", "a359", "b748"],
   EZE: ["a320", "b789"],
-  YYZ: ["a320", "e175", "b789", "b77w", "dash8"],
+  YYZ: ["a320", "e175", "b789", "b77w", "dash8", "b748"],
   MAD: ["a320", "b738", "a359", "b789"],
-  HKG: ["a359", "b77w", "a320", "b789"],
-  PVG: ["a320", "b77w", "b789", "a359"],
+  HKG: ["a359", "b77w", "a320", "b789", "b748"],
+  PVG: ["a320", "b77w", "b789", "a359", "b748"],
   SCL: ["a320", "b789", "a359"],
 };
 
@@ -585,6 +623,7 @@ const AIRLINE_HUBS = {
   ezy: ["MAN", "DUB", "FCO", "MAD"],
   ryr: ["DUB", "MAN", "WAW", "FCO", "MAD", "MUC"],
   dlh: ["FRA", "MUC"],
+  dlh100: ["FRA"],
   afr: ["CDG"],
   klm: ["AMS"],
   uae: ["DXB"],
@@ -795,12 +834,12 @@ const AIRLINE_SPOKES = {
   },
 };
 
-const WIDEBODY_IDS = new Set(["b77w", "b789", "a359"]);
+const WIDEBODY_IDS = new Set(["b77w", "b789", "a359", "b748"]);
 
 function typesAtAirportForAirline(iata, airlineId) {
   const field = AIRPORT_TYPES[iata] || ["a320", "b738"];
   let types = field.filter((tid) => (AIRCRAFT_OPERATORS[tid] || []).includes(airlineId));
-  const atHome = (AIRLINE_HUBS[airlineId] || []).includes(iata);
+  const atHome = (AIRLINE_HUBS[airlineNetworkId(airlineId)] || []).includes(iata);
   const wides = types.filter((tid) => WIDEBODY_IDS.has(tid));
   if (!atHome && wides.length) types = wides;
   return types;
@@ -916,7 +955,7 @@ function routeDistanceKm(a, b) {
 
 /* Hub → dest only. Two outstations of the same hub are not a route. */
 function airlineServesHop(id, a, b) {
-  const net = AIRLINE_SPOKES[id];
+  const net = AIRLINE_SPOKES[airlineNetworkId(id)];
   if (!net) return false;
   return (net[a] || []).includes(b) || (net[b] || []).includes(a);
 }
@@ -931,8 +970,12 @@ function operatorsOnRoute(fromAp, toAp) {
   const fieldB = new Set(AIRPORT_TYPES[toIata] || ["a320"]);
   const pairs = [];
   const seen = new Set();
+  const ids = new Set(Object.keys(AIRLINE_SPOKES));
+  for (const al of AIRLINES) {
+    if (al.networkOf) ids.add(al.id);
+  }
 
-  for (const id of Object.keys(AIRLINE_SPOKES)) {
+  for (const id of ids) {
     if (!airlineServesHop(id, fromIata, toIata)) continue;
     const al = AIRLINE_BY_ID[id];
     if (!al) continue;

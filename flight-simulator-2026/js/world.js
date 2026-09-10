@@ -1430,6 +1430,15 @@ class World {
       ctx.moveTo(x - L * 0.42, cy - H * 0.05);
       ctx.lineTo(x + L * 0.34, cy - H * 0.1);
       ctx.stroke();
+    } else if (al.cheat === "xxlcrane") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(x + L * 0.02, cy + H * 0.08, L * 0.14, H * 0.42, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = `800 ${Math.max(7, H * 0.7)}px system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("100", x - L * 0.18, cy + H * 0.42);
     }
     ctx.restore();
 

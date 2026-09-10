@@ -983,7 +983,7 @@ class Game {
     ctx.font = "700 12px system-ui, sans-serif";
     const tag = `${ac.airline.code} · ${ac.spec.name}`;
     const tw = ctx.measureText(tag).width;
-    ctx.fillText(tag, sx - tw / 2, sy - px * 0.72);
+    ctx.fillText(tag, sx - tw / 2, sy - px * (ac.spec.hump ? 0.95 : 0.72));
     ctx.restore();
   }
 
@@ -1060,38 +1060,47 @@ class Game {
     this._drawEngines(ctx, ac, L, H, wingY, wingDrop);
 
     // ---- Fuselage ----
-    this._fuselagePath(ctx, L, H);
+    this._fuselagePath(ctx, L, H, spec);
     ctx.fillStyle = body;
     ctx.fill();
 
     // Belly, cheatline and titles clipped to the body.
     ctx.save();
-    this._fuselagePath(ctx, L, H);
+    this._fuselagePath(ctx, L, H, spec);
     ctx.clip();
     ctx.fillStyle = belly;
     const bellyTop = al.cheat === "split" ? H * 0.15 : H * 0.22;
     ctx.fillRect(-L * 0.52, bellyTop, L * 1.06, H * 1.2);
-    this._drawCheat(ctx, al, L, H);
-    this._drawTitles(ctx, al, L, H, ac.facing);
+    this._drawCheat(ctx, al, L, H, ac.facing);
+    if (al.cheat !== "xxlcrane") this._drawTitles(ctx, al, L, H, ac.facing);
     ctx.restore();
 
     // Subtle belly shading for volume.
     ctx.save();
     ctx.globalAlpha = 0.10;
     ctx.fillStyle = "#000";
-    this._fuselagePath(ctx, L, H);
+    this._fuselagePath(ctx, L, H, spec);
     ctx.clip();
     ctx.fillRect(-L * 0.52, H * 0.35, L * 1.06, H);
     ctx.restore();
 
     // ---- Cockpit windows ----
     ctx.fillStyle = "#0f2233";
-    ctx.beginPath();
-    ctx.moveTo(L * 0.46, -H * 0.28);
-    ctx.lineTo(L * 0.33, -H * 0.55);
-    ctx.lineTo(L * 0.30, -H * 0.18);
-    ctx.closePath();
-    ctx.fill();
+    if (spec.hump) {
+      ctx.beginPath();
+      ctx.moveTo(L * 0.40, -H * 1.05);
+      ctx.lineTo(L * 0.32, -H * 1.62);
+      ctx.lineTo(L * 0.26, -H * 1.15);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(L * 0.46, -H * 0.28);
+      ctx.lineTo(L * 0.33, -H * 0.55);
+      ctx.lineTo(L * 0.30, -H * 0.18);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // ---- Cabin windows ----
     ctx.fillStyle = "rgba(150,200,235,0.95)";
@@ -1103,6 +1112,16 @@ class Game {
       const wx = lerp(startX, endX, i / (count - 1));
       ctx.fillRect(wx - wsz / 2, winY, wsz, wsz * 1.3);
     }
+    if (spec.hump) {
+      const uCount = 8;
+      const uStart = L * 0.22, uEnd = -L * 0.02;
+      const uY = -H * 1.42;
+      const uw = Math.max(1.0, H * 0.16);
+      for (let i = 0; i < uCount; i++) {
+        const wx = lerp(uStart, uEnd, i / (uCount - 1));
+        ctx.fillRect(wx - uw / 2, uY, uw, uw * 1.15);
+      }
+    }
 
     // ---- Landing gear ----
     if (ac.gearDown || spec.fixedGear) {
@@ -1112,7 +1131,9 @@ class Game {
       const legLen = H * (spec.fixedGear ? 0.7 : 0.45);
       ctx.strokeStyle = strutColor;
       ctx.lineWidth = Math.max(1.6, H * 0.22);
-      const legs = [L * 0.30, -L * 0.12];
+      const legs = (spec.engineCount || 2) >= 4 || spec.hump
+        ? [L * 0.32, L * 0.04, -L * 0.16]
+        : [L * 0.30, -L * 0.12];
       for (const lx of legs) {
         ctx.beginPath();
         ctx.moveTo(lx, gy);
@@ -1126,8 +1147,24 @@ class Game {
     }
   }
 
-  _fuselagePath(ctx, L, H) {
+  _fuselagePath(ctx, L, H, spec) {
     ctx.beginPath();
+    if (spec && spec.hump) {
+      // 747-8: long upper deck, then a step down onto the main-deck roof.
+      ctx.moveTo(L * 0.5, 0);
+      ctx.quadraticCurveTo(L * 0.47, -H * 0.55, L * 0.40, -H * 0.85);
+      ctx.lineTo(L * 0.34, -H * 1.58);
+      ctx.quadraticCurveTo(L * 0.28, -H * 1.82, L * 0.16, -H * 1.80);
+      ctx.lineTo(-L * 0.04, -H * 1.70);
+      ctx.quadraticCurveTo(-L * 0.12, -H * 1.55, -L * 0.14, -H * 0.95);
+      ctx.lineTo(-L * 0.30, -H * 0.92);
+      ctx.quadraticCurveTo(-L * 0.5, -H * 0.55, -L * 0.5, 0);
+      ctx.quadraticCurveTo(-L * 0.5, H * 0.55, -L * 0.30, H * 0.92);
+      ctx.lineTo(L * 0.18, H);
+      ctx.quadraticCurveTo(L * 0.44, H, L * 0.5, 0);
+      ctx.closePath();
+      return;
+    }
     ctx.moveTo(L * 0.5, 0);
     ctx.quadraticCurveTo(L * 0.44, -H, L * 0.18, -H);
     ctx.lineTo(-L * 0.30, -H * 0.92);
@@ -1146,11 +1183,16 @@ class Game {
     ctx.closePath();
   }
 
-  _drawCheat(ctx, al, L, H) {
+  _drawCheat(ctx, al, L, H, facing) {
     const cheat = al.cheat || "thin";
     const accent = al.accent;
     const accent2 = al.accent2;
     if (cheat === "none") return;
+
+    if (cheat === "xxlcrane") {
+      this._drawXxlCrane(ctx, L, H, facing);
+      return;
+    }
 
     if (cheat === "split") {
       ctx.fillStyle = accent;
@@ -1203,6 +1245,54 @@ class Game {
       ctx.lineTo(L * 0.40, -H * 0.06 + clw);
       ctx.stroke();
     }
+  }
+
+  _drawXxlCrane(ctx, L, H, facing) {
+    ctx.fillStyle = "#ffffff";
+    // Body on the rear fuselage.
+    ctx.beginPath();
+    ctx.ellipse(-L * 0.10, H * 0.08, L * 0.18, H * 0.58, -0.18, 0, Math.PI * 2);
+    ctx.fill();
+    // Neck + head facing the nose.
+    ctx.beginPath();
+    ctx.moveTo(L * 0.02, -H * 0.12);
+    ctx.quadraticCurveTo(L * 0.16, -H * 0.95, L * 0.30, -H * 0.38);
+    ctx.quadraticCurveTo(L * 0.34, -H * 0.12, L * 0.22, -H * 0.02);
+    ctx.quadraticCurveTo(L * 0.08, -H * 0.38, L * 0.02, H * 0.08);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(L * 0.30, -H * 0.34);
+    ctx.lineTo(L * 0.42, -H * 0.22);
+    ctx.lineTo(L * 0.28, -H * 0.16);
+    ctx.closePath();
+    ctx.fill();
+    // Forward wing sweeping onto the aircraft wing.
+    ctx.beginPath();
+    ctx.moveTo(-L * 0.02, -H * 0.18);
+    ctx.quadraticCurveTo(-L * 0.22, H * 0.45, -L * 0.34, H * 1.45);
+    ctx.quadraticCurveTo(-L * 0.10, H * 0.72, L * 0.06, H * 0.18);
+    ctx.closePath();
+    ctx.fill();
+    // Aft wing toward the tail.
+    ctx.beginPath();
+    ctx.moveTo(-L * 0.14, -H * 0.08);
+    ctx.quadraticCurveTo(-L * 0.42, -H * 0.55, -L * 0.40, H * 0.22);
+    ctx.quadraticCurveTo(-L * 0.22, H * 0.18, -L * 0.06, H * 0.22);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.save();
+    if ((facing || 1) < 0) ctx.scale(-1, 1);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `800 ${Math.max(10, H * 0.82)}px system-ui, sans-serif`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = (facing || 1) < 0 ? "right" : "left";
+    const tx = (facing || 1) < 0 ? L * 0.18 : L * 0.04;
+    ctx.fillText("100", tx, H * 0.48);
+    ctx.font = `700 ${Math.max(6, H * 0.32)}px system-ui, sans-serif`;
+    ctx.fillText("Lufthansa", tx, -H * 1.12);
+    ctx.restore();
   }
 
   _drawTitles(ctx, al, L, H, facing) {
@@ -1284,6 +1374,16 @@ class Game {
       ctx.stroke();
     } else if (mark === "crane") {
       ctx.fillStyle = al.accent;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, s * 0.22, s * 0.55, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.1, cy);
+      ctx.quadraticCurveTo(cx - s * 0.7, cy - s * 0.2, cx - s * 0.15, cy - s * 0.55);
+      ctx.quadraticCurveTo(cx + s * 0.05, cy - s * 0.15, cx - s * 0.1, cy);
+      ctx.fill();
+    } else if (mark === "crane100") {
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.ellipse(cx, cy, s * 0.22, s * 0.55, -0.4, 0, Math.PI * 2);
       ctx.fill();
@@ -1622,21 +1722,25 @@ class Game {
       return;
     }
 
-    // Jet: underslung turbofan pod below the wing.
+    // Jet: underslung turbofan pods below the wing.
     const ey = wingY + wingDrop * H * 1.05;
-    const ew = spec.wide ? L * 0.26 : L * 0.20;
-    const eh = spec.wide ? H * 1.15 : H * 0.95;
-    ctx.fillStyle = ac.airline.engine || shade(ac.airline.fuselage, -28);
-    roundRect(ctx, -L * 0.02, ey - eh / 2, ew, eh, eh * 0.45);
-    ctx.fill();
-    ctx.fillStyle = "#0f1620";
-    ctx.beginPath();
-    ctx.ellipse(-L * 0.02 + ew, ey, eh * 0.16, eh * 0.42, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = shade(ac.airline.engine || ac.airline.fuselage, -40);
-    ctx.beginPath();
-    ctx.ellipse(-L * 0.02, ey, eh * 0.12, eh * 0.32, 0, 0, Math.PI * 2);
-    ctx.fill();
+    const quad = (spec.engineCount || 2) >= 4;
+    const ew = spec.wide ? L * (quad ? 0.20 : 0.26) : L * 0.20;
+    const eh = spec.wide ? H * (quad ? 0.95 : 1.15) : H * 0.95;
+    const pods = quad ? [-L * 0.08, L * 0.14] : [-L * 0.02];
+    for (const ex of pods) {
+      ctx.fillStyle = ac.airline.engine || shade(ac.airline.fuselage, -28);
+      roundRect(ctx, ex, ey - eh / 2, ew, eh, eh * 0.45);
+      ctx.fill();
+      ctx.fillStyle = "#0f1620";
+      ctx.beginPath();
+      ctx.ellipse(ex + ew, ey, eh * 0.16, eh * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = shade(ac.airline.engine || ac.airline.fuselage, -40);
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, eh * 0.12, eh * 0.32, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   _showMessage(titleHtml, bodyHtml, withButtons) {
