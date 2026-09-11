@@ -531,6 +531,7 @@ html, body {
   border-radius: 24px;
   background: #ffc439;
   color: #003087;
+  font-family: inherit;
   font-weight: 800;
   font-size: 16px;
   text-decoration: none;

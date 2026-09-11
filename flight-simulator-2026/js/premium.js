@@ -36,11 +36,26 @@ function newPayPalToken() {
   return token;
 }
 
-function paypalCheckoutUrl() {
+function paypalCheckoutUrl(token) {
   const user = paypalMeUser();
-  if (!user) return "";
-  return "https://www.paypal.com/paypalme/" + encodeURIComponent(user) +
-    "/" + PAYPAL_AMOUNT + PAYPAL_CURRENCY;
+  const here = gamePageUrl();
+  if (!user || !here || !token) return "";
+  const q = new URLSearchParams();
+  q.set("cmd", "_xclick");
+  q.set("business", user);
+  q.set("item_name", "Flight Simulator 2026 Premium");
+  q.set("amount", PAYPAL_AMOUNT);
+  q.set("currency_code", PAYPAL_CURRENCY);
+  q.set("no_shipping", "1");
+  q.set("no_note", "1");
+  q.set("rm", "1");
+  q.set("return", here + "?fs_paid=" + encodeURIComponent(token));
+  q.set("cancel_return", here + "?fs_cancel=1");
+  return "https://www.paypal.com/cgi-bin/webscr?" + q.toString();
+}
+
+function _clearPayPalQuery() {
+  try { history.replaceState({}, "", location.pathname + location.hash); } catch (e) {}
 }
 
 function takePayPalReturn() {
@@ -49,7 +64,18 @@ function takePayPalReturn() {
     const expected = sessionStorage.getItem(PAYPAL_LS_TOKEN) || "";
     if (!paid || !expected || paid !== expected) return false;
     sessionStorage.removeItem(PAYPAL_LS_TOKEN);
-    history.replaceState({}, "", location.pathname + location.hash);
+    _clearPayPalQuery();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function takePayPalCancel() {
+  try {
+    if (new URLSearchParams(location.search).get("fs_cancel") !== "1") return false;
+    try { sessionStorage.removeItem(PAYPAL_LS_TOKEN); } catch (e) {}
+    _clearPayPalQuery();
     return true;
   } catch (e) {
     return false;
