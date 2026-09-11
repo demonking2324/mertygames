@@ -760,10 +760,8 @@ class Menu {
         return;
       }
       paypalBtn.href = url;
-      this._setPayStatus("PayPal opened in a new tab. Come back and tap I’ve paid when you’re done.");
-      document.getElementById("shop-paid-btn").classList.remove("hidden");
+      this._finishPremiumPurchase();
     });
-    document.getElementById("shop-paid-btn").addEventListener("click", () => this._finishPremiumPurchase());
   }
 
   _setPayStatus(text, isError) {
@@ -776,8 +774,6 @@ class Menu {
 
   _resetPaypalCheckout() {
     this._setPayStatus("");
-    const paidBtn = document.getElementById("shop-paid-btn");
-    if (paidBtn) paidBtn.classList.add("hidden");
     const box = document.getElementById("paypal-button-container");
     if (box) box.innerHTML = "";
     this._paypalButtonsReady = false;
