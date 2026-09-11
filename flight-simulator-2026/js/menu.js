@@ -67,6 +67,7 @@ class Menu {
     this._buildShop();
     this._buildSignIn();
     this._refreshAccountUi();
+    if (takePayPalReturn() && !hasPremium()) this._finishPremiumPurchase();
 
     document.getElementById("start-btn").addEventListener("click", () => this._start());
     this._refreshMap();
@@ -722,8 +723,7 @@ class Menu {
     if (hasPremium()) {
       document.getElementById("shop-code-display").textContent = currentPremiumPin();
     }
-    document.getElementById("shop-pay-status").classList.add("hidden");
-    document.getElementById("shop-pay-btn").disabled = false;
+    this._resetPaypalCheckout();
     document.getElementById("shop-modal").classList.remove("hidden");
   }
 
@@ -734,8 +734,14 @@ class Menu {
   _buildShop() {
     document.getElementById("shop-btn").addEventListener("click", () => this._openShop());
     document.getElementById("shop-close").addEventListener("click", () => this._closeShop());
-    document.getElementById("shop-buy").addEventListener("click", () => this._shopView("shop-pay"));
-    document.getElementById("shop-pay-cancel").addEventListener("click", () => this._shopView("shop-browse"));
+    document.getElementById("shop-buy").addEventListener("click", () => {
+      this._shopView("shop-pay");
+      this._preparePaypalCheckout();
+    });
+    document.getElementById("shop-pay-cancel").addEventListener("click", () => {
+      this._resetPaypalCheckout();
+      this._shopView("shop-browse");
+    });
     document.getElementById("shop-receipt-done").addEventListener("click", () => this._closeShop());
     document.getElementById("shop-copy").addEventListener("click", () => {
       this._copyPin(document.getElementById("shop-code-display").textContent);
@@ -743,23 +749,78 @@ class Menu {
     document.getElementById("shop-modal").addEventListener("click", (e) => {
       if (e.target.id === "shop-modal") this._closeShop();
     });
-    document.getElementById("shop-pay-btn").addEventListener("click", () => this._payPremium());
+    const paypalBtn = document.getElementById("shop-paypal-btn");
+    paypalBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const url = paypalCheckoutUrl(newPayPalToken());
+      if (!url) {
+        this._setPayStatus("PayPal isn’t connected yet.", true);
+        return;
+      }
+      this._setPayStatus("Opening PayPal…");
+      window.location.href = url;
+    });
   }
 
-  _payPremium() {
-    const btn = document.getElementById("shop-pay-btn");
+  _setPayStatus(text, isError) {
     const status = document.getElementById("shop-pay-status");
-    if (btn.disabled) return;
-    btn.disabled = true;
-    status.textContent = "Processing payment…";
-    status.classList.remove("hidden");
-    setTimeout(() => {
-      const pin = purchasePremium();
-      document.getElementById("shop-code-display").textContent = pin;
-      this._shopView("shop-receipt");
-      this._refreshAccountUi();
-      btn.disabled = false;
-    }, 700);
+    status.textContent = text || "";
+    status.classList.toggle("hidden", !text);
+    status.classList.toggle("shop-error", !!isError);
+    status.classList.toggle("shop-status", !isError);
+  }
+
+  _resetPaypalCheckout() {
+    this._setPayStatus("");
+    const box = document.getElementById("paypal-button-container");
+    if (box) box.innerHTML = "";
+    this._paypalButtonsReady = false;
+  }
+
+  _preparePaypalCheckout() {
+    const link = document.getElementById("shop-paypal-btn");
+    link.classList.remove("hidden");
+    link.removeAttribute("href");
+
+    if (!PAYPAL_CLIENT_ID || this._paypalButtonsReady) return;
+    const box = document.getElementById("paypal-button-container");
+    this._setPayStatus("Loading PayPal…");
+    loadPayPalSdk().then((paypal) => {
+      if (this._paypalButtonsReady) return;
+      box.innerHTML = "";
+      paypal.Buttons({
+        style: { layout: "vertical", color: "gold", shape: "pill", label: "pay" },
+        createOrder: (_data, actions) => actions.order.create({
+          purchase_units: [{
+            description: "Flight Simulator 2026 Premium",
+            amount: { currency_code: PAYPAL_CURRENCY, value: PAYPAL_AMOUNT },
+          }],
+        }),
+        onApprove: (_data, actions) => actions.order.capture().then(() => {
+          this._finishPremiumPurchase();
+        }),
+        onError: () => {
+          this._setPayStatus("PayPal had a problem. Try the PayPal button below, or try again.", true);
+        },
+        onCancel: () => {
+          this._setPayStatus("Payment cancelled. You can try PayPal again.");
+        },
+      }).render(box);
+      this._paypalButtonsReady = true;
+      link.classList.add("hidden");
+      this._setPayStatus("");
+    }).catch(() => {
+      this._setPayStatus("Couldn’t load PayPal buttons. Use the PayPal button below.", true);
+      link.classList.remove("hidden");
+    });
+  }
+
+  _finishPremiumPurchase() {
+    const pin = purchasePremium();
+    document.getElementById("shop-code-display").textContent = pin;
+    this._shopView("shop-receipt");
+    document.getElementById("shop-modal").classList.remove("hidden");
+    this._refreshAccountUi();
   }
 
   _readPin() {
