@@ -64,7 +64,7 @@
       <div class="modal-card shop-card">
         <div id="signin-guest">
           <h2>Sign in</h2>
-          <p class="modal-sub">Enter the 4-digit code from your Premium purchase.</p>
+          <p class="modal-sub">Enter the 4-digit code from the device you paid on.</p>
           <div class="pin-row" id="signin-pin">
             <input class="pin-digit" maxlength="1" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1" />
             <input class="pin-digit" maxlength="1" inputmode="numeric" aria-label="Digit 2" />
@@ -80,7 +80,7 @@
         </div>
         <div id="signin-signed" class="hidden">
           <h2>Premium</h2>
-          <p class="modal-sub">You’re signed in. Keep this code to sign in on another device.</p>
+          <p class="modal-sub">You’re signed in. Keep this code to sign back in on this browser if you sign out.</p>
           <p class="pin-display" id="signin-code-display">----</p>
           <div class="modal-actions">
             <button id="signin-copy" class="start-btn" type="button">Copy code</button>
@@ -125,7 +125,7 @@
             </div>
             <div class="shop-price">£2.99</div>
           </div>
-          <p class="shop-foot">You’ll go to PayPal to pay £2.99. Closing PayPal or coming back without finishing payment will not unlock Premium.</p>
+          <p class="shop-foot">You’ll go to PayPal to pay £2.99. Coming back without a completed PayPal payment will not unlock Premium.</p>
           <p id="shop-pay-status" class="shop-status hidden"></p>
           <div id="paypal-button-container"></div>
           <button id="shop-paypal-btn" class="paypal-btn" type="button">
@@ -138,7 +138,7 @@
         </div>
         <div id="shop-receipt" class="hidden">
           <h2>Premium unlocked</h2>
-          <p class="modal-sub">Write this code down, then tap Done and start a flight. Use Sign in to restore Premium later.</p>
+          <p class="modal-sub">Write this code down, then tap Done and start a flight. It signs you back in on this browser if you sign out.</p>
           <p class="pin-display" id="shop-code-display">----</p>
           <div class="modal-actions">
             <button id="shop-copy" class="start-btn" type="button">Copy code</button>
@@ -237,7 +237,7 @@
   </div>
 
   <script src="js/data.js?v=paypal3"></script>
-  <script src="js/premium.js?v=paypal7"></script>
+  <script src="js/premium.js?v=paypal8"></script>
   <script src="js/physics.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/aircraft.js"></script>
@@ -247,7 +247,7 @@
   <script src="js/loading.js?v=hump38"></script>
   <script src="js/game.js?v=paypal3"></script>
   <script src="js/mobile.js?v=hump38"></script>
-  <script src="js/menu.js?v=paypal7"></script>
+  <script src="js/menu.js?v=paypal8"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

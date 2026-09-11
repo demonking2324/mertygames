@@ -1,10 +1,12 @@
 /* ============================================================
  * Premium — £2.99 unlock via PayPal, 4-digit sign-in codes.
- * Codes are issued after checkout and can be re-entered on another device.
+ * Unlock only after PayPal returns a completed transaction id.
  * ============================================================ */
 
 const PREMIUM_PRICE = "£2.99";
-const PREMIUM_LS_PIN = "fs2026_premium_pin_v2";
+const PREMIUM_LS_PIN = "fs2026_premium_pin_v3";
+const PREMIUM_LS_PAID = "fs2026_premium_paid_v3";
+const PREMIUM_LS_ISSUED = "fs2026_premium_issued_v3";
 const PAYPAL_LS_TOKEN = "fs2026_pay_token";
 
 /* PayPal.Me username (the part after paypal.me/). Payments of £2.99 GBP
@@ -49,7 +51,8 @@ function paypalCheckoutUrl(token) {
   q.set("no_shipping", "1");
   q.set("no_note", "1");
   q.set("rm", "1");
-  q.set("return", here + "?fs_paid=" + encodeURIComponent(token));
+  q.set("invoice", "FS2026-" + token);
+  q.set("return", here);
   q.set("cancel_return", here + "?fs_cancel=1");
   return "https://www.paypal.com/cgi-bin/webscr?" + q.toString();
 }
@@ -58,11 +61,21 @@ function _clearPayPalQuery() {
   try { history.replaceState({}, "", location.pathname + location.hash); } catch (e) {}
 }
 
+/* PayPal only appends tx / payment_status after a completed payment.
+ * Our old fs_paid token was in the checkout URL, so anyone could open
+ * it without paying. Returning to the game tab is not enough. */
 function takePayPalReturn() {
   try {
-    const paid = new URLSearchParams(location.search).get("fs_paid");
-    const expected = sessionStorage.getItem(PAYPAL_LS_TOKEN) || "";
-    if (!paid || !expected || paid !== expected) return false;
+    const q = new URLSearchParams(location.search);
+    const tx = (q.get("tx") || q.get("txn_id") || "").replace(/\s/g, "");
+    const st = (q.get("st") || q.get("payment_status") || "").toLowerCase();
+    const amt = parseFloat(q.get("amt") || q.get("mc_gross") || "NaN");
+    const cc = (q.get("cc") || q.get("mc_currency") || "").toUpperCase();
+    if (tx.length < 12) return false;
+    if (st && st !== "completed" && st !== "processed") return false;
+    if (Number.isFinite(amt) && amt + 0.001 < Number(PAYPAL_AMOUNT)) return false;
+    if (cc && cc !== PAYPAL_CURRENCY) return false;
+    if (!sessionStorage.getItem(PAYPAL_LS_TOKEN)) return false;
     sessionStorage.removeItem(PAYPAL_LS_TOKEN);
     _clearPayPalQuery();
     return true;
@@ -86,35 +99,13 @@ function normalizePremiumPin(value) {
   return String(value || "").replace(/\D/g, "").slice(0, 4);
 }
 
-/* Issued PINs are 4 digits with a checksum so a purchased code works
- * after Sign in on another browser. Obvious sequences are rejected. */
-function isIssuedPremiumPin(pin) {
-  pin = normalizePremiumPin(pin);
-  if (pin.length !== 4) return false;
-  if (/^(\d)\1{3}$/.test(pin)) return false;
-  if (pin === "1234" || pin === "4321" || pin === "0123" || pin === "9876") return false;
-  const a = pin.charCodeAt(0) - 48;
-  const b = pin.charCodeAt(1) - 48;
-  const c = pin.charCodeAt(2) - 48;
-  const d = pin.charCodeAt(3) - 48;
-  return (a * 5 + b * 2 + c * 8 + d * 3) % 10 === 7;
-}
-
 function issuePremiumPin() {
-  for (let i = 0; i < 400; i++) {
-    const pin = String(1000 + Math.floor(Math.random() * 9000));
-    if (isIssuedPremiumPin(pin)) return pin;
-  }
-  for (let n = 1024; n <= 9999; n++) {
-    const pin = String(n);
-    if (isIssuedPremiumPin(pin)) return pin;
-  }
-  return "1036";
+  return String(1000 + Math.floor(Math.random() * 9000));
 }
 
 function hasPremium() {
   try {
-    return isIssuedPremiumPin(localStorage.getItem(PREMIUM_LS_PIN) || "");
+    return localStorage.getItem(PREMIUM_LS_PAID) === "1";
   } catch (e) {
     return false;
   }
@@ -122,8 +113,7 @@ function hasPremium() {
 
 function currentPremiumPin() {
   try {
-    const pin = normalizePremiumPin(localStorage.getItem(PREMIUM_LS_PIN) || "");
-    return isIssuedPremiumPin(pin) ? pin : "";
+    return normalizePremiumPin(localStorage.getItem(PREMIUM_LS_ISSUED) || "");
   } catch (e) {
     return "";
   }
@@ -131,18 +121,26 @@ function currentPremiumPin() {
 
 function signInPremium(pin) {
   pin = normalizePremiumPin(pin);
-  if (!isIssuedPremiumPin(pin)) return false;
-  try { localStorage.setItem(PREMIUM_LS_PIN, pin); } catch (e) {}
+  const issued = currentPremiumPin();
+  if (!pin || pin !== issued) return false;
+  try {
+    localStorage.setItem(PREMIUM_LS_PAID, "1");
+    localStorage.setItem(PREMIUM_LS_PIN, pin);
+  } catch (e) {}
   return true;
 }
 
 function signOutPremium() {
-  try { localStorage.removeItem(PREMIUM_LS_PIN); } catch (e) {}
+  try { localStorage.removeItem(PREMIUM_LS_PAID); } catch (e) {}
 }
 
 function purchasePremium() {
   const pin = issuePremiumPin();
-  signInPremium(pin);
+  try {
+    localStorage.setItem(PREMIUM_LS_ISSUED, pin);
+    localStorage.setItem(PREMIUM_LS_PIN, pin);
+    localStorage.setItem(PREMIUM_LS_PAID, "1");
+  } catch (e) {}
   return pin;
 }
 
