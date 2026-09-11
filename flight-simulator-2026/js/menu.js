@@ -117,6 +117,7 @@ class Menu {
       return;
     }
     this._closeTraining();
+    this._closeShop();
     this.onStart({
       airline: TRAINING_AIRLINE,
       aircraft: spec,
@@ -636,7 +637,7 @@ class Menu {
 
   _start() {
     if (!this.from || !this.to || this.from === this.to || !this.selectedAirline || !this.selectedAircraft) return;
-    if (configNeedsPremium({
+    if (!hasPremium() && configNeedsPremium({
       airline: this.selectedAirline,
       aircraft: this.selectedAircraft,
       from: this.from,
@@ -645,6 +646,7 @@ class Menu {
       this._openShop();
       return;
     }
+    this._closeShop();
     if (this.realistic) {
       const ok = operatorsOnRoute(this.from, this.to).some((p) =>
         p.airline === this.selectedAirline && p.spec === this.selectedAircraft);
