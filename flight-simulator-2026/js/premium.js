@@ -36,24 +36,9 @@ function newPayPalToken() {
   return token;
 }
 
-function paypalCheckoutUrl(token) {
+function paypalCheckoutUrl() {
   const user = paypalMeUser();
   if (!user) return "";
-  const here = gamePageUrl();
-  if (here && token) {
-    const q = new URLSearchParams();
-    q.set("cmd", "_xclick");
-    q.set("business", user);
-    q.set("item_name", "Flight Simulator 2026 Premium");
-    q.set("amount", PAYPAL_AMOUNT);
-    q.set("currency_code", PAYPAL_CURRENCY);
-    q.set("no_shipping", "1");
-    q.set("no_note", "1");
-    q.set("rm", "1");
-    q.set("return", here + "?fs_paid=" + encodeURIComponent(token));
-    q.set("cancel_return", here);
-    return "https://www.paypal.com/cgi-bin/webscr?" + q.toString();
-  }
   return "https://www.paypal.com/paypalme/" + encodeURIComponent(user) +
     "/" + PAYPAL_AMOUNT + PAYPAL_CURRENCY;
 }

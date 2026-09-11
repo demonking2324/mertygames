@@ -751,15 +751,17 @@ class Menu {
     });
     const paypalBtn = document.getElementById("shop-paypal-btn");
     paypalBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const url = paypalCheckoutUrl(newPayPalToken());
+      const url = paypalCheckoutUrl();
       if (!url) {
+        e.preventDefault();
         this._setPayStatus("PayPal isn’t connected yet.", true);
         return;
       }
-      this._setPayStatus("Opening PayPal…");
-      window.location.href = url;
+      paypalBtn.href = url;
+      this._setPayStatus("PayPal opened in a new tab. Come back and tap I’ve paid when you’re done.");
+      document.getElementById("shop-paid-btn").classList.remove("hidden");
     });
+    document.getElementById("shop-paid-btn").addEventListener("click", () => this._finishPremiumPurchase());
   }
 
   _setPayStatus(text, isError) {
@@ -772,6 +774,8 @@ class Menu {
 
   _resetPaypalCheckout() {
     this._setPayStatus("");
+    const paidBtn = document.getElementById("shop-paid-btn");
+    if (paidBtn) paidBtn.classList.add("hidden");
     const box = document.getElementById("paypal-button-container");
     if (box) box.innerHTML = "";
     this._paypalButtonsReady = false;
@@ -779,8 +783,13 @@ class Menu {
 
   _preparePaypalCheckout() {
     const link = document.getElementById("shop-paypal-btn");
-    link.classList.remove("hidden");
-    link.removeAttribute("href");
+    const url = paypalCheckoutUrl();
+    if (url) {
+      link.href = url;
+      link.classList.remove("hidden");
+    } else {
+      link.removeAttribute("href");
+    }
 
     if (!PAYPAL_CLIENT_ID || this._paypalButtonsReady) return;
     const box = document.getElementById("paypal-button-container");
