@@ -51,6 +51,18 @@ class Game {
       ["jbu", "a320-jbu"],
       ["afr", "a320-afr"],
       ["aca", "a320-aca"],
+      ["sas", "a320-sas"],
+      ["tha", "a320-tha"],
+      ["lan", "a320-lan"],
+      ["ezy", "a320-ezy"],
+      ["ita", "a320-ita"],
+      ["ibe", "a320-ibe"],
+      ["msr", "a320-msr"],
+      ["cpa", "a320-cpa"],
+      ["aic", "a320-aic"],
+      ["ana", "a320-ana"],
+      ["qtr", "a320-qtr"],
+      ["anz", "a320-anz"],
     ];
     for (const [id, prefix] of packs) {
       const pack = { up: null, down: null };
@@ -58,7 +70,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv5`;
+        img.src = `${base}${file}?v=liv6`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
