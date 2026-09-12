@@ -70,7 +70,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv8`;
+        img.src = `${base}${file}?v=liv9`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
