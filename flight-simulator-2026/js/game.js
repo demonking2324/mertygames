@@ -45,6 +45,12 @@ class Game {
       ["dal", "a320-dal"],
       ["baw", "a320-baw"],
       ["aal", "a320-aal"],
+      ["ual", "a320-ual"],
+      ["thy", "a320-thy"],
+      ["dlh", "a320-dlh"],
+      ["jbu", "a320-jbu"],
+      ["afr", "a320-afr"],
+      ["aca", "a320-aca"],
     ];
     for (const [id, prefix] of packs) {
       const pack = { up: null, down: null };
@@ -52,7 +58,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv1`;
+        img.src = `${base}${file}?v=liv2`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
