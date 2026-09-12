@@ -28,11 +28,24 @@ class Game {
 
     this._bindKeys();
     this._bindFreeCamPointer();
+    this._trainA320 = { up: null, down: null };
+    this._loadTrainingA320();
     window.addEventListener("resize", () => this._resize());
     this._resize();
 
     this._loop = this._loop.bind(this);
     requestAnimationFrame(this._loop);
+  }
+
+  _loadTrainingA320() {
+    const base = new URL("./img/", window.location.href).href;
+    const load = (file, key) => {
+      const img = new Image();
+      img.onload = () => { this._trainA320[key] = img; };
+      img.src = base + file;
+    };
+    load("a320-gearup.png", "up");
+    load("a320-geardown.png", "down");
   }
 
   _resize() {
@@ -973,9 +986,13 @@ class Game {
     ctx.translate(sx, sy);
     ctx.rotate(-ac.pitch); // screen y is inverted
     if ((ac.facing || 1) < 0) ctx.scale(-1, 1);
-    ctx.translate(0, -contactY); // lift body so wheels pivot on the ground point
-    this._drawPlaneBody(ctx, ac, px);
-    ctx.restore();
+    if (this.training && ac.spec && ac.spec.id === "a320" && this._paintTrainingA320(ctx, ac, px)) {
+      ctx.restore();
+    } else {
+      ctx.translate(0, -contactY); // lift body so wheels pivot on the ground point
+      this._drawPlaneBody(ctx, ac, px);
+      ctx.restore();
+    }
 
     if (alpha < 0.2) return;
     if (ac.phase === "gate" || ac.phase === "appear") return;
@@ -987,6 +1004,20 @@ class Game {
     const tw = ctx.measureText(tag).width;
     ctx.fillText(tag, sx - tw / 2, sy - px * (big ? 0.62 : 0.72));
     ctx.restore();
+  }
+
+  /* Training-only A320 sprite (gear up / gear down). Returns false if not ready. */
+  _paintTrainingA320(ctx, ac, px) {
+    const img = (ac.gearDown || (ac.spec && ac.spec.fixedGear))
+      ? this._trainA320.down
+      : this._trainA320.up;
+    if (!img || !img.naturalWidth) return false;
+    const w = px * 1.12;
+    const h = w * (img.naturalHeight / img.naturalWidth);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, -w * 0.50, -h + 2, w, h);
+    return true;
   }
 
   /* Detailed side-view airliner/GA drawing in local (nose-right) coordinates. */
