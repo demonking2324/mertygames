@@ -92,7 +92,6 @@ class Game {
   }
 
   start(config) {
-    if (configNeedsPremium(config) && !hasPremium()) return;
     this._lastConfig = config;
     this.state = "loading";
     this._hideMessage();
@@ -958,12 +957,13 @@ class Game {
     const sx = cam.worldToScreenX(ac.x);
     const sy = cam.worldToScreenY(ac.y);
 
-    // 747s are long tubes; don't cap them at the same 200px as a 777.
-    const px = clamp(ac.spec.length * (ac.spec.hump ? 4.8 : 3.9), 64, ac.spec.hump ? 310 : 200);
+    // 747s and A380s are long tubes; don't cap them at the same 200px as a 777.
+    const big = ac.spec.hump || ac.spec.doubleDeck;
+    const px = clamp(ac.spec.length * (big ? 4.8 : 3.9), 64, big ? 310 : 200);
 
     // Offset so the wheels (or belly, gear up) rest on ac.y — the ground
     // contact height — instead of the fuselage centerline floating above it.
-    const H = px * (ac.spec.hump ? 0.086 : ac.spec.wide ? 0.14 : 0.115);
+    const H = px * (big ? 0.086 : ac.spec.wide ? 0.14 : 0.115);
     const gearLen = H * (ac.spec.fixedGear ? 0.7 : 0.45);
     const showGear = ac.gearDown || ac.spec.fixedGear;
     const contactY = showGear ? H * 0.92 + gearLen + H * 0.58 : H;
@@ -985,14 +985,14 @@ class Game {
     ctx.font = "700 12px system-ui, sans-serif";
     const tag = `${ac.airline.code} · ${ac.spec.name}`;
     const tw = ctx.measureText(tag).width;
-    ctx.fillText(tag, sx - tw / 2, sy - px * (ac.spec.hump ? 0.62 : 0.72));
+    ctx.fillText(tag, sx - tw / 2, sy - px * (big ? 0.62 : 0.72));
     ctx.restore();
   }
 
   /* Detailed side-view airliner/GA drawing in local (nose-right) coordinates. */
   _drawPlaneBody(ctx, ac, L) {
     const spec = ac.spec;
-    const H = L * (spec.hump ? 0.086 : spec.wide ? 0.14 : 0.115);
+    const H = L * (spec.hump || spec.doubleDeck ? 0.086 : spec.wide ? 0.14 : 0.115);
     const al = ac.airline;
     const body = al.fuselage;
     const belly = al.belly || shade(body, -14);
@@ -1022,21 +1022,35 @@ class Game {
       ctx.restore();
     }
 
-    // ---- Horizontal stabilizer ----
-    ctx.fillStyle = shade(body, -10);
-    ctx.beginPath();
-    ctx.moveTo(-L * 0.34, -H * 0.2);
-    ctx.lineTo(-L * 0.52, -H * 0.9);
-    ctx.lineTo(-L * 0.40, -H * 0.9);
-    ctx.lineTo(-L * 0.30, -H * 0.2);
-    ctx.closePath();
-    ctx.fill();
+    // ---- Horizontal stabilizer (low, or up on the fin for a T-tail) ----
+    if (!spec.tTail) {
+      ctx.fillStyle = shade(body, -10);
+      ctx.beginPath();
+      ctx.moveTo(-L * 0.34, -H * 0.2);
+      ctx.lineTo(-L * 0.52, -H * 0.9);
+      ctx.lineTo(-L * 0.40, -H * 0.9);
+      ctx.lineTo(-L * 0.30, -H * 0.2);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // ---- Vertical tail fin + airline artwork ----
     this._tailFinPath(ctx, L, H, spec);
     ctx.fillStyle = tail;
     ctx.fill();
     this._drawTailMark(ctx, al, L, H, spec);
+
+    if (spec.tTail) {
+      // CRJ: stabilizer sits across the top of the fin.
+      ctx.fillStyle = shade(tail, -12);
+      ctx.beginPath();
+      ctx.moveTo(-L * 0.30, -H * 2.74);
+      ctx.lineTo(-L * 0.52, -H * 3.02);
+      ctx.lineTo(-L * 0.44, -H * 3.02);
+      ctx.lineTo(-L * 0.26, -H * 2.74);
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // ---- Wing (behind fuselage), swept for jets ----
     const wingY = highWing ? -H * 0.7 : H * 0.55;
@@ -1074,7 +1088,13 @@ class Game {
     const bellyTop = al.cheat === "split" ? H * 0.15 : H * 0.22;
     ctx.fillRect(-L * 0.52, bellyTop, L * 1.06, H * 1.2);
     this._drawCheat(ctx, al, L, H, ac.facing);
-    if (al.cheat !== "xxlcrane") this._drawTitles(ctx, al, L, H, ac.facing);
+    if (al.cheat !== "xxlcrane") {
+      ctx.save();
+      // A380 titles ride high, up on the upper deck.
+      if (spec.doubleDeck) ctx.translate(0, -H * 0.92);
+      this._drawTitles(ctx, al, L, H, ac.facing);
+      ctx.restore();
+    }
     ctx.restore();
 
     // Subtle belly shading for volume.
@@ -1095,6 +1115,14 @@ class Game {
       ctx.lineTo(L * 0.27, -H * 0.88);
       ctx.closePath();
       ctx.fill();
+    } else if (spec.doubleDeck) {
+      // Between the decks, low on the blunt nose.
+      ctx.beginPath();
+      ctx.moveTo(L * 0.455, -H * 0.66);
+      ctx.lineTo(L * 0.40, -H * 1.02);
+      ctx.lineTo(L * 0.34, -H * 0.72);
+      ctx.closePath();
+      ctx.fill();
     } else {
       ctx.beginPath();
       ctx.moveTo(L * 0.46, -H * 0.28);
@@ -1106,8 +1134,12 @@ class Game {
 
     // ---- Cabin windows ----
     ctx.fillStyle = "rgba(150,200,235,0.95)";
-    const count = spec.engineType === "prop" ? 4 : (spec.hump ? 22 : (spec.wide ? 14 : 9));
-    const startX = L * 0.28, endX = spec.hump ? -L * 0.34 : -L * 0.28;
+    const count = spec.engineType === "prop" ? 4
+      : spec.hump ? 22
+      : spec.doubleDeck ? 20
+      : spec.wide ? 14 : 9;
+    const startX = L * 0.28;
+    const endX = spec.hump ? -L * 0.34 : spec.doubleDeck ? -L * 0.32 : -L * 0.28;
     const winY = -H * 0.18;
     const wsz = Math.max(1.2, H * 0.22);
     for (let i = 0; i < count; i++) {
@@ -1124,6 +1156,19 @@ class Game {
         ctx.fillRect(wx - uw / 2, uY, uw, uw * 1.1);
       }
     }
+    if (spec.doubleDeck) {
+      // Second row runs almost the whole fuselage.
+      const uCount = 18;
+      const uStart = L * 0.30, uEnd = -L * 0.28;
+      const uY = -H * 1.12;
+      const uw = Math.max(1.0, H * 0.20);
+      for (let i = 0; i < uCount; i++) {
+        const wx = lerp(uStart, uEnd, i / (uCount - 1));
+        ctx.fillRect(wx - uw / 2, uY, uw, uw * 1.2);
+      }
+    }
+
+    if (spec.rearEngines) this._drawRearEngines(ctx, ac, L, H);
 
     // ---- Landing gear ----
     if (ac.gearDown || spec.fixedGear) {
@@ -1153,6 +1198,19 @@ class Game {
 
   _fuselagePath(ctx, L, H, spec) {
     ctx.beginPath();
+    if (spec && spec.doubleDeck) {
+      // A380: upper deck runs nose to tail, blunt nose, high tail cone.
+      ctx.moveTo(L * 0.5, 0);
+      ctx.quadraticCurveTo(L * 0.49, -H * 0.9, L * 0.40, -H * 1.35);
+      ctx.quadraticCurveTo(L * 0.34, -H * 1.62, L * 0.22, -H * 1.64);
+      ctx.lineTo(-L * 0.22, -H * 1.56);
+      ctx.quadraticCurveTo(-L * 0.40, -H * 1.36, -L * 0.5, -H * 0.30);
+      ctx.quadraticCurveTo(-L * 0.5, H * 0.50, -L * 0.34, H * 0.92);
+      ctx.lineTo(L * 0.22, H);
+      ctx.quadraticCurveTo(L * 0.46, H * 0.95, L * 0.5, 0);
+      ctx.closePath();
+      return;
+    }
     if (spec && spec.hump) {
       // 747-8: modest forward upper deck, then a short fairing onto the main roof.
       ctx.moveTo(L * 0.5, 0);
@@ -1180,11 +1238,14 @@ class Game {
   }
 
   _tailFinPath(ctx, L, H, spec) {
-    const th = spec && spec.hump ? H * 1.25 : H;
+    const dd = !!(spec && spec.doubleDeck);
+    const th = spec && spec.hump ? H * 1.25 : dd ? H * 1.5 : H;
+    // The A380's fin starts at its upper-deck roof, not the main cabin.
+    const base = dd ? -H * 1.3 : -H * 0.7;
     ctx.beginPath();
-    ctx.moveTo(-L * 0.42, -H * 0.7);
+    ctx.moveTo(-L * 0.42, base);
     ctx.quadraticCurveTo(-L * 0.50, -th * 2.9, -L * 0.40, -th * 2.9);
-    ctx.lineTo(-L * 0.26, -H * 0.7);
+    ctx.lineTo(-L * 0.26, base);
     ctx.closePath();
   }
 
@@ -1324,7 +1385,8 @@ class Game {
     ctx.save();
     this._tailFinPath(ctx, L, H, spec);
     ctx.clip();
-    const cx = -L * 0.38, cy = spec && spec.hump ? -H * 2.0 : -H * 1.7;
+    const cx = -L * 0.38;
+    const cy = spec && spec.hump ? -H * 2.0 : spec && spec.doubleDeck ? -H * 2.8 : -H * 1.7;
     const s = H;
 
     if (mark === "aa-flag") {
@@ -1727,6 +1789,9 @@ class Game {
       return;
     }
 
+    // Rear-mounted pods hang off the aft fuselage, drawn after the body.
+    if (spec.rearEngines) return;
+
     // Jet: underslung turbofan pods below the wing.
     const ey = wingY + wingDrop * H * 1.05;
     const quad = (spec.engineCount || 2) >= 4;
@@ -1746,6 +1811,24 @@ class Game {
       ctx.ellipse(ex, ey, eh * 0.12, eh * 0.32, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  /* Turbofan mounted on the side of the aft fuselage (CRJ). */
+  _drawRearEngines(ctx, ac, L, H) {
+    const ey = -H * 0.45;
+    const ew = L * 0.20, eh = H * 0.95;
+    const ex = -L * 0.34;
+    ctx.fillStyle = ac.airline.engine || shade(ac.airline.fuselage, -28);
+    roundRect(ctx, ex, ey - eh / 2, ew, eh, eh * 0.45);
+    ctx.fill();
+    ctx.fillStyle = "#0f1620";
+    ctx.beginPath();
+    ctx.ellipse(ex + ew, ey, eh * 0.16, eh * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = shade(ac.airline.engine || ac.airline.fuselage, -40);
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, eh * 0.12, eh * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   _showMessage(titleHtml, bodyHtml, withButtons) {

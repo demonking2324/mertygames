@@ -67,13 +67,6 @@ html, body {
   gap: 8px;
   flex: 0 0 auto;
 }
-.signin-btn {
-  position: sticky;
-  top: 12px;
-  align-self: flex-start;
-  z-index: 20;
-  margin: 0 0 12px;
-}
 .settings-btn {
   flex: 0 0 auto;
   margin-top: 6px;
@@ -88,17 +81,6 @@ html, body {
   white-space: nowrap;
 }
 .settings-btn:hover { border-color: var(--accent); background: #17314a; }
-.shop-btn {
-  border-color: #8a7428;
-  background: #2a2410;
-  color: #f0d78c;
-}
-.shop-btn:hover { border-color: #e4c56a; background: #3a3014; }
-.signin-btn.premium {
-  border-color: #c9a227;
-  background: #2a2410;
-  color: #f0d78c;
-}
 .settings-opt { margin: 0 0 22px; justify-content: flex-start; }
 
 .menu-panel.realistic .route-section { order: 1; margin-top: 0; }
@@ -151,24 +133,11 @@ html, body {
 }
 .card:hover { transform: translateY(-1px); border-color: #3a557d; }
 .card.selected { border-color: var(--accent); background: #17314a; box-shadow: 0 0 0 1px var(--accent) inset; }
-.card.locked { opacity: 0.9; }
-.card.locked:hover { border-color: #c9a227; }
 
 .card .swatch { width: 26px; height: 26px; border-radius: 6px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.15); }
 .card .card-title { font-weight: 700; font-size: 15px; }
 .card .card-sub { color: var(--muted); font-size: 12px; }
 .card .card-main { display: flex; flex-direction: column; flex: 1; }
-.prem-badge {
-  flex: 0 0 auto;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #1a1408;
-  background: linear-gradient(180deg, #f0d78c, #c9a227);
-  padding: 3px 7px;
-  border-radius: 999px;
-}
 
 .menu-grid.two { grid-template-columns: 1fr 1fr; }
 
@@ -284,7 +253,6 @@ html, body {
 .pop-btn.dep:hover { border-color: var(--accent-2); background: #12331f; }
 .pop-btn.arr:hover { border-color: var(--danger); background: #331416; }
 .pop-btn.cam:hover { border-color: #38bdf8; background: #123044; }
-.pop-btn.shop:hover { border-color: #c9a227; background: #2a2410; color: #f0d78c; }
 .pop-btn.cancel { text-align: center; font-weight: 600; color: var(--muted); }
 .pop-btn.cancel:hover { border-color: #3a557d; }
 
@@ -487,94 +455,6 @@ html, body {
 .modal-actions .start-btn { margin-top: 0; flex: 1; }
 .modal-actions .pop-btn.cancel { width: auto; padding: 0 18px; }
 
-.shop-card { width: min(460px, 92%); }
-.shop-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 14px;
-  background: var(--panel-2);
-  border: 1px solid #8a7428;
-  border-radius: 12px;
-  margin-bottom: 14px;
-}
-.shop-item-name { font-weight: 800; font-size: 16px; }
-.shop-item-copy { color: var(--muted); font-size: 12px; margin-top: 2px; }
-.shop-price {
-  font-weight: 800;
-  font-size: 22px;
-  color: #f0d78c;
-  letter-spacing: 0.04em;
-}
-.shop-list {
-  margin: 0 0 18px;
-  padding: 0 0 0 18px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-.shop-list li { margin: 0 0 8px; }
-.shop-foot { color: var(--muted); font-size: 12px; margin: 12px 0 0; }
-.shop-error { color: #f59e0b; font-size: 13px; margin: 0 0 12px; }
-.shop-status { color: var(--accent); font-size: 13px; margin: 0 0 12px; }
-#paypal-button-container { min-height: 0; margin: 0 0 12px; }
-.paypal-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  height: 48px;
-  margin: 4px 0 12px;
-  border: none;
-  border-radius: 24px;
-  background: #ffc439;
-  color: #003087;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 16px;
-  text-decoration: none;
-  cursor: pointer;
-  box-shadow: 0 1px 0 rgba(0,0,0,.12);
-}
-.paypal-btn:hover { background: #f0b72b; }
-.paypal-word {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-style: italic;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-  color: #003087;
-}
-.paypal-word span { color: #009cde; }
-.pin-row {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 8px 0 16px;
-}
-.pin-digit {
-  width: 52px;
-  height: 58px;
-  text-align: center;
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 0;
-  color: var(--text);
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.pin-digit:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
-.pin-display {
-  font-size: 36px;
-  font-weight: 800;
-  letter-spacing: 0.28em;
-  text-align: center;
-  color: #f0d78c;
-  margin: 8px 0 18px;
-}
-
 /* ===== In-game reset (training) ===== */
 .reset-btn {
   position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
@@ -660,7 +540,7 @@ body.freecam.touch #mc-gear { display: none !important; }
   .menu-panel h1 { font-size: 30px; letter-spacing: 2px; }
   .menu-head { display: flex; flex-direction: column; align-items: stretch; }
   .menu-head-actions { flex-direction: column; }
-  .settings-btn:not(.signin-btn) { width: 100%; }
+  .settings-btn { width: 100%; }
   .zoom-btn { font-size: 11px; padding: 5px 8px; }
 }
 

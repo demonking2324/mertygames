@@ -375,6 +375,90 @@ const AIRCRAFT_TYPES = [
     winglets: true,
     wide: true,
   },
+  {
+    id: "a21n",
+    name: "Airbus A321neo",
+    class: "Narrow-body Jet",
+    length: 44.5,
+    mass: 83000,
+    wingArea: 122.4,
+    maxThrust: 280000,
+    clSlope: 6.0,
+    clMax: 1.5,
+    alphaStall: rad(15),
+    flapCl: 0.52,
+    flapNotches: 4,
+    cd0: 0.022,
+    induced: 0.042,
+    pitchAuthority: 0.78,
+    vRotate: 150,
+    vApproach: 142,
+    cruiseAlt: 11300,
+    rangeKm: 7400,
+    engineType: "jet",
+    engineCount: 2,
+    highWing: false,
+    fixedGear: false,
+    winglets: true,
+  },
+  {
+    id: "crj9",
+    name: "Bombardier CRJ900",
+    class: "Regional Jet",
+    length: 36.2,
+    mass: 34000,
+    wingArea: 70.6,
+    maxThrust: 118000,
+    clSlope: 6.0,
+    clMax: 1.45,
+    alphaStall: rad(15),
+    flapCl: 0.5,
+    flapNotches: 5,
+    cd0: 0.023,
+    induced: 0.045,
+    pitchAuthority: 0.92,
+    vRotate: 140,
+    vApproach: 135,
+    cruiseAlt: 11300,
+    rangeKm: 2900,
+    engineType: "jet",
+    engineCount: 2,
+    highWing: false,
+    fixedGear: false,
+    winglets: true,
+    /* Engines on the rear fuselage and a stabilizer on top of the fin. */
+    rearEngines: true,
+    tTail: true,
+  },
+  {
+    id: "a388",
+    name: "Airbus A380-800",
+    class: "Wide-body Jet",
+    length: 72.7,
+    mass: 390000,
+    wingArea: 845.0,
+    maxThrust: 1244000,
+    clSlope: 6.1,
+    clMax: 1.42,
+    alphaStall: rad(14),
+    flapCl: 0.55,
+    flapNotches: 5,
+    cd0: 0.020,
+    induced: 0.036,
+    pitchAuthority: 0.5,
+    vRotate: 160,
+    vApproach: 140,
+    cruiseAlt: 12000,
+    rangeKm: 14800,
+    engineType: "jet",
+    engineCount: 4,
+    highWing: false,
+    fixedGear: false,
+    winglets: true,
+    wide: true,
+    /* Upper deck runs the whole fuselage, unlike the 747's short hump. */
+    doubleDeck: true,
+  },
 ];
 
 /* Real-world airports (subset). elevation in meters, runway length in meters.
@@ -503,6 +587,9 @@ const AIRCRAFT_OPERATORS = {
   e175:  ["aal", "dal", "ual", "aca", "klm"],
   b789:  ["aal", "ual", "baw", "dlh", "afr", "klm", "sia", "qfa", "jal", "aca", "eth", "kqa", "thy", "qtr", "ibe", "lan", "kal", "aic", "amx", "ana", "vir", "anz", "tha", "msr"],
   a359:  ["dal", "afr", "dlh", "sia", "qtr", "jal", "ibe", "thy", "aca", "qfa", "lan", "sas", "kal", "cpa", "ana", "vir", "tha", "ita"],
+  a21n:  ["aal", "dal", "ual", "jbu", "baw", "dlh", "aca", "pgt", "thy", "ibe", "lan", "sas", "aic", "ana", "ezy", "ita", "asa", "anz", "cpa", "kal"],
+  crj9:  ["dal", "aal", "aca"],
+  a388:  ["uae", "sia", "qfa", "baw", "dlh", "qtr", "kal"],
 };
 
 function liveriesForAircraft(spec) {
@@ -564,50 +651,50 @@ const AIRPORT_FLEETS = {
 
 /* Types that actually operate at each field (subset of AIRCRAFT_TYPES). */
 const AIRPORT_TYPES = {
-  JFK: ["a320", "b738", "e175", "b789", "a359", "b77w", "b748"],
-  LGA: ["a320", "b738", "e175"],
-  MIA: ["a320", "b738", "b789", "b77w", "b748"],
-  IST: ["a320", "b738", "b789", "a359", "b77w"],
-  LAX: ["a320", "b738", "b789", "a359", "b77w", "b748"],
-  ORD: ["a320", "b738", "e175", "b77w", "b789", "b748"],
-  SFO: ["a320", "b738", "b789", "b77w", "a359", "b748"],
-  YVR: ["a320", "b738", "dash8", "b789", "b77w"],
-  FRA: ["a320", "b789", "a359", "b77w", "b748"],
-  MUC: ["a320", "b738", "b789", "a359"],
-  LHR: ["a320", "b789", "a359", "b77w"],
-  MAN: ["a320", "b738", "b77w", "b789"],
-  WAW: ["a320", "b738"],
-  CDG: ["a320", "b77w", "b789", "a359"],
-  AMS: ["b738", "a320", "e175", "b77w", "b789"],
-  DXB: ["b77w", "b789", "a359", "b738"],
-  DOH: ["a359", "b77w", "a320", "b789"],
-  FCO: ["a320", "b738", "a359", "b789"],
+  JFK: ["a320", "a21n", "b738", "e175", "crj9", "b789", "a359", "b77w", "b748", "a388"],
+  LGA: ["a320", "a21n", "b738", "e175", "crj9"],
+  MIA: ["a320", "a21n", "b738", "crj9", "b789", "b77w", "b748", "a388"],
+  IST: ["a320", "a21n", "b738", "b789", "a359", "b77w"],
+  LAX: ["a320", "a21n", "b738", "b789", "a359", "b77w", "b748", "a388"],
+  ORD: ["a320", "a21n", "b738", "e175", "crj9", "b77w", "b789", "b748"],
+  SFO: ["a320", "a21n", "b738", "b789", "b77w", "a359", "b748", "a388"],
+  YVR: ["a320", "a21n", "b738", "dash8", "crj9", "b789", "b77w"],
+  FRA: ["a320", "a21n", "b789", "a359", "b77w", "b748", "a388"],
+  MUC: ["a320", "a21n", "b738", "b789", "a359", "a388"],
+  LHR: ["a320", "a21n", "b789", "a359", "b77w", "a388"],
+  MAN: ["a320", "a21n", "b738", "b77w", "b789", "a388"],
+  WAW: ["a320", "a21n", "b738"],
+  CDG: ["a320", "a21n", "b77w", "b789", "a359", "a388"],
+  AMS: ["b738", "a320", "a21n", "e175", "b77w", "b789", "a388"],
+  DXB: ["b77w", "b789", "a359", "b738", "a388"],
+  DOH: ["a359", "b77w", "a320", "b789", "a388"],
+  FCO: ["a320", "a21n", "b738", "a359", "b789"],
   CPT: ["b789", "a359", "b77w", "a320"],
   ADD: ["b789", "b77w", "a359", "b738", "dash8"],
   NBO: ["b738", "b789", "b77w"],
-  HND: ["a320", "b77w", "b789", "a359", "b748"],
-  SIN: ["a359", "b77w", "b789", "b748"],
-  SYD: ["b738", "b789", "a359", "b77w"],
-  AKL: ["a320", "b789"],
-  ICN: ["b77w", "b789", "a359", "a320", "b748"],
+  HND: ["a320", "a21n", "b77w", "b789", "a359", "b748"],
+  SIN: ["a359", "b77w", "b789", "b748", "a388"],
+  SYD: ["b738", "b789", "a359", "b77w", "a388"],
+  AKL: ["a320", "a21n", "b789", "a388"],
+  ICN: ["b77w", "b789", "a359", "a320", "a21n", "b748", "a388"],
   MEX: ["b738", "b789", "a320", "b748"],
-  CPH: ["a320", "a359", "b738"],
-  BKK: ["a320", "b77w", "b789", "a359", "b748"],
-  SEA: ["b738", "a320", "b77w", "b789"],
-  JNB: ["b789", "a359", "b77w", "a320"],
-  DEL: ["a320", "b789", "b77w", "b748"],
-  BOM: ["a320", "b789", "b77w", "b748"],
-  DUB: ["b738", "a320"],
-  BOS: ["a320", "b738", "e175", "b789", "a359"],
+  CPH: ["a320", "a21n", "a359", "b738"],
+  BKK: ["a320", "b77w", "b789", "a359", "b748", "a388"],
+  SEA: ["b738", "a320", "a21n", "crj9", "b77w", "b789"],
+  JNB: ["b789", "a359", "b77w", "a320", "a388"],
+  DEL: ["a320", "a21n", "b789", "b77w", "b748"],
+  BOM: ["a320", "a21n", "b789", "b77w", "b748"],
+  DUB: ["b738", "a320", "a21n"],
+  BOS: ["a320", "a21n", "b738", "e175", "crj9", "b789", "a359", "a388"],
   CAI: ["a320", "b738", "b77w", "b789"],
-  MEL: ["b738", "b789", "a359"],
-  GRU: ["a320", "b789", "a359", "b748"],
-  EZE: ["a320", "b789"],
-  YYZ: ["a320", "e175", "b789", "b77w", "dash8", "b748"],
-  MAD: ["a320", "b738", "a359", "b789"],
-  HKG: ["a359", "b77w", "a320", "b789", "b748"],
+  MEL: ["b738", "b789", "a359", "a388"],
+  GRU: ["a320", "a21n", "b789", "a359", "b748", "a388"],
+  EZE: ["a320", "a21n", "b789"],
+  YYZ: ["a320", "a21n", "e175", "crj9", "b789", "b77w", "dash8", "b748", "a388"],
+  MAD: ["a320", "a21n", "b738", "a359", "b789", "a388"],
+  HKG: ["a359", "b77w", "a320", "a21n", "b789", "b748", "a388"],
   PVG: ["a320", "b77w", "b789", "a359", "b748"],
-  SCL: ["a320", "b789", "a359"],
+  SCL: ["a320", "a21n", "b789", "a359"],
 };
 
 /* Home fields — there the airline flies its mixed fleet. Elsewhere a
@@ -834,7 +921,7 @@ const AIRLINE_SPOKES = {
   },
 };
 
-const WIDEBODY_IDS = new Set(["b77w", "b789", "a359", "b748"]);
+const WIDEBODY_IDS = new Set(["b77w", "b789", "a359", "b748", "a388"]);
 
 function typesAtAirportForAirline(iata, airlineId) {
   const field = AIRPORT_TYPES[iata] || ["a320", "b738"];
@@ -894,26 +981,6 @@ const TRAINING_AIRPORT = {
   lat: 0, lon: 0, elevation: 0, runway: 4000, runways: 1,
   theme: { terrain: ["#5c8a3c", "#33501e"], sky: ["#8fb6d8", "#cfe0ee"], landmark: "city" },
 };
-
-/* Free roster. Everything else is Premium (£2.99). Training Field stays free. */
-const FREE_AIRCRAFT_IDS = new Set(["c172", "dash8", "a320", "b738"]);
-const FREE_AIRPORT_IATA = new Set(["MAN", "FCO", "GRU", "ORD", "LGA", "ICN", "ADD", "SIN"]);
-
-function isFreeAircraft(spec) {
-  return !!(spec && FREE_AIRCRAFT_IDS.has(spec.id));
-}
-function isFreeAirport(ap) {
-  if (!ap) return false;
-  if (ap.iata === "TRN" || ap.icao === "TRNG") return true;
-  return FREE_AIRPORT_IATA.has(ap.iata);
-}
-function configNeedsPremium(config) {
-  if (!config) return false;
-  if (config.freeCam) return !isFreeAirport(config.from);
-  if (config.aircraft && !isFreeAircraft(config.aircraft)) return true;
-  if (config.training) return false;
-  return (config.from && !isFreeAirport(config.from)) || (config.to && !isFreeAirport(config.to));
-}
 
 /* Expand an airport's fleet spec into a flat list of airline objects (cached). */
 function airportFleet(airport) {
@@ -1005,9 +1072,9 @@ function operatorsOnRoute(fromAp, toAp) {
       const spec = specById[tid];
       if (!spec) continue;
       if (km > (spec.rangeKm || 8000) * 1.06) continue;
-      /* Transatlantic A320ceo is not a thing in this set; JetBlue's A321LR
-       * is the A320 stand-in that actually does JFK–LHR. */
-      if (km > 4500 && !WIDEBODY_IDS.has(tid) && id !== "jbu") continue;
+      /* Long thin routes are widebody work, except JetBlue's A321LR —
+       * the narrow-body that really does fly JFK–LHR. */
+      if (km > 4500 && !WIDEBODY_IDS.has(tid) && !(id === "jbu" && tid === "a21n")) continue;
       const key = id + "|" + tid;
       if (seen.has(key)) continue;
       seen.add(key);

@@ -57,9 +57,11 @@ Pitch is **yoke-style (inverted)**: pull back to climb.
   Southwest, JetBlue, British Airways, Lufthansa, Air France, KLM, Emirates,
   Singapore Airlines, Qantas) — tail color, cheatline, and logo shown on the
   aircraft.
-- **5 aircraft** with realistic-ish specs and distinct side-view models
-  (prop / turboprop / twinjet / widebody): Cessna 172, Dash 8 Q400, Airbus A320,
-  Boeing 737-800, Boeing 777-300ER.
+- **12 aircraft** with realistic-ish specs and distinct side-view models
+  (prop / turboprop / regional / narrow-body / widebody / double-deck):
+  Cessna 172, Dash 8 Q400, Airbus A320, Boeing 737-800, Airbus A321neo,
+  Bombardier CRJ900, Embraer E175, Boeing 777-300ER, Boeing 787-9,
+  Airbus A350-900, Boeing 747-8, Airbus A380-800.
 - **12 real-world airports**, each with its **own look** — terrain palette, sky
   tint, and a recognizable landmark:
   - JFK New York — city skyline · LAX — palms · ORD Chicago — skyline

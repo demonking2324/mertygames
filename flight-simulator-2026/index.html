@@ -4,12 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Flight Simulator 2026</title>
-  <link rel="stylesheet" href="css/style.css?v=paypal7" />
+  <link rel="stylesheet" href="css/style.css?v=free1" />
 </head>
 <body>
   <!-- ===== Start Menu ===== -->
   <div id="menu" class="screen">
-    <button id="signin-btn" class="settings-btn signin-btn" type="button">Sign in</button>
     <div class="menu-panel" id="menu-panel">
       <div class="menu-head">
         <div class="menu-head-title">
@@ -17,7 +16,6 @@
           <p class="tagline">A realistic 2D side-view flight simulator</p>
         </div>
         <div class="menu-head-actions">
-          <button id="shop-btn" class="settings-btn shop-btn" type="button">Shop</button>
           <button id="settings-btn" class="settings-btn" type="button">⚙ Settings</button>
         </div>
       </div>
@@ -37,7 +35,7 @@
 
       <section class="route-section" id="route-section">
         <h2 id="route-heading">3. Route — tap an airport on the map</h2>
-        <p class="map-hint" id="map-hint">Tap a continent to zoom in, then pick an airport. Gold dots are Premium. Free Cam watches the field with no aircraft.</p>
+        <p class="map-hint" id="map-hint">Tap a continent to zoom in, then pick an airport. Free Cam watches the field with no aircraft.</p>
         <div id="map-zooms" class="map-zooms"></div>
         <div id="map-wrap" class="map-wrap">
           <svg id="world-map" class="world-map" viewBox="0 0 360 180" preserveAspectRatio="xMidYMid meet" aria-label="World map"></svg>
@@ -57,95 +55,6 @@
       </label>
 
       <p class="hint">Tip: aim for a smooth touchdown — under ~3 m/s vertical speed on the runway.</p>
-    </div>
-
-    <!-- Sign in -->
-    <div id="signin-modal" class="modal hidden">
-      <div class="modal-card shop-card">
-        <div id="signin-guest">
-          <h2>Sign in</h2>
-          <p class="modal-sub">Enter the 4-digit code from the device you paid on.</p>
-          <div class="pin-row" id="signin-pin">
-            <input class="pin-digit" maxlength="1" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1" />
-            <input class="pin-digit" maxlength="1" inputmode="numeric" aria-label="Digit 2" />
-            <input class="pin-digit" maxlength="1" inputmode="numeric" aria-label="Digit 3" />
-            <input class="pin-digit" maxlength="1" inputmode="numeric" aria-label="Digit 4" />
-          </div>
-          <p id="signin-error" class="shop-error hidden">That code isn’t linked to a Premium purchase.</p>
-          <div class="modal-actions">
-            <button id="signin-submit" class="start-btn" type="button">Sign in</button>
-            <button id="signin-cancel" class="pop-btn cancel" type="button">Cancel</button>
-          </div>
-          <p class="shop-foot">No code yet? Buy Premium in the Shop for £2.99.</p>
-        </div>
-        <div id="signin-signed" class="hidden">
-          <h2>Premium</h2>
-          <p class="modal-sub">You’re signed in. Keep this code to sign back in on this browser if you sign out.</p>
-          <p class="pin-display" id="signin-code-display">----</p>
-          <div class="modal-actions">
-            <button id="signin-copy" class="start-btn" type="button">Copy code</button>
-            <button id="signout-btn" class="pop-btn cancel" type="button">Sign out</button>
-          </div>
-          <div class="modal-actions" style="margin-top:10px">
-            <button id="signin-done" class="pop-btn cancel" type="button">Done</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Shop -->
-    <div id="shop-modal" class="modal hidden">
-      <div class="modal-card shop-card">
-        <div id="shop-browse">
-          <h2>Shop</h2>
-          <p class="modal-sub">Unlock extra aircraft and airports with Premium.</p>
-          <div class="shop-item">
-            <div>
-              <div class="shop-item-name">Premium</div>
-              <div class="shop-item-copy">All paid aircraft and airports</div>
-            </div>
-            <div class="shop-price">£2.99</div>
-          </div>
-          <ul class="shop-list">
-            <li>Aircraft: 777-300ER, 747-8, E175, 787-9, A350-900</li>
-            <li>Airports worldwide — free remain Manchester, Rome, São Paulo, Chicago, LaGuardia, Seoul, Addis Ababa, Singapore</li>
-          </ul>
-          <div class="modal-actions">
-            <button id="shop-buy" class="start-btn" type="button">Buy Premium — £2.99</button>
-            <button id="shop-close" class="pop-btn cancel" type="button">Close</button>
-          </div>
-        </div>
-        <div id="shop-pay" class="hidden">
-          <h2>Checkout</h2>
-          <p class="modal-sub">Premium · one-time purchase · PayPal</p>
-          <div class="shop-item">
-            <div>
-              <div class="shop-item-name">Flight Simulator 2026 Premium</div>
-              <div class="shop-item-copy">More planes and airports</div>
-            </div>
-            <div class="shop-price">£2.99</div>
-          </div>
-          <p class="shop-foot">You’ll go to PayPal to pay £2.99. Coming back without a completed PayPal payment will not unlock Premium.</p>
-          <p id="shop-pay-status" class="shop-status hidden"></p>
-          <div id="paypal-button-container"></div>
-          <button id="shop-paypal-btn" class="paypal-btn" type="button">
-            <span class="paypal-word">Pay<span>Pal</span></span>
-            Pay £2.99
-          </button>
-          <div class="modal-actions">
-            <button id="shop-pay-cancel" class="pop-btn cancel" type="button">Back</button>
-          </div>
-        </div>
-        <div id="shop-receipt" class="hidden">
-          <h2>Premium unlocked</h2>
-          <p class="modal-sub">Write this code down, then tap Done and start a flight. It signs you back in on this browser if you sign out.</p>
-          <p class="pin-display" id="shop-code-display">----</p>
-          <div class="modal-actions">
-            <button id="shop-copy" class="start-btn" type="button">Copy code</button>
-            <button id="shop-receipt-done" class="pop-btn cancel" type="button">Done</button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Settings -->
@@ -236,8 +145,7 @@
     </div>
   </div>
 
-  <script src="js/data.js?v=paypal3"></script>
-  <script src="js/premium.js?v=paypal8"></script>
+  <script src="js/data.js?v=free1"></script>
   <script src="js/physics.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/aircraft.js"></script>
@@ -245,9 +153,9 @@
   <script src="js/input.js?v=hump38"></script>
   <script src="js/hud.js?v=hump38"></script>
   <script src="js/loading.js?v=hump38"></script>
-  <script src="js/game.js?v=paypal3"></script>
+  <script src="js/game.js?v=free1"></script>
   <script src="js/mobile.js?v=hump38"></script>
-  <script src="js/menu.js?v=paypal8"></script>
+  <script src="js/menu.js?v=free1"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
