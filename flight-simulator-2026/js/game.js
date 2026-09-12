@@ -28,8 +28,8 @@ class Game {
 
     this._bindKeys();
     this._bindFreeCamPointer();
-    this._trainA320 = { up: null, down: null };
-    this._loadTrainingA320();
+    this._a320Sprites = {};
+    this._loadA320Sprites();
     window.addEventListener("resize", () => this._resize());
     this._resize();
 
@@ -37,15 +37,26 @@ class Game {
     requestAnimationFrame(this._loop);
   }
 
-  _loadTrainingA320() {
+  _loadA320Sprites() {
     const base = new URL("./img/", window.location.href).href;
-    const load = (file, key) => {
-      const img = new Image();
-      img.onload = () => { this._trainA320[key] = img; };
-      img.src = base + file;
-    };
-    load("a320-gearup.png", "up");
-    load("a320-geardown.png", "down");
+    const packs = [
+      ["white", "a320"],
+      ["pgt", "a320-pgt"],
+      ["dal", "a320-dal"],
+      ["baw", "a320-baw"],
+      ["aal", "a320-aal"],
+    ];
+    for (const [id, prefix] of packs) {
+      const pack = { up: null, down: null };
+      this._a320Sprites[id] = pack;
+      const load = (file, key) => {
+        const img = new Image();
+        img.onload = () => { pack[key] = img; };
+        img.src = `${base}${file}?v=liv1`;
+      };
+      load(`${prefix}-gearup.png`, "up");
+      load(`${prefix}-geardown.png`, "down");
+    }
   }
 
   _resize() {
@@ -986,7 +997,7 @@ class Game {
     ctx.translate(sx, sy);
     ctx.rotate(-ac.pitch); // screen y is inverted
     if ((ac.facing || 1) < 0) ctx.scale(-1, 1);
-    if (this.training && ac.spec && ac.spec.id === "a320" && this._paintTrainingA320(ctx, ac, px)) {
+    if (ac.spec && ac.spec.id === "a320" && this._paintSpriteA320(ctx, ac, px)) {
       ctx.restore();
     } else {
       ctx.translate(0, -contactY); // lift body so wheels pivot on the ground point
@@ -1006,11 +1017,12 @@ class Game {
     ctx.restore();
   }
 
-  /* Training-only A320 sprite (gear up / gear down). Returns false if not ready. */
-  _paintTrainingA320(ctx, ac, px) {
-    const img = (ac.gearDown || (ac.spec && ac.spec.fixedGear))
-      ? this._trainA320.down
-      : this._trainA320.up;
+  /* White A320 in training; painted liveries on Start Flight. Returns false if not ready. */
+  _paintSpriteA320(ctx, ac, px) {
+    const id = this.training ? "white" : (ac.airline && ac.airline.id);
+    const pack = this._a320Sprites[id];
+    if (!pack) return false;
+    const img = (ac.gearDown || (ac.spec && ac.spec.fixedGear)) ? pack.down : pack.up;
     if (!img || !img.naturalWidth) return false;
     const w = px * 1.12;
     const h = w * (img.naturalHeight / img.naturalWidth);
