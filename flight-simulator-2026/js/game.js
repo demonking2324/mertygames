@@ -29,7 +29,9 @@ class Game {
     this._bindKeys();
     this._bindFreeCamPointer();
     this._a320Sprites = {};
+    this._a380Sprites = {};
     this._loadA320Sprites();
+    this._loadA380Sprites();
     window.addEventListener("resize", () => this._resize());
     this._resize();
 
@@ -70,7 +72,27 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv9`;
+        img.src = `${base}${file}?v=liv10`;
+      };
+      load(`${prefix}-gearup.png`, "up");
+      load(`${prefix}-geardown.png`, "down");
+    }
+  }
+
+  _loadA380Sprites() {
+    const base = new URL("./img/", window.location.href).href;
+    const packs = [
+      ["white", "a380"],
+      ["uae", "a380-uae"],
+      ["qtr", "a380-qtr"],
+    ];
+    for (const [id, prefix] of packs) {
+      const pack = { up: null, down: null };
+      this._a380Sprites[id] = pack;
+      const load = (file, key) => {
+        const img = new Image();
+        img.onload = () => { pack[key] = img; };
+        img.src = `${base}${file}?v=liv10`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
@@ -1015,7 +1037,7 @@ class Game {
     ctx.translate(sx, sy);
     ctx.rotate(-ac.pitch); // screen y is inverted
     if ((ac.facing || 1) < 0) ctx.scale(-1, 1);
-    if (ac.spec && ac.spec.id === "a320" && this._paintSpriteA320(ctx, ac, px)) {
+    if (this._paintAirlineSprite(ctx, ac, px)) {
       ctx.restore();
     } else {
       ctx.translate(0, -contactY); // lift body so wheels pivot on the ground point
@@ -1035,14 +1057,19 @@ class Game {
     ctx.restore();
   }
 
-  /* White A320 in training; painted liveries on Start Flight. Returns false if not ready. */
-  _paintSpriteA320(ctx, ac, px) {
+  /* White type sprite in training; painted liveries on Start Flight. Returns false if not ready. */
+  _paintAirlineSprite(ctx, ac, px) {
+    const specId = ac.spec && ac.spec.id;
+    const packs = specId === "a320" ? this._a320Sprites
+      : specId === "a388" ? this._a380Sprites
+      : null;
+    if (!packs) return false;
     const id = this.training ? "white" : (ac.airline && ac.airline.id);
-    const pack = this._a320Sprites[id];
+    const pack = packs[id];
     if (!pack) return false;
     const img = (ac.gearDown || (ac.spec && ac.spec.fixedGear)) ? pack.down : pack.up;
     if (!img || !img.naturalWidth) return false;
-    const w = px * 1.12;
+    const w = px * (specId === "a388" ? 1.18 : 1.12);
     const h = w * (img.naturalHeight / img.naturalWidth);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
