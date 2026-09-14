@@ -74,7 +74,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv16`;
+        img.src = `${base}${file}?v=liv17`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
@@ -99,7 +99,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv16`;
+        img.src = `${base}${file}?v=liv17`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
@@ -113,6 +113,9 @@ class Game {
       ["dlh", "b747-dlh"],
       ["dlh100", "b747-dlh100"],
       ["kal", "b747-kal"],
+      ["baw", "b747-baw"],
+      ["klm", "b747-klm"],
+      ["qfa", "b747-qfa"],
     ];
     for (const [id, prefix] of packs) {
       const pack = { up: null, down: null };
@@ -120,7 +123,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv16`;
+        img.src = `${base}${file}?v=liv17`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
