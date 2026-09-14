@@ -30,8 +30,10 @@ class Game {
     this._bindFreeCamPointer();
     this._a320Sprites = {};
     this._a380Sprites = {};
+    this._b747Sprites = {};
     this._loadA320Sprites();
     this._loadA380Sprites();
+    this._loadB747Sprites();
     window.addEventListener("resize", () => this._resize());
     this._resize();
 
@@ -72,7 +74,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv14`;
+        img.src = `${base}${file}?v=liv16`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
@@ -97,7 +99,28 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv14`;
+        img.src = `${base}${file}?v=liv16`;
+      };
+      load(`${prefix}-gearup.png`, "up");
+      load(`${prefix}-geardown.png`, "down");
+    }
+  }
+
+  _loadB747Sprites() {
+    const base = new URL("./img/", window.location.href).href;
+    const packs = [
+      ["white", "b747"],
+      ["dlh", "b747-dlh"],
+      ["dlh100", "b747-dlh100"],
+      ["kal", "b747-kal"],
+    ];
+    for (const [id, prefix] of packs) {
+      const pack = { up: null, down: null };
+      this._b747Sprites[id] = pack;
+      const load = (file, key) => {
+        const img = new Image();
+        img.onload = () => { pack[key] = img; };
+        img.src = `${base}${file}?v=liv16`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
@@ -1067,6 +1090,7 @@ class Game {
     const specId = ac.spec && ac.spec.id;
     const packs = specId === "a320" ? this._a320Sprites
       : specId === "a388" ? this._a380Sprites
+      : specId === "b748" ? this._b747Sprites
       : null;
     if (!packs) return false;
     const id = this.training ? "white" : (ac.airline && ac.airline.id);
@@ -1074,11 +1098,15 @@ class Game {
     if (!pack) return false;
     const img = (ac.gearDown || (ac.spec && ac.spec.fixedGear)) ? pack.down : pack.up;
     if (!img || !img.naturalWidth) return false;
-    const w = px * (specId === "a388" ? 1.18 : 1.12);
+    const w = px * (specId === "a388" || specId === "b748" ? 1.18 : 1.12);
     const h = w * (img.naturalHeight / img.naturalWidth);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(img, -w * 0.50, -h + 2, w, h);
+    // Plant the airframe on ac.y. A380 sprites have empty canvas under the
+    // wheels, which made the whole jet hover above the runway.
+    const padded = specId === "a388" || specId === "b748";
+    const plant = padded && ac.gearDown ? h * 0.04 : 2;
+    ctx.drawImage(img, -w * 0.50, -h + plant, w, h);
     return true;
   }
 
