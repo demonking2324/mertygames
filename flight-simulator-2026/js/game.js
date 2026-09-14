@@ -123,7 +123,7 @@ class Game {
       const load = (file, key) => {
         const img = new Image();
         img.onload = () => { pack[key] = img; };
-        img.src = `${base}${file}?v=liv19`;
+        img.src = `${base}${file}?v=liv20`;
       };
       load(`${prefix}-gearup.png`, "up");
       load(`${prefix}-geardown.png`, "down");
